@@ -1,0 +1,72 @@
+### Campaigns API REST Client
+### Base URL
+@baseUrl = http://localhost:4000/api
+@contentType = application/json
+
+### Variables (will be set by responses)
+@campaignId =
+
+###################
+### Test Scenarios
+###################
+
+### Scenario 1: Complete Campaign Lifecycle
+# Step 1: Create campaign
+POST {{baseUrl}}/campaigns
+Content-Type: {{contentType}}
+
+{
+  "campaign": {
+    "name": "Lifecycle Test Campaign",
+    "tenant": "tenant-test-001"
+  }
+}
+
+# Step 2: Start the campaign (use ID from previous response)
+# POST {{baseUrl}}/campaigns/{ID}/start
+
+# Step 3: Update campaign details
+# PUT {{baseUrl}}/campaigns/{ID}
+
+# Step 4: Finish the campaign
+# POST {{baseUrl}}/campaigns/{ID}/finish
+
+# Step 5: Verify final state
+# GET {{baseUrl}}/campaigns/{ID}
+
+### Scenario 2: Multiple tenants
+# Create campaign for tenant A
+POST {{baseUrl}}/campaigns
+Content-Type: {{contentType}}
+
+{
+  "campaign": {
+    "name": "Tenant A - Q1 Campaign",
+    "tenant": "tenant-a"
+  }
+}
+
+### Create campaign for tenant B
+POST {{baseUrl}}/campaigns
+Content-Type: {{contentType}}
+
+{
+  "campaign": {
+    "name": "Tenant B - Q1 Campaign",
+    "tenant": "tenant-b"
+  }
+}
+
+### Scenario 3: Campaign with future dates
+POST {{baseUrl}}/campaigns
+Content-Type: {{contentType}}
+
+{
+  "campaign": {
+    "name": "Future Campaign",
+    "tenant": "tenant-abc123",
+    "started_at": "2026-06-01T00:00:00.000000Z",
+    "finished_at": "2026-08-31T23:59:59.999999Z",
+    "status": "not_started"
+  }
+}

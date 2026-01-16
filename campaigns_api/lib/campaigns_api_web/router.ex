@@ -7,6 +7,11 @@ defmodule CampaignsApiWeb.Router do
 
   scope "/api", CampaignsApiWeb do
     pipe_through :api
+
+    resources "/campaigns", CampaignController, except: [:new, :edit] do
+      post "/start", CampaignController, :start
+      post "/finish", CampaignController, :finish
+    end
   end
 
   # Enable LiveDashboard in development

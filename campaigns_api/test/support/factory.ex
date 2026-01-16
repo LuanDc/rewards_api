@@ -37,17 +37,14 @@ defmodule CampaignsApi.Factory do
   """
   def build(factory_name, attrs \\ %{})
 
-  # Add your factory definitions here
-  # Example:
-  # def build(:user, attrs) do
-  #   %User{
-  #     name: "User #{System.unique_integer([:positive])}",
-  #     email: "user#{System.unique_integer([:positive])}@example.com",
-  #     inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
-  #     updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-  #   }
-  #   |> merge_attrs(attrs)
-  # end
+  def build(:campaign, attrs) do
+    %CampaignsApi.Campaigns.Campaign{
+      name: "Campaign #{System.unique_integer([:positive])}",
+      tenant: "tenant-#{System.unique_integer([:positive])}",
+      status: :not_started
+    }
+    |> merge_attrs(attrs)
+  end
 
   @doc """
   Builds and inserts a struct into the database.
