@@ -11,10 +11,11 @@ defmodule CampaignsApiWeb.CampaignController do
   action_fallback CampaignsApiWeb.FallbackController
 
   @doc """
-  Lists all campaigns.
+  Lists all campaigns for the authenticated tenant.
   """
   def index(conn, _params) do
-    campaigns = Campaigns.list_campaigns()
+    tenant = conn.assigns.tenant
+    campaigns = Campaigns.list_campaigns_by_tenant(tenant)
     render(conn, :index, campaigns: campaigns)
   end
 
@@ -23,13 +24,17 @@ defmodule CampaignsApiWeb.CampaignController do
 
   Expects params:
   - name (required): Campaign name
-  - tenant (required): Tenant identifier string
   - started_at (optional): Start date/time
   - finished_at (optional): End date/time
   - status (optional): Campaign status
+
+  The tenant is automatically extracted from the Authorization header.
   """
   def create(conn, %{"campaign" => campaign_params}) do
-    with {:ok, %Campaign{} = campaign} <- Campaigns.create_campaign(campaign_params) do
+    tenant = conn.assigns.tenant
+    params_with_tenant = Map.put(campaign_params, "tenant", tenant)
+
+    with {:ok, %Campaign{} = campaign} <- Campaigns.create_campaign(params_with_tenant) do
       conn
       |> put_status(:created)
       |> put_resp_header("location", ~p"/api/campaigns/#{campaign}")
@@ -38,54 +43,100 @@ defmodule CampaignsApiWeb.CampaignController do
   end
 
   @doc """
-  Shows a single campaign.
+  Shows a single campaign for the authenticated tenant.
   """
   def show(conn, %{"id" => id}) do
-    campaign = Campaigns.get_campaign!(id)
-    render(conn, :show, campaign: campaign)
+    tenant = conn.assigns.tenant
+
+    case Campaigns.get_campaign_by_tenant(id, tenant) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> put_view(json: CampaignsApiWeb.ErrorJSON)
+        |> render(:"404")
+
+      campaign ->
+        render(conn, :show, campaign: campaign)
+    end
   end
 
   @doc """
-  Updates a campaign.
+  Updates a campaign for the authenticated tenant.
   """
   def update(conn, %{"id" => id, "campaign" => campaign_params}) do
-    campaign = Campaigns.get_campaign!(id)
+    tenant = conn.assigns.tenant
 
-    with {:ok, %Campaign{} = campaign} <- Campaigns.update_campaign(campaign, campaign_params) do
-      render(conn, :show, campaign: campaign)
+    case Campaigns.get_campaign_by_tenant(id, tenant) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> put_view(json: CampaignsApiWeb.ErrorJSON)
+        |> render(:"404")
+
+      campaign ->
+        with {:ok, %Campaign{} = campaign} <- Campaigns.update_campaign(campaign, campaign_params) do
+          render(conn, :show, campaign: campaign)
+        end
     end
   end
 
   @doc """
-  Deletes a campaign.
+  Deletes a campaign for the authenticated tenant.
   """
   def delete(conn, %{"id" => id}) do
-    campaign = Campaigns.get_campaign!(id)
+    tenant = conn.assigns.tenant
 
-    with {:ok, %Campaign{}} <- Campaigns.delete_campaign(campaign) do
-      send_resp(conn, :no_content, "")
+    case Campaigns.get_campaign_by_tenant(id, tenant) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> put_view(json: CampaignsApiWeb.ErrorJSON)
+        |> render(:"404")
+
+      campaign ->
+        with {:ok, %Campaign{}} <- Campaigns.delete_campaign(campaign) do
+          send_resp(conn, :no_content, "")
+        end
     end
   end
 
   @doc """
-  Starts a campaign.
+  Starts a campaign for the authenticated tenant.
   """
   def start(conn, %{"campaign_id" => id}) do
-    campaign = Campaigns.get_campaign!(id)
+    tenant = conn.assigns.tenant
 
-    with {:ok, %Campaign{} = campaign} <- Campaigns.start_campaign(campaign) do
-      render(conn, :show, campaign: campaign)
+    case Campaigns.get_campaign_by_tenant(id, tenant) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> put_view(json: CampaignsApiWeb.ErrorJSON)
+        |> render(:"404")
+
+      campaign ->
+        with {:ok, %Campaign{} = campaign} <- Campaigns.start_campaign(campaign) do
+          render(conn, :show, campaign: campaign)
+        end
     end
   end
 
   @doc """
-  Finishes a campaign.
+  Finishes a campaign for the authenticated tenant.
   """
   def finish(conn, %{"campaign_id" => id}) do
-    campaign = Campaigns.get_campaign!(id)
+    tenant = conn.assigns.tenant
 
-    with {:ok, %Campaign{} = campaign} <- Campaigns.finish_campaign(campaign) do
-      render(conn, :show, campaign: campaign)
+    case Campaigns.get_campaign_by_tenant(id, tenant) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> put_view(json: CampaignsApiWeb.ErrorJSON)
+        |> render(:"404")
+
+      campaign ->
+        with {:ok, %Campaign{} = campaign} <- Campaigns.finish_campaign(campaign) do
+          render(conn, :show, campaign: campaign)
+        end
     end
   end
 end

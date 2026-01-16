@@ -5,8 +5,12 @@ defmodule CampaignsApiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :authenticated do
+    plug CampaignsApiWeb.Plugs.PutTenant
+  end
+
   scope "/api", CampaignsApiWeb do
-    pipe_through :api
+    pipe_through [:api, :authenticated]
 
     resources "/campaigns", CampaignController, except: [:new, :edit] do
       post "/start", CampaignController, :start
