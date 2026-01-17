@@ -7,16 +7,18 @@ defmodule CampaignsApi.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      CampaignsApiWeb.Telemetry,
-      CampaignsApi.Repo,
-      {DNSCluster, query: Application.get_env(:campaigns_api, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: CampaignsApi.PubSub},
-      # Start a worker by calling: CampaignsApi.Worker.start_link(arg)
-      # {CampaignsApi.Worker, arg},
-      # Start to serve requests, typically the last entry
-      CampaignsApiWeb.Endpoint
-    ]
+    children =
+      [
+        CampaignsApiWeb.Telemetry,
+        CampaignsApi.Repo,
+        {DNSCluster, query: Application.get_env(:campaigns_api, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: CampaignsApi.PubSub}
+      ] ++
+        jwks_strategy_child() ++
+        [
+          # Start to serve requests, typically the last entry
+          CampaignsApiWeb.Endpoint
+        ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -30,5 +32,16 @@ defmodule CampaignsApi.Application do
   def config_change(changed, _new, removed) do
     CampaignsApiWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  # Add JWKS strategy to supervision tree only when JWKS URL is configured
+  defp jwks_strategy_child do
+    jwks_url = Application.get_env(:campaigns_api, :keycloak_jwks_url)
+
+    if jwks_url do
+      [{CampaignsApi.Auth.JwksStrategy, []}]
+    else
+      []
+    end
   end
 end

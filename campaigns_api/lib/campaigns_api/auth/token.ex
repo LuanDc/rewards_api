@@ -3,10 +3,12 @@ defmodule CampaignsApi.Auth.Token do
   Module for handling JWT token validation and decoding from Keycloak.
 
   This module uses Joken to verify and decode JWT tokens issued by Keycloak,
-  extracting tenant information from the token claims.
+  automatically fetching public keys from the Keycloak JWKS endpoint.
   """
 
   use Joken.Config
+
+  alias CampaignsApi.Auth.JwksStrategy
 
   @impl true
   def token_config do
@@ -18,6 +20,10 @@ defmodule CampaignsApi.Auth.Token do
   @doc """
   Verifies and decodes a JWT token.
 
+  This function automatically fetches the public key from Keycloak's JWKS endpoint
+  based on the key ID (kid) in the token header when JWKS URL is configured.
+  Otherwise, it falls back to using the configured JWT secret.
+
   ## Parameters
 
     - token: The JWT token string to verify
@@ -28,10 +34,29 @@ defmodule CampaignsApi.Auth.Token do
     - {:error, reason} if the token is invalid
   """
   def verify_token(token) do
-    with {:ok, signer} <- get_signer(),
-         {:ok, claims} <- verify_and_validate(token, signer) do
-      {:ok, claims}
+    jwks_url = Application.get_env(:campaigns_api, :keycloak_jwks_url)
+
+    if jwks_url do
+      # Use JWKS to verify with automatic key fetching
+      # We need to use Joken's verify_and_validate with hooks
+      hooks = [{JokenJwks, strategy: JwksStrategy}]
+
+      case Joken.verify_and_validate(__MODULE__, token, nil, %{}, hooks) do
+        {:ok, claims} -> {:ok, claims}
+        {:error, reason} -> {:error, reason}
+      end
     else
+      # Fallback to secret-based verification for tests
+      verify_token_with_secret(token)
+    end
+  end
+
+  defp verify_token_with_secret(token) do
+    secret = Application.get_env(:campaigns_api, :jwt_secret, "default-secret-key")
+    signer = Joken.Signer.create("HS256", secret)
+
+    case verify_and_validate(token, signer) do
+      {:ok, claims} -> {:ok, claims}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -66,16 +91,6 @@ defmodule CampaignsApi.Auth.Token do
       tenant when is_binary(tenant) -> {:ok, tenant}
       _ -> {:error, :invalid_tenant_format}
     end
-  end
-
-  defp get_signer do
-    # For testing and development, use a simple HS256 secret
-    # For production with JWKS, you would typically:
-    # 1. Set up a GenServer to periodically fetch and cache JWKS keys
-    # 2. Use JokenJwks with proper configuration
-    # For now, we'll keep it simple and only use the secret approach
-    secret = Application.get_env(:campaigns_api, :jwt_secret, "default-secret-key")
-    {:ok, Joken.Signer.create("HS256", secret)}
   end
 
   defp get_current_time, do: System.system_time(:second)
