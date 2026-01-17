@@ -161,6 +161,12 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
       assert json_response(conn, 404)["errors"] != %{}
     end
+
+    test "returns 401 when authorization header is missing", %{conn: conn, campaign: campaign} do
+      conn = post(conn, ~p"/api/campaigns/#{campaign.id}/start")
+
+      assert json_response(conn, 401)["errors"] != %{}
+    end
   end
 
   describe "finish campaign" do
@@ -184,6 +190,15 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       conn = conn |> put_auth_header() |> post(~p"/api/campaigns/#{non_existent_id}/finish")
 
       assert json_response(conn, 404)["errors"] != %{}
+    end
+
+    test "returns 401 when authorization header is missing", %{
+      conn: conn,
+      campaign: campaign
+    } do
+      conn = post(conn, ~p"/api/campaigns/#{campaign.id}/finish")
+
+      assert json_response(conn, 401)["errors"] != %{}
     end
   end
 

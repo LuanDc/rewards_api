@@ -8,8 +8,6 @@ defmodule CampaignsApi.Auth.Token do
 
   use Joken.Config
 
-  alias CampaignsApi.Auth.JwksStrategy
-
   @impl true
   def token_config do
     default_claims(skip: [:aud, :iss])
@@ -38,10 +36,8 @@ defmodule CampaignsApi.Auth.Token do
 
     if jwks_url do
       # Use JWKS to verify with automatic key fetching
-      # We need to use Joken's verify_and_validate with hooks
-      hooks = [{JokenJwks, strategy: JwksStrategy}]
-
-      case Joken.verify_and_validate(__MODULE__, token, nil, %{}, hooks) do
+      # Pass nil as signer because JokenJwks hook will provide it
+      case verify_and_validate(token, nil, %{}) do
         {:ok, claims} -> {:ok, claims}
         {:error, reason} -> {:error, reason}
       end
