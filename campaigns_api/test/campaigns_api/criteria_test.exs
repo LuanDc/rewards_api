@@ -377,7 +377,8 @@ defmodule CampaignsApi.CriteriaTest do
         "status" => "active"
       }
 
-      assert {:error, :not_found} = Criteria.associate_criterion_to_campaign_by_tenant(attrs, "tenant-123")
+      assert {:error, :not_found} =
+               Criteria.associate_criterion_to_campaign_by_tenant(attrs, "tenant-123")
     end
   end
 
@@ -387,7 +388,12 @@ defmodule CampaignsApi.CriteriaTest do
       criterion = Factory.insert(:criterion, tenant: "tenant-123")
 
       assert {:error, :not_found} =
-        Criteria.update_campaign_criterion_by_tenant(campaign.id, criterion.id, %{}, "tenant-123")
+               Criteria.update_campaign_criterion_by_tenant(
+                 campaign.id,
+                 criterion.id,
+                 %{},
+                 "tenant-123"
+               )
     end
   end
 
@@ -397,7 +403,11 @@ defmodule CampaignsApi.CriteriaTest do
       criterion = Factory.insert(:criterion, tenant: "tenant-123")
 
       assert {:error, :not_found} =
-        Criteria.remove_campaign_criterion_by_tenant(campaign.id, criterion.id, "tenant-123")
+               Criteria.remove_campaign_criterion_by_tenant(
+                 campaign.id,
+                 criterion.id,
+                 "tenant-123"
+               )
     end
   end
 end

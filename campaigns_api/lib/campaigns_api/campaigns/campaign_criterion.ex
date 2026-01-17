@@ -2,6 +2,17 @@ defmodule CampaignsApi.Campaigns.CampaignCriterion do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{
+          id: Ecto.UUID.t() | nil,
+          campaign_id: Ecto.UUID.t() | nil,
+          criterion_id: Ecto.UUID.t() | nil,
+          periodicity: String.t() | nil,
+          status: String.t(),
+          reward_points_amount: integer() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
   @primary_key {:id, Ecto.UUID, autogenerate: false}
   @foreign_key_type Ecto.UUID
 

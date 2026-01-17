@@ -94,7 +94,11 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
     test "returns 404 when campaign does not exist for tenant", %{conn: conn} do
       non_existent_id = Uniq.UUID.uuid7()
-      conn = conn |> put_auth_header() |> put(~p"/api/campaigns/#{non_existent_id}", campaign: @update_attrs)
+
+      conn =
+        conn
+        |> put_auth_header()
+        |> put(~p"/api/campaigns/#{non_existent_id}", campaign: @update_attrs)
 
       assert json_response(conn, 404)["errors"] != %{}
     end

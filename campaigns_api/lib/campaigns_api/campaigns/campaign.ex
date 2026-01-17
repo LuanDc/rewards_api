@@ -10,8 +10,8 @@ defmodule CampaignsApi.Campaigns.Campaign do
   @type status :: :not_started | :active | :paused | :completed | :cancelled
   @type t :: %__MODULE__{
           id: Ecto.UUID.t() | nil,
-          name: String.t(),
-          tenant: String.t(),
+          name: String.t() | nil,
+          tenant: String.t() | nil,
           started_at: DateTime.t() | nil,
           finished_at: DateTime.t() | nil,
           status: status(),

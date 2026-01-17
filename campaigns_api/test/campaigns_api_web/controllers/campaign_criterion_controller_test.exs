@@ -183,7 +183,10 @@ defmodule CampaignsApiWeb.CampaignCriterionControllerTest do
       campaign_criterion: campaign_criterion
     } do
       conn =
-        delete(conn, ~p"/api/campaigns/#{campaign.id}/criteria/#{campaign_criterion.criterion_id}")
+        delete(
+          conn,
+          ~p"/api/campaigns/#{campaign.id}/criteria/#{campaign_criterion.criterion_id}"
+        )
 
       assert json_response(conn, 401)
     end
