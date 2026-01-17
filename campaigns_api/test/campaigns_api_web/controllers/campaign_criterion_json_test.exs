@@ -1,8 +1,8 @@
 defmodule CampaignsApiWeb.CampaignCriterionJSONTest do
   use CampaignsApiWeb.ConnCase
 
-  alias CampaignsApiWeb.CampaignCriterionJSON
   alias CampaignsApi.Campaigns.CampaignCriterion
+  alias CampaignsApiWeb.CampaignCriterionJSON
 
   describe "show/1" do
     test "renders campaign criterion without preloaded criterion" do

@@ -1,0 +1,7 @@
+# Ignore data directories created by Docker volumes
+data/
+*.db
+*.log
+
+# Grafana provisioning generated files
+grafana/data/

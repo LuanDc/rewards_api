@@ -67,3 +67,39 @@ config :phoenix, :plug_init_mode, :runtime
 config :campaigns_api,
   jwt_secret: "dev-secret-key-change-in-production",
   keycloak_jwks_url: System.get_env("KEYCLOAK_JWKS_URL")
+
+# PromEx configuration
+config :campaigns_api, CampaignsApi.PromEx,
+  disabled: false,
+  manual_metrics_start_delay: :no_delay,
+  drop_metrics_groups: [],
+  grafana: [
+    host: System.get_env("GRAFANA_HOST") || "http://localhost:3000",
+    auth_token: System.get_env("GRAFANA_TOKEN"),
+    upload_dashboards_on_start: false,
+    folder_name: "CampaignsAPI",
+    annotate_app_lifecycle: true
+  ],
+  metrics_server: :disabled
+
+# OpenTelemetry configuration for development
+config :opentelemetry,
+  resource: [
+    service: [
+      name: "campaigns_api",
+      namespace: "rewards_api"
+    ]
+  ],
+  span_processor: :batch,
+  traces_exporter: :otlp
+
+config :opentelemetry_exporter,
+  otlp_protocol: :grpc,
+  otlp_endpoint: "http://localhost:4317",
+  otlp_headers: [],
+  otlp_compression: :gzip
+
+# Configure logger to include OpenTelemetry metadata
+config :logger, :console,
+  format: "[$level] $message $metadata\n",
+  metadata: [:request_id, :trace_id, :span_id]

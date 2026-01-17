@@ -5,8 +5,8 @@ defmodule CampaignsApiWeb.CampaignCriterionController do
 
   use CampaignsApiWeb, :controller
 
-  alias CampaignsApi.Criteria
   alias CampaignsApi.Campaigns.CampaignCriterion
+  alias CampaignsApi.Criteria
 
   action_fallback(CampaignsApiWeb.FallbackController)
 

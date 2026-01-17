@@ -1,0 +1,102 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus receiver to scrape metrics
+  prometheus:
+    config:
+      scrape_configs:
+        # Scrape PromEx metrics from Elixir app
+        - job_name: 'campaigns_api'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['host.docker.internal:4000']  # Phoenix endpoint with PromEx
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: 'phoenix_endpoint_.*|vm_.*|erlang_.*|ecto_.*'
+              action: keep
+
+        # Postgres Exporter
+        - job_name: 'postgres'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['postgres-exporter:9187']
+
+        # RabbitMQ metrics (if enabled)
+        - job_name: 'rabbitmq'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['rabbitmq:15692']
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+  # Add resource attributes
+  resource:
+    attributes:
+      - key: service.name
+        value: campaigns_api
+        action: upsert
+      - key: deployment.environment
+        value: local
+        action: upsert
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+exporters:
+  # Tempo for traces
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # Loki for logs
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: true
+      job: true
+
+  # Prometheus for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: campaigns_api
+
+  # Debug exporter (optional, for troubleshooting)
+  debug:
+    verbosity: detailed
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+service:
+  extensions: [health_check, pprof]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [otlp/tempo]
+
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, batch, resource]
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [loki]

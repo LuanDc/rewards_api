@@ -109,4 +109,35 @@ if config_env() == :prod do
   config :campaigns_api,
     jwt_secret: nil,
     keycloak_jwks_url: keycloak_jwks_url
+
+  # PromEx configuration for production
+  config :campaigns_api, CampaignsApi.PromEx,
+    disabled: false,
+    manual_metrics_start_delay: :no_delay,
+    drop_metrics_groups: [],
+    grafana: [
+      host: System.get_env("GRAFANA_HOST") || "http://grafana:3000",
+      auth_token: System.get_env("GRAFANA_TOKEN"),
+      upload_dashboards_on_start: false,
+      folder_name: "CampaignsAPI",
+      annotate_app_lifecycle: true
+    ],
+    metrics_server: :disabled
+
+  # OpenTelemetry configuration for production
+  config :opentelemetry,
+    resource: [
+      service: [
+        name: "campaigns_api",
+        namespace: "rewards_api"
+      ]
+    ],
+    span_processor: :batch,
+    traces_exporter: :otlp
+
+  config :opentelemetry_exporter,
+    otlp_protocol: :grpc,
+    otlp_endpoint: System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") || "http://otel-collector:4317",
+    otlp_headers: [],
+    otlp_compression: :gzip
 end

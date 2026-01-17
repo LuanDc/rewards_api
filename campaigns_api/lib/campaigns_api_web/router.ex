@@ -9,6 +9,12 @@ defmodule CampaignsApiWeb.Router do
     plug(CampaignsApiWeb.Plugs.PutTenant)
   end
 
+  # PromEx metrics endpoint (no authentication required for Prometheus scraping)
+  scope "/" do
+    pipe_through(:api)
+    forward("/metrics", PromEx.Plug, prom_ex_module: CampaignsApi.PromEx)
+  end
+
   scope "/api", CampaignsApiWeb do
     pipe_through([:api, :authenticated])
 

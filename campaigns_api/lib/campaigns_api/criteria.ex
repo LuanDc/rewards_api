@@ -6,9 +6,10 @@ defmodule CampaignsApi.Criteria do
   """
 
   import Ecto.Query, warn: false
-  alias CampaignsApi.Repo
-  alias CampaignsApi.Criteria.Criterion
+
   alias CampaignsApi.Campaigns.CampaignCriterion
+  alias CampaignsApi.Criteria.Criterion
+  alias CampaignsApi.Repo
 
   @doc """
   Returns the list of criteria.

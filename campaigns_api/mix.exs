@@ -54,6 +54,13 @@ defmodule CampaignsApi.MixProject do
       {:uniq, "~> 0.6"},
       {:joken, "~> 2.6"},
       {:joken_jwks, "~> 1.6"},
+      # Observability
+      {:prom_ex, "~> 1.10"},
+      {:opentelemetry, "~> 1.4"},
+      {:opentelemetry_exporter, "~> 1.7"},
+      {:opentelemetry_phoenix, "~> 1.2"},
+      {:opentelemetry_ecto, "~> 1.2"},
+      {:opentelemetry_logger_metadata, "~> 0.1"},
       {:faker, "~> 0.18", only: [:dev, :test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},

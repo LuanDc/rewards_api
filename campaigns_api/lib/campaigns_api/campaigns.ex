@@ -6,8 +6,9 @@ defmodule CampaignsApi.Campaigns do
   """
 
   import Ecto.Query, warn: false
-  alias CampaignsApi.Repo
+
   alias CampaignsApi.Campaigns.Campaign
+  alias CampaignsApi.Repo
 
   @doc """
   Returns the list of campaigns.
