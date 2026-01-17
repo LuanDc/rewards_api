@@ -70,7 +70,9 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       conn: conn,
       campaign: %Campaign{id: id} = campaign
     } do
-      conn = conn |> put_auth_header() |> put(~p"/api/campaigns/#{campaign}", campaign: @update_attrs)
+      conn =
+        conn |> put_auth_header() |> put(~p"/api/campaigns/#{campaign}", campaign: @update_attrs)
+
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = build_conn() |> put_auth_header() |> get(~p"/api/campaigns/#{id}")
@@ -83,7 +85,9 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "renders errors when data is invalid", %{conn: conn, campaign: campaign} do
-      conn = conn |> put_auth_header() |> put(~p"/api/campaigns/#{campaign}", campaign: @invalid_attrs)
+      conn =
+        conn |> put_auth_header() |> put(~p"/api/campaigns/#{campaign}", campaign: @invalid_attrs)
+
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
@@ -96,6 +100,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert response(conn, 204)
 
       conn = build_conn() |> put_auth_header()
+
       assert_error_sent(404, fn ->
         get(conn, ~p"/api/campaigns/#{campaign}")
       end)

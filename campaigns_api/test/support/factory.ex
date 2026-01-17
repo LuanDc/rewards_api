@@ -46,6 +46,26 @@ defmodule CampaignsApi.Factory do
     |> merge_attrs(attrs)
   end
 
+  def build(:criterion, attrs) do
+    %CampaignsApi.Criteria.Criterion{
+      id: Uniq.UUID.uuid7(),
+      name: "Criterion #{System.unique_integer([:positive])}",
+      status: "active",
+      description: "Description for criterion #{System.unique_integer([:positive])}"
+    }
+    |> merge_attrs(attrs)
+  end
+
+  def build(:campaign_criterion, attrs) do
+    %CampaignsApi.Campaigns.CampaignCriterion{
+      id: Uniq.UUID.uuid7(),
+      periodicity: "0 0 * * *",
+      status: "active",
+      reward_points_amount: 100
+    }
+    |> merge_attrs(attrs)
+  end
+
   @doc """
   Builds and inserts a struct into the database.
 
@@ -119,6 +139,12 @@ defmodule CampaignsApi.Factory do
       {key, value} when is_atom(key) -> {key, value}
       {key, value} when is_binary(key) -> {String.to_existing_atom(key), value}
     end)
+  end
+
+  defp stringify_keys(list) when is_list(list) do
+    list
+    |> Enum.into(%{})
+    |> stringify_keys()
   end
 
   defp struct_to_map(struct) do

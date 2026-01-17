@@ -31,6 +31,11 @@ defmodule CampaignsApi.Campaigns.Campaign do
     field(:finished_at, :utc_datetime_usec)
     field(:status, Ecto.Enum, values: @statuses, default: :not_started)
 
+    many_to_many(:criteria, CampaignsApi.Criteria.Criterion,
+      join_through: CampaignsApi.Campaigns.CampaignCriterion,
+      on_replace: :delete
+    )
+
     timestamps()
   end
 
