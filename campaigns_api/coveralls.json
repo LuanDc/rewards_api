@@ -1,0 +1,16 @@
+{
+  "skip_files": [
+    "test",
+    "lib/campaigns_api.ex",
+    "lib/campaigns_api_web.ex",
+    "lib/campaigns_api/repo.ex",
+    "lib/campaigns_api_web/endpoint.ex",
+    "lib/campaigns_api_web/gettext.ex",
+    "lib/campaigns_api_web/telemetry.ex",
+    "lib/campaigns_api/application.ex",
+    "lib/campaigns_api_web/controllers/fallback_controller.ex",
+    "lib/campaigns_api_web/controllers/error_json.ex",
+    "lib/campaigns_api_web/controllers/error_html.ex",
+    "lib/campaigns_api_web/controllers/changeset_json.ex"
+  ]
+}

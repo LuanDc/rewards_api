@@ -24,6 +24,7 @@ defmodule CampaignsApi.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import CampaignsApi.DataCase
+      import CampaignsApi.Factory
     end
   end
 

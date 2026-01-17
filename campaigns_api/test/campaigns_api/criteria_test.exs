@@ -365,4 +365,39 @@ defmodule CampaignsApi.CriteriaTest do
       assert Criteria.list_campaign_criteria(campaign.id) == []
     end
   end
+
+  describe "associate_criterion_to_campaign_by_tenant/2" do
+    test "returns error when campaign does not exist for tenant" do
+      criterion = Factory.insert(:criterion, tenant: "tenant-123")
+
+      attrs = %{
+        "campaign_id" => Uniq.UUID.uuid7(),
+        "criterion_id" => criterion.id,
+        "reward_points_amount" => 100,
+        "status" => "active"
+      }
+
+      assert {:error, :not_found} = Criteria.associate_criterion_to_campaign_by_tenant(attrs, "tenant-123")
+    end
+  end
+
+  describe "update_campaign_criterion_by_tenant/4" do
+    test "returns error when campaign criterion does not exist for tenant" do
+      campaign = Factory.insert(:campaign, tenant: "tenant-123")
+      criterion = Factory.insert(:criterion, tenant: "tenant-123")
+
+      assert {:error, :not_found} =
+        Criteria.update_campaign_criterion_by_tenant(campaign.id, criterion.id, %{}, "tenant-123")
+    end
+  end
+
+  describe "remove_campaign_criterion_by_tenant/3" do
+    test "returns error when campaign criterion does not exist for tenant" do
+      campaign = Factory.insert(:campaign, tenant: "tenant-123")
+      criterion = Factory.insert(:criterion, tenant: "tenant-123")
+
+      assert {:error, :not_found} =
+        Criteria.remove_campaign_criterion_by_tenant(campaign.id, criterion.id, "tenant-123")
+    end
+  end
 end

@@ -1,19 +1,19 @@
-### Campaigns API REST Client
+### Campaigns API - Campanhas
 ### Base URL
 @baseUrl = http://localhost:4000/api
 @contentType = application/json
 
-### Tenant Authorization (change this to test different tenants)
+### Tenant Authorization
 @tenantId = tenant-abc123
 
-### Variables (will be set by responses)
+### Campaign ID (será preenchido após criar uma campanha)
 @campaignId =
 
 ###################
-### Campaigns
+### CICLO DE VIDA COMPLETO
 ###################
 
-### Create a new campaign
+### 1. Criar uma nova campanha
 # @name createCampaign
 POST {{baseUrl}}/campaigns
 Authorization: Bearer {{tenantId}}
@@ -21,26 +21,54 @@ Content-Type: {{contentType}}
 
 {
   "campaign": {
-    "name": "Summer Campaign 2026",
+    "name": "Campanha Q1 2026",
     "status": "not_started"
   }
 }
 
-### Create campaign with dates
-POST {{baseUrl}}/campaigns
+### 2. Listar campanhas
+GET {{baseUrl}}/campaigns
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+### 3. Visualizar detalhes da campanha (substitua o ID)
+GET {{baseUrl}}/campaigns/{{campaignId}}
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+### 4. Atualizar campanha
+PUT {{baseUrl}}/campaigns/{{campaignId}}
 Authorization: Bearer {{tenantId}}
 Content-Type: {{contentType}}
 
 {
   "campaign": {
-    "name": "Winter Campaign 2026",
-    "started_at": "2026-01-20T10:00:00.000000Z",
-    "finished_at": "2026-03-20T23:59:59.000000Z",
-    "status": "not_started"
+    "name": "Campanha Q1 2026 - Atualizada",
+    "started_at": "2026-01-20T00:00:00.000000Z",
+    "finished_at": "2026-03-31T23:59:59.999999Z"
   }
 }
 
-### Create campaign - Validation Error (missing required fields)
+### 5. Iniciar campanha
+POST {{baseUrl}}/campaigns/{{campaignId}}/start
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+### 6. Finalizar campanha
+POST {{baseUrl}}/campaigns/{{campaignId}}/finish
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+### 7. Deletar campanha
+DELETE {{baseUrl}}/campaigns/{{campaignId}}
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+###################
+### TESTES DE VALIDAÇÃO
+###################
+
+### Erro: Nome vazio
 POST {{baseUrl}}/campaigns
 Authorization: Bearer {{tenantId}}
 Content-Type: {{contentType}}
@@ -51,156 +79,12 @@ Content-Type: {{contentType}}
   }
 }
 
-### Create campaign - Validation Error (name too long)
-POST {{baseUrl}}/campaigns
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-{
-  "campaign": {
-    "name": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit."
-  }
-}
-
-### Create campaign - Unauthorized (no auth header)
+### Erro: Sem autenticação
 POST {{baseUrl}}/campaigns
 Content-Type: {{contentType}}
 
 {
   "campaign": {
-    "name": "Test Campaign"
+    "name": "Teste sem auth"
   }
 }
-
-### Get all campaigns for tenant
-GET {{baseUrl}}/campaigns
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-### Get specific campaign (replace with actual ID)
-GET {{baseUrl}}/campaigns/01964ee0-3a8b-7c9d-8e5f-123456789abc
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-### Update campaign
-PUT {{baseUrl}}/campaigns/01964ee0-3a8b-7c9d-8e5f-123456789abc
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-{
-  "campaign": {
-    "name": "Updated Summer Campaign 2026",
-    "status": "active"
-  }
-}
-
-### Start campaign
-POST {{baseUrl}}/campaigns/01964ee0-3a8b-7c9d-8e5f-123456789abc/start
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-### Finish campaign
-POST {{baseUrl}}/campaigns/01964ee0-3a8b-7c9d-8e5f-123456789abc/finish
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-### Delete campaign
-DELETE {{baseUrl}}/campaigns/01964ee0-3a8b-7c9d-8e5f-123456789abc
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-###################
-### Test Scenarios
-###################
-
-### Scenario 1: Complete Campaign Lifecycle
-# Step 1: Create campaign
-POST {{baseUrl}}/campaigns
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-{
-  "campaign": {
-    "name": "Lifecycle Test Campaign"
-  }
-}
-
-# Step 2: Start the campaign (use ID from previous response)
-# POST {{baseUrl}}/campaigns/{ID}/start
-# Authorization: Bearer {{tenantId}}
-
-# Step 3: Update campaign details
-# PUT {{baseUrl}}/campaigns/{ID}
-# Authorization: Bearer {{tenantId}}
-
-# Step 4: Finish the campaign
-# POST {{baseUrl}}/campaigns/{ID}/finish
-# Authorization: Bearer {{tenantId}}
-
-# Step 5: Verify final state
-# GET {{baseUrl}}/campaigns/{ID}
-# Authorization: Bearer {{tenantId}}
-
-### Scenario 2: Multiple tenants (tenant isolation)
-# Create campaign for tenant A
-POST {{baseUrl}}/campaigns
-Authorization: Bearer tenant-a
-Content-Type: {{contentType}}
-
-{
-  "campaign": {
-    "name": "Tenant A - Q1 Campaign"
-  }
-}
-
-### Create campaign for tenant B
-POST {{baseUrl}}/campaigns
-Authorization: Bearer tenant-b
-Content-Type: {{contentType}}
-
-{
-  "campaign": {
-    "name": "Tenant B - Q1 Campaign"
-  }
-}
-
-### List campaigns for tenant A (should only see tenant A campaigns)
-GET {{baseUrl}}/campaigns
-Authorization: Bearer tenant-a
-Content-Type: {{contentType}}
-
-### List campaigns for tenant B (should only see tenant B campaigns)
-GET {{baseUrl}}/campaigns
-Authorization: Bearer tenant-b
-Content-Type: {{contentType}}
-
-### Scenario 3: Campaign with future dates
-POST {{baseUrl}}/campaigns
-Authorization: Bearer {{tenantId}}
-Content-Type: {{contentType}}
-
-{
-  "campaign": {
-    "name": "Future Campaign",
-    "started_at": "2026-06-01T00:00:00.000000Z",
-    "finished_at": "2026-08-31T23:59:59.999999Z",
-    "status": "not_started"
-  }
-}
-
-### Scenario 4: Cross-tenant access (should fail)
-# First, create a campaign with tenant A
-POST {{baseUrl}}/campaigns
-Authorization: Bearer tenant-a
-Content-Type: {{contentType}}
-
-{
-  "campaign": {
-    "name": "Tenant A Campaign"
-  }
-}
-
-# Then try to access it with tenant B (use actual ID from above)
-# This should return 404 because tenant B cannot access tenant A's campaigns
-# GET {{baseUrl}}/campaigns/{ID_FROM_TENANT_A}
-# Authorization: Bearer tenant-b

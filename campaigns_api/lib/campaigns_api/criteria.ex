@@ -239,4 +239,134 @@ defmodule CampaignsApi.Criteria do
     |> preload(:criterion)
     |> Repo.all()
   end
+
+  @doc """
+  Lists all criteria associated with a campaign for a specific tenant.
+
+  ## Examples
+
+      iex> list_campaign_criteria_by_tenant(campaign_id, tenant)
+      [%CampaignCriterion{}, ...]
+
+  """
+  @spec list_campaign_criteria_by_tenant(Ecto.UUID.t(), String.t()) :: [CampaignCriterion.t()]
+  def list_campaign_criteria_by_tenant(campaign_id, tenant) do
+    CampaignCriterion
+    |> join(:inner, [cc], c in assoc(cc, :campaign))
+    |> where([cc, c], cc.campaign_id == ^campaign_id and c.tenant == ^tenant)
+    |> preload(:criterion)
+    |> Repo.all()
+  end
+
+  @doc """
+  Associates a criterion with a campaign after validating tenant ownership.
+
+  ## Examples
+
+      iex> associate_criterion_to_campaign_by_tenant(%{campaign_id: campaign_id, criterion_id: criterion_id}, tenant)
+      {:ok, %CampaignCriterion{}}
+
+      iex> associate_criterion_to_campaign_by_tenant(%{campaign_id: invalid_id}, tenant)
+      {:error, :not_found}
+
+  """
+  @spec associate_criterion_to_campaign_by_tenant(map(), String.t()) ::
+          {:ok, CampaignCriterion.t()} | {:error, :not_found} | {:error, Ecto.Changeset.t()}
+  def associate_criterion_to_campaign_by_tenant(attrs, tenant) do
+    alias CampaignsApi.Campaigns.Campaign
+
+    campaign_id = attrs["campaign_id"]
+
+    case Repo.get_by(Campaign, id: campaign_id, tenant: tenant) do
+      nil ->
+        {:error, :not_found}
+
+      _campaign ->
+        %CampaignCriterion{}
+        |> CampaignCriterion.changeset(attrs)
+        |> Repo.insert()
+        |> case do
+          {:ok, campaign_criterion} ->
+            {:ok, Repo.preload(campaign_criterion, :criterion)}
+
+          error ->
+            error
+        end
+    end
+  end
+
+  @doc """
+  Updates a campaign criterion association after validating tenant ownership.
+
+  ## Examples
+
+      iex> update_campaign_criterion_by_tenant(campaign_id, criterion_id, %{reward_points_amount: 200}, tenant)
+      {:ok, %CampaignCriterion{}}
+
+  """
+  @spec update_campaign_criterion_by_tenant(Ecto.UUID.t(), Ecto.UUID.t(), map(), String.t()) ::
+          {:ok, CampaignCriterion.t()} | {:error, :not_found} | {:error, Ecto.Changeset.t()}
+  def update_campaign_criterion_by_tenant(campaign_id, criterion_id, attrs, tenant) do
+    alias CampaignsApi.Campaigns.Campaign
+
+    campaign_criterion =
+      CampaignCriterion
+      |> join(:inner, [cc], c in Campaign, on: cc.campaign_id == c.id)
+      |> where(
+        [cc, c],
+        cc.campaign_id == ^campaign_id and cc.criterion_id == ^criterion_id and
+          c.tenant == ^tenant
+      )
+      |> Repo.one()
+
+    case campaign_criterion do
+      nil ->
+        {:error, :not_found}
+
+      campaign_criterion ->
+        campaign_criterion
+        |> CampaignCriterion.changeset(attrs)
+        |> Repo.update()
+        |> case do
+          {:ok, updated} ->
+            {:ok, Repo.preload(updated, :criterion)}
+
+          error ->
+            error
+        end
+    end
+  end
+
+  @doc """
+  Removes a criterion association from a campaign after validating tenant ownership.
+
+  ## Examples
+
+      iex> remove_campaign_criterion_by_tenant(campaign_id, criterion_id, tenant)
+      {:ok, %CampaignCriterion{}}
+
+  """
+  @spec remove_campaign_criterion_by_tenant(Ecto.UUID.t(), Ecto.UUID.t(), String.t()) ::
+          {:ok, CampaignCriterion.t()} | {:error, :not_found} | {:error, Ecto.Changeset.t()}
+  def remove_campaign_criterion_by_tenant(campaign_id, criterion_id, tenant) do
+    alias CampaignsApi.Campaigns.Campaign
+
+    campaign_criterion =
+      CampaignCriterion
+      |> join(:inner, [cc], c in Campaign, on: cc.campaign_id == c.id)
+      |> where(
+        [cc, c],
+        cc.campaign_id == ^campaign_id and cc.criterion_id == ^criterion_id and
+          c.tenant == ^tenant
+      )
+      |> Repo.one()
+
+    case campaign_criterion do
+      nil ->
+        {:error, :not_found}
+
+      campaign_criterion ->
+        Repo.delete(campaign_criterion)
+    end
+  end
 end

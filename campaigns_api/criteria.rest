@@ -1,0 +1,137 @@
+### Campaigns API - Critérios de Campanha
+### Base URL
+@baseUrl = http://localhost:4000/api
+@contentType = application/json
+
+### Tenant Authorization
+@tenantId = tenant-abc123
+
+### IDs (substituir após criar campanha)
+@campaignId =
+@criterionId =
+
+###################
+### CICLO DE VIDA COMPLETO
+###################
+
+### 0. Preparação: Seed de critérios (rodar uma vez no terminal)
+# mix run priv/repo/seeds.exs
+
+### 1. Criar campanha (necessário antes de associar critérios)
+POST {{baseUrl}}/campaigns
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign": {
+    "name": "Campanha de Critérios - Q1 2026",
+    "status": "not_started"
+  }
+}
+
+### 2. Associar critério: Login Diário (50 pontos)
+POST {{baseUrl}}/campaigns/{{campaignId}}/criteria
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign_criterion": {
+    "criterion_id": "019bc959-7b1e-725f-b27a-da6708ecf85a",
+    "reward_points_amount": 50,
+    "periodicity": "daily",
+    "status": "active"
+  }
+}
+
+### 3. Associar critério: Primeira Compra (1000 pontos)
+POST {{baseUrl}}/campaigns/{{campaignId}}/criteria
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign_criterion": {
+    "criterion_id": "019bc959-7b29-783e-b556-eef51f214596",
+    "reward_points_amount": 1000,
+    "periodicity": "once",
+    "status": "active"
+  }
+}
+
+### 4. Associar critério: Indicação de Amigo (250 pontos)
+POST {{baseUrl}}/campaigns/{{campaignId}}/criteria
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign_criterion": {
+    "criterion_id": "019bc959-7b2b-7b4a-94f6-c3ab78c1d016",
+    "reward_points_amount": 250,
+    "periodicity": "unlimited",
+    "status": "active"
+  }
+}
+
+### 5. Listar todos os critérios da campanha
+GET {{baseUrl}}/campaigns/{{campaignId}}/criteria
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+### 6. Atualizar critério associado
+PUT {{baseUrl}}/campaigns/{{campaignId}}/criteria/{{criterionId}}
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign_criterion": {
+    "reward_points_amount": 75,
+    "periodicity": "daily"
+  }
+}
+
+### 7. Remover critério da campanha
+DELETE {{baseUrl}}/campaigns/{{campaignId}}/criteria/{{criterionId}}
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+###################
+### TESTES DE VALIDAÇÃO
+###################
+
+### Erro: Pontos negativos
+POST {{baseUrl}}/campaigns/{{campaignId}}/criteria
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign_criterion": {
+    "criterion_id": "019bc959-7b1e-725f-b27a-da6708ecf85a",
+    "reward_points_amount": -100,
+    "status": "active"
+  }
+}
+
+### Erro: Critério duplicado
+POST {{baseUrl}}/campaigns/{{campaignId}}/criteria
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign_criterion": {
+    "criterion_id": "019bc959-7b1e-725f-b27a-da6708ecf85a",
+    "reward_points_amount": 100,
+    "status": "active"
+  }
+}
+
+### Erro: Campanha inexistente
+POST {{baseUrl}}/campaigns/00000000-0000-0000-0000-000000000000/criteria
+Authorization: Bearer {{tenantId}}
+Content-Type: {{contentType}}
+
+{
+  "campaign_criterion": {
+    "criterion_id": "019bc959-7b1e-725f-b27a-da6708ecf85a",
+    "reward_points_amount": 100,
+    "status": "active"
+  }
+}

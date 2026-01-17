@@ -2,19 +2,21 @@ defmodule CampaignsApiWeb.Router do
   use CampaignsApiWeb, :router
 
   pipeline :api do
-    plug :accepts, ["json"]
+    plug(:accepts, ["json"])
   end
 
   pipeline :authenticated do
-    plug CampaignsApiWeb.Plugs.PutTenant
+    plug(CampaignsApiWeb.Plugs.PutTenant)
   end
 
   scope "/api", CampaignsApiWeb do
-    pipe_through [:api, :authenticated]
+    pipe_through([:api, :authenticated])
 
     resources "/campaigns", CampaignController, except: [:new, :edit] do
-      post "/start", CampaignController, :start
-      post "/finish", CampaignController, :finish
+      post("/start", CampaignController, :start)
+      post("/finish", CampaignController, :finish)
+
+      resources("/criteria", CampaignCriterionController, except: [:new, :edit, :show])
     end
   end
 
@@ -28,9 +30,9 @@ defmodule CampaignsApiWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through [:fetch_session, :protect_from_forgery]
+      pipe_through([:fetch_session, :protect_from_forgery])
 
-      live_dashboard "/dashboard", metrics: CampaignsApiWeb.Telemetry
+      live_dashboard("/dashboard", metrics: CampaignsApiWeb.Telemetry)
     end
   end
 end

@@ -61,6 +61,11 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       conn = conn |> put_auth_header() |> post(~p"/api/campaigns", campaign: attrs)
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    test "returns 401 when authorization header is missing", %{conn: conn} do
+      conn = post(conn, ~p"/api/campaigns", campaign: @create_attrs)
+      assert json_response(conn, 401)
+    end
   end
 
   describe "update campaign" do
@@ -68,10 +73,10 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
     test "renders campaign when data is valid", %{
       conn: conn,
-      campaign: %Campaign{id: id} = campaign
+      campaign: %Campaign{id: id}
     } do
       conn =
-        conn |> put_auth_header() |> put(~p"/api/campaigns/#{campaign}", campaign: @update_attrs)
+        conn |> put_auth_header() |> put(~p"/api/campaigns/#{id}", campaign: @update_attrs)
 
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
@@ -90,20 +95,50 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    test "returns 404 when campaign does not exist for tenant", %{conn: conn} do
+      non_existent_id = Uniq.UUID.uuid7()
+      conn = conn |> put_auth_header() |> put(~p"/api/campaigns/#{non_existent_id}", campaign: @update_attrs)
+
+      assert json_response(conn, 404)["errors"] != %{}
+    end
+
+    test "returns 401 when authorization header is missing", %{
+      conn: conn,
+      campaign: %Campaign{id: id}
+    } do
+      conn = conn |> put(~p"/api/campaigns/#{id}", campaign: @update_attrs)
+
+      assert json_response(conn, 401)["errors"] != %{}
+    end
   end
 
   describe "delete campaign" do
     setup [:create_campaign]
 
-    test "deletes chosen campaign", %{conn: conn, campaign: campaign} do
-      conn = conn |> put_auth_header() |> delete(~p"/api/campaigns/#{campaign}")
+    test "deletes chosen campaign", %{conn: conn, campaign: %Campaign{id: id}} do
+      conn = conn |> put_auth_header() |> delete(~p"/api/campaigns/#{id}")
       assert response(conn, 204)
 
-      conn = build_conn() |> put_auth_header()
+      conn = build_conn() |> put_auth_header() |> get(~p"/api/campaigns/#{id}")
 
-      assert_error_sent(404, fn ->
-        get(conn, ~p"/api/campaigns/#{campaign}")
-      end)
+      assert json_response(conn, 404)["errors"] != %{}
+    end
+
+    test "returns 404 when campaign does not exist for tenant", %{conn: conn} do
+      non_existent_id = Uniq.UUID.uuid7()
+      conn = conn |> put_auth_header() |> delete(~p"/api/campaigns/#{non_existent_id}")
+
+      assert json_response(conn, 404)["errors"] != %{}
+    end
+
+    test "returns 401 when authorization header is missing", %{
+      conn: conn,
+      campaign: %Campaign{id: id}
+    } do
+      conn = delete(conn, ~p"/api/campaigns/#{id}")
+
+      assert json_response(conn, 401)["errors"] != %{}
     end
   end
 
@@ -119,12 +154,22 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert id == campaign.id
       assert started_at != nil
     end
+
+    test "returns 404 when campaign does not exist for tenant", %{conn: conn} do
+      non_existent_id = Uniq.UUID.uuid7()
+      conn = conn |> put_auth_header() |> post(~p"/api/campaigns/#{non_existent_id}/start")
+
+      assert json_response(conn, 404)["errors"] != %{}
+    end
   end
 
   describe "finish campaign" do
     setup [:create_campaign]
 
-    test "finishes a campaign and sets status to completed", %{conn: conn, campaign: campaign} do
+    test "finishes a campaign and sets status to completed", %{
+      conn: conn,
+      campaign: campaign
+    } do
       conn = conn |> put_auth_header() |> post(~p"/api/campaigns/#{campaign.id}/finish")
 
       assert %{"id" => id, "status" => "completed", "finished_at" => finished_at} =
@@ -132,6 +177,13 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
       assert id == campaign.id
       assert finished_at != nil
+    end
+
+    test "returns 404 when campaign does not exist for tenant", %{conn: conn} do
+      non_existent_id = Uniq.UUID.uuid7()
+      conn = conn |> put_auth_header() |> post(~p"/api/campaigns/#{non_existent_id}/finish")
+
+      assert json_response(conn, 404)["errors"] != %{}
     end
   end
 

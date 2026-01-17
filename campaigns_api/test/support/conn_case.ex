@@ -28,6 +28,7 @@ defmodule CampaignsApiWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import CampaignsApiWeb.ConnCase
+      import CampaignsApi.Factory
     end
   end
 
