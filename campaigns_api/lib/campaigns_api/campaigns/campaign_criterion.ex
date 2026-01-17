@@ -8,12 +8,12 @@ defmodule CampaignsApi.Campaigns.CampaignCriterion do
   @statuses ~w(active inactive)
 
   schema "campaign_criteria" do
-    belongs_to :campaign, CampaignsApi.Campaigns.Campaign
-    belongs_to :criterion, CampaignsApi.Criteria.Criterion
+    belongs_to(:campaign, CampaignsApi.Campaigns.Campaign)
+    belongs_to(:criterion, CampaignsApi.Criteria.Criterion)
 
-    field :periodicity, :string
-    field :status, :string, default: "active"
-    field :reward_points_amount, :integer
+    field(:periodicity, :string)
+    field(:status, :string, default: "active")
+    field(:reward_points_amount, :integer)
 
     timestamps(type: :utc_datetime)
   end

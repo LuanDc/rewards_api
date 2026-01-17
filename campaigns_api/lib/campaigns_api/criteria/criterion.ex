@@ -8,13 +8,14 @@ defmodule CampaignsApi.Criteria.Criterion do
   @statuses ~w(active inactive)
 
   schema "criteria" do
-    field :name, :string
-    field :status, :string, default: "active"
-    field :description, :string
+    field(:name, :string)
+    field(:status, :string, default: "active")
+    field(:description, :string)
 
-    many_to_many :campaigns, CampaignsApi.Campaigns.Campaign,
+    many_to_many(:campaigns, CampaignsApi.Campaigns.Campaign,
       join_through: CampaignsApi.Campaigns.CampaignCriterion,
       on_replace: :delete
+    )
 
     timestamps(type: :utc_datetime)
   end

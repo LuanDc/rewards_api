@@ -8,7 +8,7 @@ defmodule CampaignsApiWeb.CampaignController do
   alias CampaignsApi.Campaigns
   alias CampaignsApi.Campaigns.Campaign
 
-  action_fallback CampaignsApiWeb.FallbackController
+  action_fallback(CampaignsApiWeb.FallbackController)
 
   @doc """
   Lists all campaigns for the authenticated tenant.
