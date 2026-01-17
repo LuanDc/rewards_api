@@ -52,6 +52,8 @@ defmodule CampaignsApi.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:uniq, "~> 0.6"},
+      {:joken, "~> 2.6"},
+      {:joken_jwks, "~> 1.6"},
       {:faker, "~> 0.18", only: [:dev, :test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},

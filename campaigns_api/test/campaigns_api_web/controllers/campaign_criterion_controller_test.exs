@@ -3,10 +3,6 @@ defmodule CampaignsApiWeb.CampaignCriterionControllerTest do
 
   @tenant "tenant-abc123"
 
-  defp put_auth_header(conn, tenant \\ @tenant) do
-    put_req_header(conn, "authorization", "Bearer #{tenant}")
-  end
-
   describe "index" do
     setup [:create_campaign, :create_criterion]
 

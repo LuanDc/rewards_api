@@ -29,6 +29,7 @@ defmodule CampaignsApiWeb.ConnCase do
       import Phoenix.ConnTest
       import CampaignsApiWeb.ConnCase
       import CampaignsApi.Factory
+      import CampaignsApi.AuthHelper
     end
   end
 

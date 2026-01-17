@@ -61,3 +61,9 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Keycloak configuration for development
+# For development, using a simple secret. In production, use JWKS URL
+config :campaigns_api,
+  jwt_secret: "dev-secret-key-change-in-production",
+  keycloak_jwks_url: System.get_env("KEYCLOAK_JWKS_URL")

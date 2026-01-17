@@ -96,4 +96,17 @@ if config_env() == :prod do
   #       force_ssl: [hsts: true]
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
+
+  # Keycloak JWT configuration for production
+  # KEYCLOAK_JWKS_URL should point to: http://keycloak:8080/realms/{realm-name}/protocol/openid-connect/certs
+  keycloak_jwks_url =
+    System.get_env("KEYCLOAK_JWKS_URL") ||
+      raise """
+      environment variable KEYCLOAK_JWKS_URL is missing.
+      For example: http://keycloak:8080/realms/my-realm/protocol/openid-connect/certs
+      """
+
+  config :campaigns_api,
+    jwt_secret: nil,
+    keycloak_jwks_url: keycloak_jwks_url
 end

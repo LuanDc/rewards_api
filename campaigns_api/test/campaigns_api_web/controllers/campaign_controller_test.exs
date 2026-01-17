@@ -17,10 +17,6 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
   @invalid_attrs %{name: nil}
 
-  defp put_auth_header(conn, tenant \\ @tenant) do
-    put_req_header(conn, "authorization", "Bearer #{tenant}")
-  end
-
   describe "index" do
     test "lists all campaigns for tenant", %{conn: conn} do
       conn = conn |> put_auth_header() |> get(~p"/api/campaigns")

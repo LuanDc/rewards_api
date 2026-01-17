@@ -25,3 +25,9 @@ config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Keycloak configuration for testing
+# Using a simple secret for tests
+config :campaigns_api,
+  jwt_secret: "test-secret-key",
+  keycloak_jwks_url: nil
