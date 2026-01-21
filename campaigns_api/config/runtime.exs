@@ -165,6 +165,17 @@ if config_env() == :prod do
     span_processor: :batch,
     traces_exporter: :otlp
 
+  # Batch processor configuration - send traces every 60 seconds or when batch is full
+  config :opentelemetry, :processors,
+    otel_batch_processor: %{
+      exporter: {:opentelemetry_exporter, :otlp_exporter},
+      # Export every 60 seconds (60000ms)
+      scheduled_delay_ms: 60_000,
+      # Max batch size before forcing export
+      max_queue_size: 2048,
+      max_export_batch_size: 512
+    }
+
   config :opentelemetry_exporter,
     otlp_protocol: :grpc,
     otlp_endpoint: System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") || "http://otel-collector:4317",

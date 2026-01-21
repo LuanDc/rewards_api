@@ -7,17 +7,12 @@ defmodule CampaignsApi.Application do
 
   @impl true
   def start(_type, _args) do
+    # Attach OpenTelemetry context to Logger metadata FIRST (trace_id, span_id)
+    :ok = OpentelemetryLoggerMetadata.setup()
+
     # Setup OpenTelemetry instrumentation
     OpentelemetryPhoenix.setup()
     OpentelemetryEcto.setup([:campaigns_api, :repo])
-
-    # Attach OpenTelemetry context to Logger metadata (trace_id, span_id)
-    :ok = OpentelemetryLoggerMetadata.setup()
-
-    children =
-      [
-        CampaignsApiWeb.Telemetry,
-        CampaignsApi.Repo,
         {DNSCluster, query: Application.get_env(:campaigns_api, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: CampaignsApi.PubSub},
         # PromEx for Prometheus metrics

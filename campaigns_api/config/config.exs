@@ -25,7 +25,10 @@ config :campaigns_api, CampaignsApiWeb.Endpoint,
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+  metadata: [:request_id, :trace_id, :span_id]
+
+# Disable Phoenix default request logging - using custom logger instead
+config :phoenix, :logger, false
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
