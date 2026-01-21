@@ -21,10 +21,11 @@ scrape_configs:
         action: keep
 
   # Phoenix/Elixir app metrics (via PromEx)
+  # Uses campaigns-api container when running in Docker, falls back to host.docker.internal for local dev
   - job_name: 'campaigns_api'
     scrape_interval: 15s
     static_configs:
-      - targets: ['host.docker.internal:4000']
+      - targets: ['campaigns-api:4000', 'host.docker.internal:4000']
     metrics_path: '/metrics'
 
   # PostgreSQL exporter

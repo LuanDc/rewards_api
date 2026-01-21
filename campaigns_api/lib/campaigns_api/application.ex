@@ -11,6 +11,9 @@ defmodule CampaignsApi.Application do
     OpentelemetryPhoenix.setup()
     OpentelemetryEcto.setup([:campaigns_api, :repo])
 
+    # Attach OpenTelemetry context to Logger metadata (trace_id, span_id)
+    :ok = OpentelemetryLoggerMetadata.setup()
+
     children =
       [
         CampaignsApiWeb.Telemetry,

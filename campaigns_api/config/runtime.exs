@@ -20,6 +20,36 @@ if System.get_env("PHX_SERVER") do
   config :campaigns_api, CampaignsApiWeb.Endpoint, server: true
 end
 
+# Development runtime configuration (for Docker)
+if config_env() == :dev do
+  # Database configuration from environment variables (for Docker)
+  if db_hostname = System.get_env("DB_HOSTNAME") do
+    config :campaigns_api, CampaignsApi.Repo,
+      username: System.get_env("DB_USERNAME") || "postgres",
+      password: System.get_env("DB_PASSWORD") || "postgres",
+      hostname: db_hostname,
+      database: System.get_env("DB_DATABASE") || "campaigns_api_dev",
+      stacktrace: true,
+      show_sensitive_data_on_connection_error: true,
+      pool_size: 10
+  end
+
+  # OpenTelemetry configuration from environment variables (for Docker)
+  if otel_endpoint = System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") do
+    config :opentelemetry_exporter,
+      otlp_protocol: :grpc,
+      otlp_endpoint: otel_endpoint,
+      otlp_headers: [],
+      otlp_compression: :gzip
+  end
+
+  # Keycloak JWKS URL from environment variables (for Docker)
+  if jwks_url = System.get_env("KEYCLOAK_JWKS_URL") do
+    config :campaigns_api,
+      keycloak_jwks_url: jwks_url
+  end
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

@@ -36,5 +36,10 @@ schema_config:
 ruler:
   alertmanager_url: http://localhost:9093
 
+limits_config:
+  allow_structured_metadata: true
+  max_streams_matchers_per_query: 1000
+  max_entries_limit_per_query: 10000
+
 analytics:
   reporting_enabled: false

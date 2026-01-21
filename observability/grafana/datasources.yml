@@ -21,6 +21,7 @@ datasources:
     uid: tempo
     editable: true
     jsonData:
+      httpMethod: GET
       tracesToLogs:
         datasourceUid: loki
         tags: ['job', 'instance', 'pod', 'namespace']

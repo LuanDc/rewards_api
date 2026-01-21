@@ -1,6 +1,7 @@
 import Config
 
 # Configure your database
+# Note: When running in Docker, these values are overridden in runtime.exs
 config :campaigns_api, CampaignsApi.Repo,
   username: "postgres",
   password: "postgres",
@@ -17,9 +18,8 @@ config :campaigns_api, CampaignsApi.Repo,
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
 config :campaigns_api, CampaignsApiWeb.Endpoint,
-  # Binding to loopback ipv4 address prevents access from other machines.
-  # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  # Binding to all interfaces to allow Docker containers (Prometheus) to scrape metrics
+  http: [ip: {0, 0, 0, 0}, port: 4000],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
@@ -52,8 +52,7 @@ config :campaigns_api, CampaignsApiWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :campaigns_api, dev_routes: true
 
-# Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n"
+# Logger configuration moved below to include OpenTelemetry metadata
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.
@@ -93,6 +92,7 @@ config :opentelemetry,
   span_processor: :batch,
   traces_exporter: :otlp
 
+# Note: When running in Docker, the endpoint is overridden in runtime.exs
 config :opentelemetry_exporter,
   otlp_protocol: :grpc,
   otlp_endpoint: "http://localhost:4317",
@@ -100,6 +100,7 @@ config :opentelemetry_exporter,
   otlp_compression: :gzip
 
 # Configure logger to include OpenTelemetry metadata
+# Format includes trace_id and span_id for log-trace correlation in Grafana
 config :logger, :console,
-  format: "[$level] $message $metadata\n",
+  format: "$time [$level] $message $metadata\n",
   metadata: [:request_id, :trace_id, :span_id]
