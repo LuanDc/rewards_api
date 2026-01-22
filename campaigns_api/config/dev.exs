@@ -95,12 +95,12 @@ config :opentelemetry,
   span_processor: :batch,
   traces_exporter: :otlp
 
-# Batch processor configuration - send traces every 60 seconds or when batch is full
+# Batch processor configuration - send traces frequently in dev for faster feedback
 config :opentelemetry, :processors,
   otel_batch_processor: %{
     exporter: {:opentelemetry_exporter, :otlp_exporter},
-    # Export every 60 seconds (60000ms)
-    scheduled_delay_ms: 60_000,
+    # Export every 5 seconds in dev for faster visibility
+    scheduled_delay_ms: 5_000,
     # Max batch size before forcing export
     max_queue_size: 2048,
     max_export_batch_size: 512
@@ -115,9 +115,6 @@ config :opentelemetry_exporter,
 
 # Configure logger to include OpenTelemetry metadata
 # Format includes trace_id and span_id for log-trace correlation in Grafana
-# Only log messages that have trace_id to avoid duplicate Phoenix logs
 config :logger, :console,
   format: "$time [$level] $message $metadata\n",
-  metadata: [:request_id, :trace_id, :span_id],
-  # Filter out logs without trace_id
-  metadata_filter: [trace_id: nil]
+  metadata: [:request_id, :trace_id, :span_id]

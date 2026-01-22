@@ -35,31 +35,35 @@ scrape_configs:
       - target_label: 'environment'
         replacement: 'local'
     pipeline_stages:
+      # First, always add a static label to ensure streams have at least one label
+      - static_labels:
+          app: campaigns_api
+
       # Parse Elixir/Phoenix log format with timestamp
       - multiline:
           firstline: '^\d{2}:\d{2}:\d{2}\.\d{3}|\[\w+\]'
           max_wait_time: 3s
-      
+
       # Extract log level as label
       - regex:
           expression: '\[(?P<level>\w+)\]'
       - labels:
           level:
-      
-      # Extract trace_id as LABEL (not just structured metadata)
+
+      # Extract trace_id - store in structured metadata, not as label (high cardinality)
       - regex:
           expression: '.*trace_id=(?P<trace_id>[a-f0-9]{32}).*'
-      - labels:
+      - structured_metadata:
           trace_id:
-      
-      # Extract span_id as LABEL
+
+      # Extract span_id - store in structured metadata
       - regex:
           expression: '.*span_id=(?P<span_id>[a-f0-9]{16}).*'
-      - labels:
+      - structured_metadata:
           span_id:
-      
-      # Extract request_id as LABEL
+
+      # Extract request_id - store in structured metadata
       - regex:
           expression: '.*request_id=(?P<request_id>[A-Za-z0-9_-]+).*'
-      - labels:
+      - structured_metadata:
           request_id:
