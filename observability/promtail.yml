@@ -46,23 +46,20 @@ scrape_configs:
       - labels:
           level:
       
-      # Extract trace_id, span_id, and request_id as BOTH structured metadata AND parsed fields
-      # This ensures compatibility and searchability
-      
-      # Extract trace_id
+      # Extract trace_id as LABEL (not just structured metadata)
       - regex:
           expression: '.*trace_id=(?P<trace_id>[a-f0-9]{32}).*'
-      - structured_metadata:
+      - labels:
           trace_id:
       
-      # Extract span_id
+      # Extract span_id as LABEL
       - regex:
           expression: '.*span_id=(?P<span_id>[a-f0-9]{16}).*'
-      - structured_metadata:
+      - labels:
           span_id:
       
-      # Extract request_id
+      # Extract request_id as LABEL
       - regex:
           expression: '.*request_id=(?P<request_id>[A-Za-z0-9_-]+).*'
-      - structured_metadata:
+      - labels:
           request_id:

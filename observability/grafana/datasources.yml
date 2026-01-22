@@ -24,13 +24,16 @@ datasources:
       httpMethod: GET
       tracesToLogs:
         datasourceUid: loki
-        tags: ['job', 'instance', 'pod', 'namespace']
+        tags: ['job', 'container', 'service']
         mappedTags: [{ key: 'service.name', value: 'service' }]
-        mapTagNamesEnabled: false
-        spanStartTimeShift: '1h'
+        mapTagNamesEnabled: true
+        spanStartTimeShift: '-1h'
         spanEndTimeShift: '1h'
         filterByTraceID: true
-        filterBySpanID: false
+        filterBySpanID: true
+        # Custom query to find logs by trace_id
+        customQuery: true
+        query: '{job="campaigns_api"} |= "trace_id=$${__trace.traceId}"'
       tracesToMetrics:
         datasourceUid: prometheus
         tags: [{ key: 'service.name', value: 'service' }]
@@ -53,8 +56,17 @@ datasources:
     uid: loki
     editable: true
     jsonData:
+      maxLines: 1000
       derivedFields:
+        # Link trace_id to Tempo for direct navigation from logs to traces
         - datasourceUid: tempo
-          matcherRegex: "trace_id=(\\w+)"
+          matcherRegex: "trace_id=([a-f0-9]{32})"
           name: TraceID
           url: '$${__value.raw}'
+          urlDisplayLabel: 'View Trace'
+        # Display span_id as a derived field
+        - datasourceUid: tempo
+          matcherRegex: "span_id=([a-f0-9]{16})"
+          name: SpanID
+          url: '$${__value.raw}'
+          urlDisplayLabel: 'View Span'

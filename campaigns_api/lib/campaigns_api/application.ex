@@ -13,6 +13,11 @@ defmodule CampaignsApi.Application do
     # Setup OpenTelemetry instrumentation
     OpentelemetryPhoenix.setup()
     OpentelemetryEcto.setup([:campaigns_api, :repo])
+
+    children =
+      [
+        CampaignsApiWeb.Telemetry,
+        CampaignsApi.Repo,
         {DNSCluster, query: Application.get_env(:campaigns_api, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: CampaignsApi.PubSub},
         # PromEx for Prometheus metrics
