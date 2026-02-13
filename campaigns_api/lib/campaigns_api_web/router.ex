@@ -1,5 +1,32 @@
 defmodule CampaignsApiWeb.Router do
   use CampaignsApiWeb, :router
+  use PhoenixSwagger
+
+  def swagger_info do
+    %{
+      info: %{
+        version: "1.0.0",
+        title: "Campaign Management API",
+        description: "Multi-tenant Campaign Management API with JWT authentication",
+        contact: %{
+          name: "API Support",
+          email: "support@example.com"
+        }
+      },
+      securityDefinitions: %{
+        Bearer: %{
+          type: "apiKey",
+          name: "Authorization",
+          description: "JWT Bearer token. Format: Bearer <token>",
+          in: "header"
+        }
+      },
+      security: [
+        %{Bearer: []}
+      ],
+      basePath: "/api"
+    }
+  end
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -14,16 +41,30 @@ defmodule CampaignsApiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :authenticated do
+    plug CampaignsApiWeb.Plugs.RequireAuth
+    plug CampaignsApiWeb.Plugs.AssignTenant
+  end
+
   scope "/", CampaignsApiWeb do
     pipe_through :browser
 
     get "/", PageController, :home
   end
 
+  # Swagger UI
+  scope "/api/swagger" do
+    forward "/", PhoenixSwagger.Plug.SwaggerUI,
+      otp_app: :campaigns_api,
+      swagger_file: "swagger.json"
+  end
+
   # Other scopes may use custom stacks.
-  # scope "/api", CampaignsApiWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", CampaignsApiWeb do
+    pipe_through [:api, :authenticated]
+
+    resources "/campaigns", CampaignController, except: [:new, :edit]
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:campaigns_api, :dev_routes) do

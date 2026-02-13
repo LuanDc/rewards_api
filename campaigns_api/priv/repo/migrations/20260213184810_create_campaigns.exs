@@ -1,0 +1,20 @@
+defmodule CampaignsApi.Repo.Migrations.CreateCampaigns do
+  use Ecto.Migration
+
+  def change do
+    create table(:campaigns, primary_key: false) do
+      add :id, :binary_id, primary_key: true
+      add :tenant_id, references(:tenants, type: :string, on_delete: :restrict), null: false
+      add :name, :string, null: false
+      add :description, :text
+      add :start_time, :utc_datetime
+      add :end_time, :utc_datetime
+      add :status, :string, null: false, default: "active"
+
+      timestamps(type: :utc_datetime)
+    end
+
+    create index(:campaigns, [:tenant_id, :id])
+    create index(:campaigns, [:tenant_id, :inserted_at])
+  end
+end
