@@ -12,9 +12,30 @@ defmodule CampaignsApiWeb.RouterTest do
       assert %{route: "/api/campaigns/:id"} = Phoenix.Router.route_info(CampaignsApiWeb.Router, "DELETE", "/api/campaigns/123", "")
     end
 
+    test "campaign challenge routes are properly configured" do
+      # Verify all expected nested routes exist
+      assert %{route: "/api/campaigns/:campaign_id/challenges"} =
+        Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123/challenges", "")
+      assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
+        Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123/challenges/456", "")
+      assert %{route: "/api/campaigns/:campaign_id/challenges"} =
+        Phoenix.Router.route_info(CampaignsApiWeb.Router, "POST", "/api/campaigns/123/challenges", "")
+      assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
+        Phoenix.Router.route_info(CampaignsApiWeb.Router, "PUT", "/api/campaigns/123/challenges/456", "")
+      assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
+        Phoenix.Router.route_info(CampaignsApiWeb.Router, "PATCH", "/api/campaigns/123/challenges/456", "")
+      assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
+        Phoenix.Router.route_info(CampaignsApiWeb.Router, "DELETE", "/api/campaigns/123/challenges/456", "")
+    end
+
     test "campaigns routes use CampaignController" do
       route_info = Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns", "")
       assert route_info.plug == CampaignsApiWeb.CampaignController
+    end
+
+    test "campaign challenge routes use CampaignChallengeController" do
+      route_info = Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123/challenges", "")
+      assert route_info.plug == CampaignsApiWeb.CampaignChallengeController
     end
 
     test "authenticated pipeline includes RequireAuth plug" do
@@ -22,6 +43,16 @@ defmodule CampaignsApiWeb.RouterTest do
       conn = build_conn()
         |> put_req_header("accept", "application/json")
         |> get("/api/campaigns")
+
+      assert conn.status == 401
+      assert json_response(conn, 401) == %{"error" => "Unauthorized"}
+    end
+
+    test "campaign challenge routes require authentication" do
+      # Make a request without auth header to verify RequireAuth is applied
+      conn = build_conn()
+        |> put_req_header("accept", "application/json")
+        |> get("/api/campaigns/123/challenges")
 
       assert conn.status == 401
       assert json_response(conn, 401) == %{"error" => "Unauthorized"}

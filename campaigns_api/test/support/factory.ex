@@ -7,6 +7,8 @@ defmodule CampaignsApi.Factory do
   use ExMachina.Ecto, repo: CampaignsApi.Repo
 
   alias CampaignsApi.CampaignManagement.Campaign
+  alias CampaignsApi.CampaignManagement.CampaignChallenge
+  alias CampaignsApi.Challenges.Challenge
   alias CampaignsApi.Tenants.Tenant
 
   def tenant_factory do
@@ -69,6 +71,28 @@ defmodule CampaignsApi.Factory do
       campaign_factory(),
       %{status: :paused}
     )
+  end
+
+  def challenge_factory do
+    id = System.unique_integer([:positive])
+
+    %Challenge{
+      name: "Challenge #{id}",
+      description: "Description for challenge #{id}",
+      metadata: %{"type" => "evaluation"}
+    }
+  end
+
+  def campaign_challenge_factory do
+    %CampaignChallenge{
+      display_name: "Buy+ Challenge",
+      display_description: "Earn points for purchases",
+      evaluation_frequency: "daily",
+      reward_points: 100,
+      configuration: %{"threshold" => 10},
+      campaign: build(:campaign),
+      challenge: build(:challenge)
+    }
   end
 
   def jwt_token(tenant_id) do

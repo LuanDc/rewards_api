@@ -61,7 +61,9 @@ defmodule CampaignsApiWeb.Router do
   scope "/api", CampaignsApiWeb do
     pipe_through [:api, :authenticated]
 
-    resources "/campaigns", CampaignController, except: [:new, :edit]
+    resources "/campaigns", CampaignController, except: [:new, :edit] do
+      resources "/challenges", CampaignChallengeController, except: [:new, :edit]
+    end
   end
 
   if Application.compile_env(:campaigns_api, :dev_routes) do

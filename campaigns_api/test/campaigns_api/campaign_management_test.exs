@@ -289,4 +289,324 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert hd(result.data).id == campaign2.id
     end
   end
+
+  describe "list_campaign_challenges/3" do
+    test "returns empty list when campaign has no challenges", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+
+      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+
+      assert result.data == []
+      assert result.next_cursor == nil
+      assert result.has_more == false
+    end
+
+    test "returns all campaign challenges with pagination", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+
+      cc1 = insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+
+      assert length(result.data) == 2
+      returned_ids = Enum.map(result.data, & &1.id)
+      assert cc1.id in returned_ids
+      assert cc2.id in returned_ids
+    end
+
+    test "preloads challenge association", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge, name: "Test Challenge")
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+
+      assert length(result.data) == 1
+      campaign_challenge = hd(result.data)
+      assert campaign_challenge.challenge.name == "Test Challenge"
+    end
+
+    test "enforces tenant isolation - cannot list challenges from different tenant's campaign", %{
+      tenant1: tenant1,
+      tenant2: tenant2
+    } do
+      campaign = insert(:campaign, tenant: tenant1)
+      challenge = insert(:challenge)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      result = CampaignManagement.list_campaign_challenges(tenant2.id, campaign.id)
+
+      assert result.data == []
+    end
+
+    test "respects pagination limit", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+      challenge3 = insert(:challenge)
+
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge3)
+
+      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id, limit: 2)
+
+      assert length(result.data) == 2
+      assert result.has_more == true
+    end
+  end
+
+  describe "get_campaign_challenge/3" do
+    test "returns campaign challenge with preloaded challenge", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge, name: "Test Challenge")
+      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id)
+
+      assert result.id == cc.id
+      assert result.challenge.name == "Test Challenge"
+    end
+
+    test "returns nil when campaign challenge does not exist", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      non_existent_id = Ecto.UUID.generate()
+
+      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, non_existent_id)
+
+      assert result == nil
+    end
+
+    test "returns nil when accessing campaign challenge from different tenant", %{
+      tenant1: tenant1,
+      tenant2: tenant2
+    } do
+      campaign = insert(:campaign, tenant: tenant1)
+      challenge = insert(:challenge)
+      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      result = CampaignManagement.get_campaign_challenge(tenant2.id, campaign.id, cc.id)
+
+      assert result == nil
+    end
+  end
+
+  describe "create_campaign_challenge/3" do
+    test "successfully creates campaign challenge with valid data", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge)
+
+      attrs = %{
+        challenge_id: challenge.id,
+        display_name: "Buy+ Challenge",
+        display_description: "Earn points for purchases",
+        evaluation_frequency: "daily",
+        reward_points: 100,
+        configuration: %{"threshold" => 10}
+      }
+
+      {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+
+      assert cc.campaign_id == campaign.id
+      assert cc.challenge_id == challenge.id
+      assert cc.display_name == "Buy+ Challenge"
+      assert cc.reward_points == 100
+    end
+
+    test "returns error when campaign does not belong to tenant", %{
+      tenant1: tenant1,
+      tenant2: tenant2
+    } do
+      campaign = insert(:campaign, tenant: tenant1)
+      challenge = insert(:challenge)
+
+      attrs = %{
+        challenge_id: challenge.id,
+        display_name: "Test Challenge",
+        evaluation_frequency: "daily",
+        reward_points: 50
+      }
+
+      result = CampaignManagement.create_campaign_challenge(tenant2.id, campaign.id, attrs)
+
+      assert {:error, :campaign_not_found} = result
+    end
+
+    test "accepts any challenge (challenges are global)", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge)
+
+      attrs = %{
+        challenge_id: challenge.id,
+        display_name: "Global Challenge",
+        evaluation_frequency: "weekly",
+        reward_points: 200
+      }
+
+      {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+
+      assert cc.challenge_id == challenge.id
+    end
+
+    test "returns error when creating duplicate association", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge)
+
+      attrs = %{
+        challenge_id: challenge.id,
+        display_name: "First Association",
+        evaluation_frequency: "daily",
+        reward_points: 100
+      }
+
+      {:ok, _cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+
+      duplicate_attrs = %{
+        challenge_id: challenge.id,
+        display_name: "Duplicate Association",
+        evaluation_frequency: "weekly",
+        reward_points: 200
+      }
+
+      {:error, changeset} =
+        CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, duplicate_attrs)
+
+      assert %{campaign_id: ["has already been taken"]} = errors_on(changeset)
+    end
+
+    test "returns error with invalid data", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge)
+
+      attrs = %{
+        challenge_id: challenge.id,
+        display_name: "ab",
+        evaluation_frequency: "daily",
+        reward_points: 100
+      }
+
+      {:error, changeset} =
+        CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+
+      assert %{display_name: ["should be at least 3 character(s)"]} = errors_on(changeset)
+    end
+  end
+
+  describe "update_campaign_challenge/4" do
+    test "successfully updates campaign challenge with valid data", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge)
+      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      attrs = %{
+        display_name: "Updated Challenge",
+        reward_points: 500
+      }
+
+      {:ok, updated_cc} =
+        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, attrs)
+
+      assert updated_cc.display_name == "Updated Challenge"
+      assert updated_cc.reward_points == 500
+    end
+
+    test "returns error when campaign challenge does not exist", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      non_existent_id = Ecto.UUID.generate()
+
+      result =
+        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, non_existent_id, %{
+          display_name: "Updated"
+        })
+
+      assert {:error, :not_found} = result
+    end
+
+    test "returns error when updating campaign challenge from different tenant", %{
+      tenant1: tenant1,
+      tenant2: tenant2
+    } do
+      campaign = insert(:campaign, tenant: tenant1)
+      challenge = insert(:challenge)
+      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      result =
+        CampaignManagement.update_campaign_challenge(tenant2.id, campaign.id, cc.id, %{
+          display_name: "Updated"
+        })
+
+      assert {:error, :not_found} = result
+    end
+
+    test "returns error with invalid data", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge)
+      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      {:error, changeset} =
+        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{
+          display_name: "ab"
+        })
+
+      assert %{display_name: ["should be at least 3 character(s)"]} = errors_on(changeset)
+    end
+  end
+
+  describe "delete_campaign_challenge/3" do
+    test "successfully deletes campaign challenge", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge = insert(:challenge)
+      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      {:ok, deleted_cc} =
+        CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, cc.id)
+
+      assert deleted_cc.id == cc.id
+      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id) == nil
+    end
+
+    test "returns error when campaign challenge does not exist", %{tenant1: tenant} do
+      campaign = insert(:campaign, tenant: tenant)
+      non_existent_id = Ecto.UUID.generate()
+
+      result =
+        CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, non_existent_id)
+
+      assert {:error, :not_found} = result
+    end
+
+    test "returns error when deleting campaign challenge from different tenant", %{
+      tenant1: tenant1,
+      tenant2: tenant2
+    } do
+      campaign = insert(:campaign, tenant: tenant1)
+      challenge = insert(:challenge)
+      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+      result = CampaignManagement.delete_campaign_challenge(tenant2.id, campaign.id, cc.id)
+
+      assert {:error, :not_found} = result
+    end
+  end
+
+  describe "campaign deletion cascade" do
+    test "deleting campaign automatically deletes associated campaign challenges", %{
+      tenant1: tenant
+    } do
+      campaign = insert(:campaign, tenant: tenant)
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+
+      cc1 = insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      {:ok, _} = CampaignManagement.delete_campaign(tenant.id, campaign.id)
+
+      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc1.id) == nil
+      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc2.id) == nil
+    end
+  end
 end

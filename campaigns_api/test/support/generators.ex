@@ -105,6 +105,108 @@ defmodule CampaignsApi.Generators do
     end)
   end
 
+  @doc """
+  Generates valid evaluation frequency values (predefined keywords or cron expressions).
+  """
+  def evaluation_frequency_generator do
+    one_of([
+      # Predefined keywords
+      member_of(["daily", "weekly", "monthly", "on_event"]),
+      # Valid cron expressions (5 parts)
+      cron_expression_generator()
+    ])
+  end
+
+  @doc """
+  Generates valid cron expressions with exactly 5 parts.
+  """
+  def cron_expression_generator do
+    # Generate 5 cron parts and join them with spaces
+    list_of(cron_part_generator(), length: 5)
+    |> map(fn parts -> Enum.join(parts, " ") end)
+  end
+
+  @doc """
+  Generates a single cron part (can be *, number, range, or step).
+  """
+  def cron_part_generator do
+    one_of([
+      constant("*"),
+      integer(0..59) |> map(&to_string/1),
+      # Range like "1-5"
+      bind(integer(0..50), fn start ->
+        integer((start + 1)..59)
+        |> map(fn end_val -> "#{start}-#{end_val}" end)
+      end),
+      # Step like "*/5"
+      integer(1..30) |> map(fn step -> "*/#{step}" end)
+    ])
+  end
+
+  @doc """
+  Generates invalid evaluation frequency values.
+  """
+  def invalid_evaluation_frequency_generator do
+    one_of([
+      # Invalid keywords
+      member_of(["hourly", "yearly", "invalid", "random"]),
+      # Cron expressions with wrong number of parts
+      list_of(cron_part_generator(), min_length: 1, max_length: 4)
+      |> map(fn parts -> Enum.join(parts, " ") end),
+      list_of(cron_part_generator(), min_length: 6, max_length: 10)
+      |> map(fn parts -> Enum.join(parts, " ") end),
+      # Random strings
+      string(:alphanumeric, min_length: 1, max_length: 20)
+      |> filter(fn str ->
+        # Exclude valid keywords and valid cron patterns
+        str not in ["daily", "weekly", "monthly", "on_event"] and
+          length(String.split(str, " ")) != 5
+      end)
+    ])
+  end
+
+  @doc """
+  Generates reward points (any integer including positive, negative, or zero).
+  """
+  def reward_points_generator do
+    integer(-1_000_000..1_000_000)
+  end
+
+  @doc """
+  Generates valid JSON configuration structures.
+  """
+  def json_configuration_generator do
+    one_of([
+      # nil
+      constant(nil),
+      # Empty map
+      constant(%{}),
+      # Simple map with various types
+      fixed_map(%{
+        "string_field" => string(:alphanumeric, max_length: 50),
+        "integer_field" => integer(-1000..1000),
+        "boolean_field" => boolean()
+      }),
+      # Map with nested structure
+      fixed_map(%{
+        "threshold" => integer(1..1000),
+        "enabled" => boolean(),
+        "tags" => list_of(string(:alphanumeric, min_length: 1, max_length: 20), max_length: 5)
+      }),
+      # Map with nested object
+      fixed_map(%{
+        "rules" => fixed_map(%{
+          "min_amount" => integer(0..1000),
+          "max_amount" => integer(1001..10_000)
+        }),
+        "metadata" => fixed_map(%{
+          "type" => member_of(["premium", "standard", "basic"]),
+          "priority" => integer(1..10)
+        })
+      })
+    ])
+  end
+
   # Private helper to create JWT tokens
   defp create_jwt(claims) do
     header = %{"alg" => "none", "typ" => "JWT"}

@@ -112,18 +112,15 @@ package "Database" {
   }
 }
 
-[ChallengeController] --> [RequireAuth]
 [CampaignChallengeController] --> [RequireAuth]
 [RequireAuth] --> [AssignTenant]
 [AssignTenant] --> [Tenants Context]
 
-[ChallengeController] --> [Challenges Context]
-[CampaignChallengeController] --> [Challenges Context]
 [CampaignChallengeController] --> [CampaignManagement Context]
 
 [Challenges Context] --> [Challenge Schema]
-[Challenges Context] --> [CampaignChallenge Schema]
 [CampaignManagement Context] --> [Campaign Schema]
+[CampaignManagement Context] --> [CampaignChallenge Schema]
 [Tenants Context] --> [Tenant Schema]
 
 [Challenge Schema] --> [challenges table]
@@ -225,11 +222,11 @@ actor "Client" as client
 participant "Router" as router
 participant "RequireAuth" as auth
 participant "AssignTenant" as tenant
-participant "ChallengeController" as controller
-participant "Challenges Context" as context
+participant "CampaignChallengeController" as controller
+participant "CampaignManagement Context" as context
 database "PostgreSQL" as db
 
-client -> router : POST /api/challenges
+client -> router : POST /api/campaigns/:id/challenges
 activate router
 
 router -> auth : validate JWT
@@ -249,13 +246,13 @@ deactivate tenant
 router -> controller : create(conn, params)
 activate controller
 
-controller -> context : create_challenge(tenant_id, attrs)
+controller -> context : create_campaign_challenge(tenant_id, campaign_id, attrs)
 activate context
 
-context -> db : INSERT INTO challenges
-db --> context : challenge record
+context -> db : INSERT INTO campaign_challenges
+db --> context : campaign_challenge record
 
-context --> controller : {:ok, challenge}
+context --> controller : {:ok, campaign_challenge}
 deactivate context
 
 controller --> client : 201 Created + JSON
@@ -269,15 +266,15 @@ deactivate router
 
 ### Challenges Context
 
-
 ```elixir
 defmodule CampaignsManagmentApi.Challenges do
   @moduledoc """
-  Context for managing challenges and campaign challenge associations.
+  Context for managing challenges.
   
   Challenges are reusable evaluation mechanisms that can be associated
-  with multiple campaigns. Each association includes specific configuration
-  for evaluation frequency, reward points, and display information.
+  with multiple campaigns. This context handles internal challenge CRUD
+  operations only. Campaign challenge associations are managed by the
+  CampaignManagement context.
   """
   
   import Ecto.Query
@@ -287,7 +284,7 @@ defmodule CampaignsManagmentApi.Challenges do
   
   @type pagination_opts :: [limit: pos_integer(), cursor: DateTime.t() | nil]
   @type pagination_result :: %{
-    data: [Challenge.t() | CampaignChallenge.t()],
+    data: [Challenge.t()],
     cursor: DateTime.t() | nil,
     has_more: boolean()
   }
@@ -338,6 +335,40 @@ defmodule CampaignsManagmentApi.Challenges do
         end
     end
   end
+  
+  # Private Helpers
+  
+  @spec has_campaign_associations?(Ecto.UUID.t()) :: boolean()
+  defp has_campaign_associations?(challenge_id) do
+    Repo.exists?(from cc in CampaignChallenge, where: cc.challenge_id == ^challenge_id)
+  end
+end
+```
+
+### CampaignManagement Context
+
+```elixir
+defmodule CampaignsManagmentApi.CampaignManagement do
+  @moduledoc """
+  Context for managing campaigns and campaign challenge associations.
+  
+  This context handles campaign CRUD operations and the association of
+  challenges with campaigns. Campaign challenges are tenant-isolated
+  through campaign ownership.
+  """
+  
+  import Ecto.Query
+  alias CampaignsManagmentApi.Repo
+  alias CampaignsManagmentApi.CampaignManagement.Campaign
+  alias CampaignsManagmentApi.Challenges.CampaignChallenge
+  alias CampaignsManagmentApi.Pagination
+  
+  @type pagination_opts :: [limit: pos_integer(), cursor: DateTime.t() | nil]
+  @type pagination_result :: %{
+    data: [CampaignChallenge.t()],
+    cursor: DateTime.t() | nil,
+    has_more: boolean()
+  }
   
   # Campaign Challenge Operations
   
@@ -398,16 +429,10 @@ defmodule CampaignsManagmentApi.Challenges do
   
   # Private Helpers
   
-  @spec has_campaign_associations?(Ecto.UUID.t()) :: boolean()
-  defp has_campaign_associations?(challenge_id) do
-    Repo.exists?(from cc in CampaignChallenge, where: cc.challenge_id == ^challenge_id)
-  end
-  
   @spec validate_campaign_ownership(String.t(), Ecto.UUID.t()) :: 
     {:ok, Campaign.t()} | {:error, :campaign_not_found}
   defp validate_campaign_ownership(tenant_id, campaign_id) do
-    case Repo.get_by(CampaignsManagmentApi.CampaignManagement.Campaign, 
-                     id: campaign_id, tenant_id: tenant_id) do
+    case Repo.get_by(Campaign, id: campaign_id, tenant_id: tenant_id) do
       nil -> {:error, :campaign_not_found}
       campaign -> {:ok, campaign}
     end
@@ -570,7 +595,7 @@ end
 ```elixir
 defmodule CampaignsManagmentApiWeb.CampaignChallengeController do
   use CampaignsManagmentApiWeb, :controller
-  alias CampaignsManagmentApi.Challenges
+  alias CampaignsManagmentApi.CampaignManagement
   
   def index(conn, %{"campaign_id" => campaign_id} = params) do
     tenant_id = conn.assigns.tenant.id
@@ -579,14 +604,14 @@ defmodule CampaignsManagmentApiWeb.CampaignChallengeController do
       cursor: parse_datetime(params["cursor"])
     ]
     
-    result = Challenges.list_campaign_challenges(tenant_id, campaign_id, opts)
+    result = CampaignManagement.list_campaign_challenges(tenant_id, campaign_id, opts)
     json(conn, result)
   end
   
   def show(conn, %{"campaign_id" => campaign_id, "id" => id}) do
     tenant_id = conn.assigns.tenant.id
     
-    case Challenges.get_campaign_challenge(tenant_id, campaign_id, id) do
+    case CampaignManagement.get_campaign_challenge(tenant_id, campaign_id, id) do
       nil -> send_not_found(conn)
       campaign_challenge -> json(conn, campaign_challenge)
     end
@@ -595,7 +620,7 @@ defmodule CampaignsManagmentApiWeb.CampaignChallengeController do
   def create(conn, %{"campaign_id" => campaign_id} = params) do
     tenant_id = conn.assigns.tenant.id
     
-    case Challenges.create_campaign_challenge(tenant_id, campaign_id, params) do
+    case CampaignManagement.create_campaign_challenge(tenant_id, campaign_id, params) do
       {:ok, campaign_challenge} ->
         conn
         |> put_status(:created)
@@ -610,7 +635,7 @@ defmodule CampaignsManagmentApiWeb.CampaignChallengeController do
   def update(conn, %{"campaign_id" => campaign_id, "id" => id} = params) do
     tenant_id = conn.assigns.tenant.id
     
-    case Challenges.update_campaign_challenge(tenant_id, campaign_id, id, params) do
+    case CampaignManagement.update_campaign_challenge(tenant_id, campaign_id, id, params) do
       {:ok, campaign_challenge} -> json(conn, campaign_challenge)
       {:error, :not_found} -> send_not_found(conn)
       {:error, changeset} -> send_validation_error(conn, changeset)
@@ -620,7 +645,7 @@ defmodule CampaignsManagmentApiWeb.CampaignChallengeController do
   def delete(conn, %{"campaign_id" => campaign_id, "id" => id}) do
     tenant_id = conn.assigns.tenant.id
     
-    case Challenges.delete_campaign_challenge(tenant_id, campaign_id, id) do
+    case CampaignManagement.delete_campaign_challenge(tenant_id, campaign_id, id) do
       {:ok, _} -> send_resp(conn, :no_content, "")
       {:error, :not_found} -> send_not_found(conn)
     end
