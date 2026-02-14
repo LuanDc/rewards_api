@@ -252,6 +252,78 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       # The list will be empty because tenant isolation prevents access
       assert %{"data" => []} = json_response(conn, 200)
     end
+
+    test "handles missing limit parameter gracefully", %{conn: conn, campaign: campaign} do
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      conn = get(conn, ~p"/api/campaigns/#{campaign.id}/challenges")
+
+      assert %{"data" => challenges} = json_response(conn, 200)
+      assert length(challenges) == 2
+    end
+
+    test "handles empty limit parameter gracefully", %{conn: conn, campaign: campaign} do
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      conn = get(conn, ~p"/api/campaigns/#{campaign.id}/challenges?limit=")
+
+      assert %{"data" => challenges} = json_response(conn, 200)
+      assert length(challenges) == 2
+    end
+
+    test "handles invalid limit parameter gracefully", %{conn: conn, campaign: campaign} do
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      conn = get(conn, ~p"/api/campaigns/#{campaign.id}/challenges?limit=invalid")
+
+      assert %{"data" => challenges} = json_response(conn, 200)
+      assert length(challenges) == 2
+    end
+
+    test "handles missing cursor parameter gracefully", %{conn: conn, campaign: campaign} do
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      conn = get(conn, ~p"/api/campaigns/#{campaign.id}/challenges")
+
+      assert %{"data" => challenges} = json_response(conn, 200)
+      assert length(challenges) == 2
+    end
+
+    test "handles empty cursor parameter gracefully", %{conn: conn, campaign: campaign} do
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      conn = get(conn, ~p"/api/campaigns/#{campaign.id}/challenges?cursor=")
+
+      assert %{"data" => challenges} = json_response(conn, 200)
+      assert length(challenges) == 2
+    end
+
+    test "handles invalid cursor parameter gracefully", %{conn: conn, campaign: campaign} do
+      challenge1 = insert(:challenge)
+      challenge2 = insert(:challenge)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
+      insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
+      conn = get(conn, ~p"/api/campaigns/#{campaign.id}/challenges?cursor=invalid")
+
+      assert %{"data" => challenges} = json_response(conn, 200)
+      assert length(challenges) == 2
+    end
   end
 
   describe "GET /api/campaigns/:campaign_id/challenges/:id (show)" do

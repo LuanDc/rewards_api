@@ -10,50 +10,6 @@
   },
   "host": "localhost:4000",
   "definitions": {
-    "CampaignRequest": {
-      "description": "Campaign creation/update request",
-      "example": {
-        "description": "A great summer promotion",
-        "end_time": "2024-08-31T23:59:59Z",
-        "name": "Summer Sale Campaign",
-        "start_time": "2024-06-01T00:00:00Z",
-        "status": "active"
-      },
-      "properties": {
-        "description": {
-          "description": "Campaign description",
-          "type": "string"
-        },
-        "end_time": {
-          "description": "Campaign end time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "name": {
-          "description": "Campaign name",
-          "minLength": 3,
-          "type": "string"
-        },
-        "start_time": {
-          "description": "Campaign start time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "description": "Campaign status",
-          "enum": [
-            "active",
-            "paused"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "Campaign Request",
-      "type": "object"
-    },
     "Campaign": {
       "description": "A reward campaign belonging to a tenant",
       "example": {
@@ -124,6 +80,85 @@
       "title": "Campaign",
       "type": "object"
     },
+    "CampaignListResponse": {
+      "description": "Paginated list of campaigns",
+      "example": {
+        "data": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "Summer Sale Campaign",
+            "status": "active",
+            "tenant_id": "tenant-123"
+          }
+        ],
+        "has_more": true,
+        "next_cursor": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "data": {
+          "description": "List of campaigns",
+          "items": {
+            "$ref": "#/definitions/Campaign"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "description": "Whether more results are available",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "description": "Cursor for next page",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "title": "Campaign List Response",
+      "type": "object"
+    },
+    "CampaignRequest": {
+      "description": "Campaign creation/update request",
+      "example": {
+        "description": "A great summer promotion",
+        "end_time": "2024-08-31T23:59:59Z",
+        "name": "Summer Sale Campaign",
+        "start_time": "2024-06-01T00:00:00Z",
+        "status": "active"
+      },
+      "properties": {
+        "description": {
+          "description": "Campaign description",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "Campaign end time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "description": "Campaign name",
+          "minLength": 3,
+          "type": "string"
+        },
+        "start_time": {
+          "description": "Campaign start time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "description": "Campaign status",
+          "enum": [
+            "active",
+            "paused"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Campaign Request",
+      "type": "object"
+    },
     "ErrorResponse": {
       "description": "Error response",
       "example": {
@@ -159,15 +194,106 @@
       "title": "Validation Error Response",
       "type": "object"
     },
-    "CampaignListResponse": {
-      "description": "Paginated list of campaigns",
+    "CampaignChallenge": {
+      "description": "Association between a campaign and a challenge with configuration",
+      "example": {
+        "campaign_id": "660e8400-e29b-41d4-a716-446655440001",
+        "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
+        "configuration": {
+          "threshold": 10
+        },
+        "display_description": "Earn points for purchases",
+        "display_name": "Buy+ Challenge",
+        "evaluation_frequency": "daily",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "inserted_at": "2024-05-01T10:00:00Z",
+        "reward_points": 100,
+        "updated_at": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "campaign_id": {
+          "description": "Campaign UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "challenge_id": {
+          "description": "Challenge UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "configuration": {
+          "description": "Additional configuration as JSON",
+          "type": "object"
+        },
+        "display_description": {
+          "description": "Display description for the challenge",
+          "type": "string"
+        },
+        "display_name": {
+          "description": "Display name for the challenge",
+          "minLength": 3,
+          "type": "string"
+        },
+        "evaluation_frequency": {
+          "description": "Evaluation frequency (cron expression or keyword)",
+          "type": "string"
+        },
+        "id": {
+          "description": "Campaign Challenge UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "inserted_at": {
+          "description": "Creation timestamp",
+          "format": "date-time",
+          "type": "string"
+        },
+        "reward_points": {
+          "description": "Reward points (can be positive, negative, or zero)",
+          "type": "integer"
+        },
+        "updated_at": {
+          "description": "Last update timestamp",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reward_points",
+        "evaluation_frequency",
+        "display_name",
+        "challenge_id",
+        "campaign_id",
+        "id"
+      ],
+      "title": "Campaign Challenge",
+      "type": "object"
+    },
+    "CampaignChallengeErrorResponse": {
+      "description": "Error response",
+      "example": {
+        "error": "Campaign challenge not found"
+      },
+      "properties": {
+        "error": {
+          "description": "Error message",
+          "type": "string"
+        }
+      },
+      "title": "Error Response",
+      "type": "object"
+    },
+    "CampaignChallengeListResponse": {
+      "description": "Paginated list of campaign challenges",
       "example": {
         "data": [
           {
+            "campaign_id": "660e8400-e29b-41d4-a716-446655440001",
+            "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
+            "display_name": "Buy+ Challenge",
+            "evaluation_frequency": "daily",
             "id": "550e8400-e29b-41d4-a716-446655440000",
-            "name": "Summer Sale Campaign",
-            "status": "active",
-            "tenant_id": "tenant-123"
+            "reward_points": 100
           }
         ],
         "has_more": true,
@@ -175,9 +301,9 @@
       },
       "properties": {
         "data": {
-          "description": "List of campaigns",
+          "description": "List of campaign challenges",
           "items": {
-            "$ref": "#/definitions/Campaign"
+            "$ref": "#/definitions/CampaignChallenge"
           },
           "type": "array"
         },
@@ -191,7 +317,77 @@
           "type": "string"
         }
       },
-      "title": "Campaign List Response",
+      "title": "Campaign Challenge List Response",
+      "type": "object"
+    },
+    "CampaignChallengeRequest": {
+      "description": "Campaign challenge creation/update request",
+      "example": {
+        "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
+        "configuration": {
+          "threshold": 10
+        },
+        "display_description": "Earn points for purchases",
+        "display_name": "Buy+ Challenge",
+        "evaluation_frequency": "daily",
+        "reward_points": 100
+      },
+      "properties": {
+        "challenge_id": {
+          "description": "Challenge UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "configuration": {
+          "description": "Additional configuration as JSON",
+          "type": "object"
+        },
+        "display_description": {
+          "description": "Display description for the challenge",
+          "type": "string"
+        },
+        "display_name": {
+          "description": "Display name for the challenge",
+          "minLength": 3,
+          "type": "string"
+        },
+        "evaluation_frequency": {
+          "description": "Evaluation frequency (daily, weekly, monthly, on_event, or cron expression)",
+          "type": "string"
+        },
+        "reward_points": {
+          "description": "Reward points (can be positive, negative, or zero)",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "reward_points",
+        "evaluation_frequency",
+        "display_name",
+        "challenge_id"
+      ],
+      "title": "Campaign Challenge Request",
+      "type": "object"
+    },
+    "CampaignChallengeValidationErrorResponse": {
+      "description": "Validation error response",
+      "example": {
+        "errors": {
+          "display_name": [
+            "should be at least 3 character(s)"
+          ],
+          "evaluation_frequency": [
+            "must be a valid cron expression or one of: daily, weekly, monthly, on_event"
+          ]
+        }
+      },
+      "properties": {
+        "errors": {
+          "description": "Validation errors by field",
+          "type": "object"
+        }
+      },
+      "title": "Validation Error Response",
       "type": "object"
     }
   },
@@ -294,6 +490,314 @@
         "summary": "Create campaign",
         "tags": [
           "Campaign Management"
+        ]
+      }
+    },
+    "/campaigns/{campaign_id}/challenges": {
+      "get": {
+        "description": "Returns a paginated list of challenges associated with a campaign",
+        "operationId": "CampaignsApiWeb.CampaignChallengeController.index",
+        "parameters": [
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Number of records to return (max: 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "description": "Cursor for pagination (ISO8601 datetime)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "List campaign challenges",
+        "tags": [
+          "Campaign Challenge Management"
+        ]
+      },
+      "post": {
+        "description": "Creates a new campaign challenge association",
+        "operationId": "CampaignsApiWeb.CampaignChallengeController.create",
+        "parameters": [
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Campaign challenge attributes",
+            "in": "body",
+            "name": "campaign_challenge",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallenge"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Campaign Not Found",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeValidationErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create campaign challenge",
+        "tags": [
+          "Campaign Challenge Management"
+        ]
+      }
+    },
+    "/campaigns/{campaign_id}/challenges/{id}": {
+      "delete": {
+        "description": "Permanently deletes a campaign challenge association",
+        "operationId": "CampaignsApiWeb.CampaignChallengeController.delete",
+        "parameters": [
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Campaign Challenge ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Delete campaign challenge",
+        "tags": [
+          "Campaign Challenge Management"
+        ]
+      },
+      "get": {
+        "description": "Returns a single campaign challenge by ID",
+        "operationId": "CampaignsApiWeb.CampaignChallengeController.show",
+        "parameters": [
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Campaign Challenge ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallenge"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get campaign challenge",
+        "tags": [
+          "Campaign Challenge Management"
+        ]
+      },
+      "put": {
+        "description": "Updates an existing campaign challenge",
+        "operationId": "CampaignsApiWeb.CampaignChallengeController.update",
+        "parameters": [
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Campaign Challenge ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Campaign challenge attributes",
+            "in": "body",
+            "name": "campaign_challenge",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallenge"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeErrorResponse"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/CampaignChallengeValidationErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update campaign challenge",
+        "tags": [
+          "Campaign Challenge Management"
         ]
       }
     },
@@ -460,6 +964,12 @@
     }
   },
   "swagger": "2.0",
+  "basePath": "/api",
+  "security": [
+    {
+      "Bearer": []
+    }
+  ],
   "securityDefinitions": {
     "Bearer": {
       "in": "header",
@@ -467,11 +977,5 @@
       "type": "apiKey",
       "description": "JWT Bearer token. Format: Bearer <token>"
     }
-  },
-  "security": [
-    {
-      "Bearer": []
-    }
-  ],
-  "basePath": "/api"
+  }
 }

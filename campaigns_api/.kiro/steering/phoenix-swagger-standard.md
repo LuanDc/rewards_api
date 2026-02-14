@@ -245,3 +245,37 @@ When creating or reviewing controllers, always verify:
 6. Schema naming follows the established conventions
 7. All required response codes are documented (200, 201, 401, 403, 404, 422, etc.)
 
+## Swagger JSON Generation
+
+After adding or modifying any Swagger documentation, you MUST regenerate the `swagger.json` file:
+
+```bash
+mix phx.swagger.generate
+```
+
+This command will:
+- Parse all `swagger_definitions/0` functions from controllers
+- Parse all `swagger_path` documentation
+- Generate/update `priv/static/swagger.json` with the complete API specification
+
+**Requirements:**
+- Run this command after any changes to controller Swagger documentation
+- Verify the generated `swagger.json` file is valid
+- Commit the updated `swagger.json` file to version control
+- The file should be located at `priv/static/swagger.json`
+
+**When to regenerate:**
+- After adding a new controller with Swagger documentation
+- After modifying existing `swagger_definitions/0`
+- After adding or updating `swagger_path` documentation
+- After changing endpoint paths or parameters
+- Before committing API changes
+
+**Verification:**
+After running the command, verify:
+- The `swagger.json` file was updated
+- All new endpoints appear in the file
+- All schema definitions are present
+- No syntax errors in the generated JSON
+- The file can be loaded in Swagger UI or similar tools
+

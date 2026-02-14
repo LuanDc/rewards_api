@@ -345,7 +345,13 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
 
   @spec parse_int(nil | String.t() | integer()) :: nil | integer()
   defp parse_int(nil), do: nil
-  defp parse_int(str) when is_binary(str), do: String.to_integer(str)
+  defp parse_int(""), do: nil
+  defp parse_int(str) when is_binary(str) do
+    case Integer.parse(str) do
+      {int, _} -> int
+      :error -> nil
+    end
+  end
   defp parse_int(int) when is_integer(int), do: int
 
   @spec parse_datetime(nil | String.t()) :: nil | DateTime.t()

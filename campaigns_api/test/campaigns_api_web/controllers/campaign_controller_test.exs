@@ -143,6 +143,60 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(campaigns) == 1
       assert hd(campaigns)["name"] == my_campaign.name
     end
+
+    test "handles missing limit parameter gracefully", %{conn: conn, tenant: tenant} do
+      insert_list(2, :campaign, tenant: tenant)
+
+      conn = get(conn, ~p"/api/campaigns")
+
+      assert %{"data" => campaigns} = json_response(conn, 200)
+      assert length(campaigns) == 2
+    end
+
+    test "handles empty limit parameter gracefully", %{conn: conn, tenant: tenant} do
+      insert_list(2, :campaign, tenant: tenant)
+
+      conn = get(conn, ~p"/api/campaigns?limit=")
+
+      assert %{"data" => campaigns} = json_response(conn, 200)
+      assert length(campaigns) == 2
+    end
+
+    test "handles invalid limit parameter gracefully", %{conn: conn, tenant: tenant} do
+      insert_list(2, :campaign, tenant: tenant)
+
+      conn = get(conn, ~p"/api/campaigns?limit=invalid")
+
+      assert %{"data" => campaigns} = json_response(conn, 200)
+      assert length(campaigns) == 2
+    end
+
+    test "handles missing cursor parameter gracefully", %{conn: conn, tenant: tenant} do
+      insert_list(2, :campaign, tenant: tenant)
+
+      conn = get(conn, ~p"/api/campaigns")
+
+      assert %{"data" => campaigns} = json_response(conn, 200)
+      assert length(campaigns) == 2
+    end
+
+    test "handles empty cursor parameter gracefully", %{conn: conn, tenant: tenant} do
+      insert_list(2, :campaign, tenant: tenant)
+
+      conn = get(conn, ~p"/api/campaigns?cursor=")
+
+      assert %{"data" => campaigns} = json_response(conn, 200)
+      assert length(campaigns) == 2
+    end
+
+    test "handles invalid cursor parameter gracefully", %{conn: conn, tenant: tenant} do
+      insert_list(2, :campaign, tenant: tenant)
+
+      conn = get(conn, ~p"/api/campaigns?cursor=invalid")
+
+      assert %{"data" => campaigns} = json_response(conn, 200)
+      assert length(campaigns) == 2
+    end
   end
 
   describe "GET /api/campaigns/:id (show)" do
