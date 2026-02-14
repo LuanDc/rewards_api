@@ -18,60 +18,167 @@ The architecture follows Phoenix best practices with clear separation between co
 
 ## Architecture
 
-### System Components
+### System Components Diagram
 
+```plantuml
+@startuml Campaign Management API Architecture
+
+!define RECTANGLE class
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam component {
+  BackgroundColor<<context>> #E1F5FE
+  BackgroundColor<<schema>> #FFF9C4
+  BackgroundColor<<controller>> #F3E5F5
+  BackgroundColor<<plug>> #C8E6C9
+  BorderColor #424242
+}
+
+package "HTTP Layer" {
+  [CampaignController] <<controller>>
+}
+
+package "Plug Pipeline" {
+  [RequireAuth] <<plug>>
+  [AssignTenant] <<plug>>
+}
+
+package "Context Layer" {
+  [CampaignManagement Context] <<context>>
+  [Tenants Context] <<context>>
+  [Pagination Module] <<context>>
+}
+
+package "Schema Layer" {
+  [Campaign Schema] <<schema>>
+  [Tenant Schema] <<schema>>
+}
+
+package "Database" {
+  database "PostgreSQL" {
+    [campaigns table]
+    [tenants table]
+  }
+}
+
+[CampaignController] --> [RequireAuth]
+[RequireAuth] --> [AssignTenant]
+[AssignTenant] --> [Tenants Context]
+
+[CampaignController] --> [CampaignManagement Context]
+[CampaignManagement Context] --> [Pagination Module]
+[CampaignManagement Context] --> [Campaign Schema]
+[Tenants Context] --> [Tenant Schema]
+
+[Campaign Schema] --> [campaigns table]
+[Tenant Schema] --> [tenants table]
+
+@enduml
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     HTTP Request                             │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Phoenix Router                              │
-│  - Routes API requests to CampaignController                 │
-│  - Applies authentication plugs                              │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Plug Pipeline                                   │
-│  1. RequireAuth - Validates JWT, extracts tenant_id         │
-│  2. AssignTenant - JIT provisioning, loads tenant            │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│           CampaignController                                 │
-│  - Handles HTTP requests/responses                           │
-│  - Delegates business logic to contexts                      │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                ┌────────┴────────┐
-                ▼                 ▼
-┌──────────────────────┐  ┌──────────────────────┐
-│  Tenants Context     │  │ CampaignManagement   │
-│  - get_tenant/1      │  │ Context              │
-│  - create_tenant/1   │  │ - list_campaigns/2   │
-│  - tenant_active?/1  │  │ - get_campaign/2     │
-└──────────┬───────────┘  │ - create_campaign/2  │
-           │              │ - update_campaign/3  │
-           │              │ - delete_campaign/2  │
-           │              └──────────┬───────────┘
-           │                         │
-           │                         ▼
-           │              ┌──────────────────────┐
-           │              │ Pagination Module    │
-           │              │ - paginate/3         │
-           │              │ (Reusable)           │
-           │              └──────────┬───────────┘
-           │                         │
-           ▼                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Ecto / Database                           │
-│  - tenants table (soft delete)                               │
-│  - campaigns table (hard delete)                             │
-│  - Indexes: (tenant_id, id), (status)                        │
-└─────────────────────────────────────────────────────────────┘
+
+### Entity Relationship Diagram
+
+```plantuml
+@startuml Campaign Management ERD
+
+!define TABLE class
+!define PK <b><color:#FF6B6B>PK</color></b>
+!define FK <b><color:#4ECDC4>FK</color></b>
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #424242
+  ArrowColor #424242
+}
+
+entity "tenants" as tenants {
+  PK id : string
+  --
+  name : string
+  status : enum(active, suspended, deleted)
+  deleted_at : timestamp
+  inserted_at : timestamp
+  updated_at : timestamp
+}
+
+entity "campaigns" as campaigns {
+  PK id : uuid
+  --
+  FK tenant_id : string
+  name : string
+  description : text
+  start_time : timestamp
+  end_time : timestamp
+  status : enum(active, paused)
+  inserted_at : timestamp
+  updated_at : timestamp
+}
+
+tenants ||--o{ campaigns : "owns"
+
+note right of tenants
+  Soft delete strategy
+  JIT provisioning on first access
+  Status controls API access
+end note
+
+note right of campaigns
+  Hard delete strategy
+  Flexible date management
+  Tenant-isolated
+end note
+
+@enduml
+```
+
+### Request Flow Diagram
+
+```plantuml
+@startuml Campaign Request Flow
+
+actor "Client" as client
+participant "Router" as router
+participant "RequireAuth" as auth
+participant "AssignTenant" as tenant
+participant "CampaignController" as controller
+participant "CampaignManagement" as context
+database "PostgreSQL" as db
+
+client -> router : POST /api/campaigns
+activate router
+
+router -> auth : validate JWT
+activate auth
+auth -> auth : extract tenant_id
+auth --> router : tenant_id assigned
+deactivate auth
+
+router -> tenant : load/create tenant
+activate tenant
+tenant -> db : get_or_create_tenant
+db --> tenant : tenant record
+tenant -> tenant : check tenant_active?
+tenant --> router : tenant assigned
+deactivate tenant
+
+router -> controller : create(conn, params)
+activate controller
+
+controller -> context : create_campaign(tenant_id, attrs)
+activate context
+
+context -> db : INSERT INTO campaigns
+db --> context : campaign record
+
+context --> controller : {:ok, campaign}
+deactivate context
+
+controller --> client : 201 Created + JSON
+deactivate controller
+deactivate router
+
+@enduml
 ```
 
 ### Context Boundaries
