@@ -2,12 +2,10 @@ defmodule CampaignsApi.CampaignManagementTest do
   use CampaignsApi.DataCase
 
   alias CampaignsApi.CampaignManagement
-  alias CampaignsApi.Tenants
 
   setup do
-    # Create test tenants
-    {:ok, tenant1} = Tenants.create_tenant("test-tenant-1-#{System.unique_integer([:positive])}")
-    {:ok, tenant2} = Tenants.create_tenant("test-tenant-2-#{System.unique_integer([:positive])}")
+    tenant1 = insert(:tenant)
+    tenant2 = insert(:tenant)
 
     {:ok, tenant1: tenant1, tenant2: tenant2}
   end
@@ -17,16 +15,9 @@ defmodule CampaignsApi.CampaignManagementTest do
       tenant1: tenant1,
       tenant2: tenant2
     } do
-      # Create campaign for tenant1
-      {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant1.id, %{
-          name: "Tenant 1 Campaign"
-        })
+      campaign = insert(:campaign, tenant: tenant1)
 
-      # Verify tenant1 can access their campaign
       assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil
-
-      # Verify tenant2 cannot access tenant1's campaign (returns nil, not error)
       assert CampaignManagement.get_campaign(tenant2.id, campaign.id) == nil
     end
 
@@ -40,13 +31,11 @@ defmodule CampaignsApi.CampaignManagementTest do
     test "returns error with foreign key violation when tenant does not exist" do
       non_existent_tenant_id = "non-existent-tenant-#{System.unique_integer([:positive])}"
 
-      # Attempt to create campaign for non-existent tenant
       assert {:error, changeset} =
                CampaignManagement.create_campaign(non_existent_tenant_id, %{
                  name: "Test Campaign"
                })
 
-      # Verify it's a foreign key constraint error
       assert %{tenant_id: ["does not exist"]} = errors_on(changeset)
     end
 
@@ -71,14 +60,7 @@ defmodule CampaignsApi.CampaignManagementTest do
     end
 
     test "returns all campaigns when count is less than default limit", %{tenant1: tenant} do
-      # Create 5 campaigns (less than default limit of 50)
-      campaigns =
-        Enum.map(1..5, fn i ->
-          {:ok, campaign} =
-            CampaignManagement.create_campaign(tenant.id, %{name: "Campaign #{i}"})
-
-          campaign
-        end)
+      campaigns = insert_list(5, :campaign, tenant: tenant)
 
       result = CampaignManagement.list_campaigns(tenant.id)
 
@@ -86,19 +68,14 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert result.has_more == false
       assert result.next_cursor == nil
 
-      # Verify all campaigns are present
       returned_ids = Enum.map(result.data, & &1.id)
       campaign_ids = Enum.map(campaigns, & &1.id)
       assert Enum.all?(campaign_ids, &(&1 in returned_ids))
     end
 
     test "respects custom limit parameter", %{tenant1: tenant} do
-      # Create 10 campaigns
-      Enum.each(1..10, fn i ->
-        CampaignManagement.create_campaign(tenant.id, %{name: "Campaign #{i}"})
-      end)
+      insert_list(10, :campaign, tenant: tenant)
 
-      # Request with limit of 3
       result = CampaignManagement.list_campaigns(tenant.id, limit: 3)
 
       assert length(result.data) == 3
@@ -107,65 +84,44 @@ defmodule CampaignsApi.CampaignManagementTest do
     end
 
     test "handles pagination with cursor", %{tenant1: tenant} do
-      # Create 12 campaigns
-      # Note: In tests, campaigns may have identical timestamps due to fast execution
-      Enum.each(1..12, fn i ->
-        CampaignManagement.create_campaign(tenant.id, %{name: "Campaign #{i}"})
-      end)
+      insert_list(12, :campaign, tenant: tenant)
 
-      # Get first page with limit 5
       first_page = CampaignManagement.list_campaigns(tenant.id, limit: 5)
       assert length(first_page.data) == 5
 
-      # If there are more campaigns, test cursor pagination
       if first_page.has_more do
         assert first_page.next_cursor != nil
 
-        # Get second page using cursor
         second_page =
           CampaignManagement.list_campaigns(tenant.id, limit: 5, cursor: first_page.next_cursor)
 
-        # Verify no overlap between pages (campaigns with different IDs)
         first_page_ids = Enum.map(first_page.data, & &1.id)
         second_page_ids = Enum.map(second_page.data, & &1.id)
 
-        # All second page IDs should be different from first page IDs
         assert Enum.all?(second_page_ids, &(&1 not in first_page_ids)),
                "Second page should not contain campaigns from first page"
       end
     end
 
     test "enforces maximum limit of 100", %{tenant1: tenant} do
-      # Create 150 campaigns
-      Enum.each(1..150, fn i ->
-        CampaignManagement.create_campaign(tenant.id, %{name: "Campaign #{i}"})
-      end)
+      insert_list(150, :campaign, tenant: tenant)
 
-      # Request with limit > 100
       result = CampaignManagement.list_campaigns(tenant.id, limit: 200)
 
-      # Should return at most 100
       assert length(result.data) <= 100
       assert result.has_more == true
     end
 
     test "returns campaigns only for specified tenant", %{tenant1: tenant1, tenant2: tenant2} do
-      # Create campaigns for both tenants
-      {:ok, tenant1_campaign} =
-        CampaignManagement.create_campaign(tenant1.id, %{name: "Tenant 1 Campaign"})
+      tenant1_campaign = insert(:campaign, tenant: tenant1)
+      tenant2_campaign = insert(:campaign, tenant: tenant2)
 
-      {:ok, tenant2_campaign} =
-        CampaignManagement.create_campaign(tenant2.id, %{name: "Tenant 2 Campaign"})
-
-      # List campaigns for tenant1
       tenant1_result = CampaignManagement.list_campaigns(tenant1.id)
       tenant1_ids = Enum.map(tenant1_result.data, & &1.id)
 
-      # List campaigns for tenant2
       tenant2_result = CampaignManagement.list_campaigns(tenant2.id)
       tenant2_ids = Enum.map(tenant2_result.data, & &1.id)
 
-      # Verify isolation
       assert tenant1_campaign.id in tenant1_ids
       assert tenant1_campaign.id not in tenant2_ids
       assert tenant2_campaign.id in tenant2_ids
@@ -175,13 +131,8 @@ defmodule CampaignsApi.CampaignManagementTest do
 
   describe "update_campaign/3" do
     test "returns changeset errors when updating with invalid data", %{tenant1: tenant} do
-      # Create a campaign
-      {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
-          name: "Original Campaign"
-        })
+      campaign = insert(:campaign, tenant: tenant)
 
-      # Try to update with invalid name (less than 3 characters)
       assert {:error, changeset} =
                CampaignManagement.update_campaign(tenant.id, campaign.id, %{name: "ab"})
 
@@ -189,13 +140,8 @@ defmodule CampaignsApi.CampaignManagementTest do
     end
 
     test "returns changeset errors when updating with invalid date order", %{tenant1: tenant} do
-      # Create a campaign
-      {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
-          name: "Test Campaign"
-        })
+      campaign = insert(:campaign, tenant: tenant)
 
-      # Try to update with start_time after end_time
       start_time = ~U[2024-02-01 00:00:00Z]
       end_time = ~U[2024-01-01 00:00:00Z]
 
@@ -209,13 +155,8 @@ defmodule CampaignsApi.CampaignManagementTest do
     end
 
     test "successfully updates campaign with valid data", %{tenant1: tenant} do
-      # Create a campaign
-      {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
-          name: "Original Campaign"
-        })
+      campaign = insert(:campaign, tenant: tenant)
 
-      # Update with valid data
       {:ok, updated_campaign} =
         CampaignManagement.update_campaign(tenant.id, campaign.id, %{
           name: "Updated Campaign",
@@ -230,21 +171,15 @@ defmodule CampaignsApi.CampaignManagementTest do
       tenant1: tenant1,
       tenant2: tenant2
     } do
-      # Create campaign for tenant1
-      {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant1.id, %{
-          name: "Tenant 1 Campaign"
-        })
+      campaign = insert(:campaign, tenant: tenant1)
 
-      # Try to update with tenant2's ID
       assert {:error, :not_found} =
                CampaignManagement.update_campaign(tenant2.id, campaign.id, %{
                  name: "Updated Name"
                })
 
-      # Verify campaign unchanged for tenant1
       unchanged = CampaignManagement.get_campaign(tenant1.id, campaign.id)
-      assert unchanged.name == "Tenant 1 Campaign"
+      assert unchanged.name == campaign.name
     end
 
     test "returns not_found when updating non-existent campaign", %{tenant1: tenant} do
@@ -327,17 +262,10 @@ defmodule CampaignsApi.CampaignManagementTest do
 
   describe "delete_campaign/2" do
     test "successfully deletes a campaign belonging to the tenant", %{tenant1: tenant} do
-      # Create a campaign
-      {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
-          name: "Test Campaign"
-        })
+      campaign = insert(:campaign, tenant: tenant)
 
-      # Delete the campaign
       assert {:ok, deleted_campaign} = CampaignManagement.delete_campaign(tenant.id, campaign.id)
       assert deleted_campaign.id == campaign.id
-
-      # Verify campaign is deleted
       assert CampaignManagement.get_campaign(tenant.id, campaign.id) == nil
     end
 
@@ -351,34 +279,20 @@ defmodule CampaignsApi.CampaignManagementTest do
       tenant1: tenant1,
       tenant2: tenant2
     } do
-      # Create campaign for tenant1
-      {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant1.id, %{
-          name: "Tenant 1 Campaign"
-        })
+      campaign = insert(:campaign, tenant: tenant1)
 
-      # Try to delete with tenant2's ID
       assert {:error, :not_found} = CampaignManagement.delete_campaign(tenant2.id, campaign.id)
-
-      # Verify campaign still exists for tenant1
       assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil
     end
 
     test "campaign does not appear in list after deletion", %{tenant1: tenant} do
-      # Create multiple campaigns
-      {:ok, campaign1} =
-        CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 1"})
+      campaign1 = insert(:campaign, tenant: tenant)
+      campaign2 = insert(:campaign, tenant: tenant)
 
-      {:ok, campaign2} =
-        CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 2"})
-
-      # Delete one campaign
       {:ok, _} = CampaignManagement.delete_campaign(tenant.id, campaign1.id)
 
-      # List campaigns
       result = CampaignManagement.list_campaigns(tenant.id)
 
-      # Only campaign2 should remain
       assert length(result.data) == 1
       assert hd(result.data).id == campaign2.id
     end

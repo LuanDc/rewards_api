@@ -4,18 +4,14 @@ defmodule CampaignsApi.PaginationTest do
   alias CampaignsApi.CampaignManagement.Campaign
   alias CampaignsApi.Pagination
   alias CampaignsApi.Repo
-  alias CampaignsApi.Tenants
 
   import Ecto.Query
 
   setup do
-    # Create a test tenant
-    {:ok, tenant} = Tenants.create_tenant("test-tenant-#{System.unique_integer([:positive])}")
+    tenant = insert(:tenant)
 
-    # Create multiple campaigns with different timestamps
     campaigns =
       for i <- 1..15 do
-        # Insert campaigns with staggered timestamps
         {:ok, campaign} =
           %Campaign{}
           |> Campaign.changeset(%{
@@ -25,8 +21,6 @@ defmodule CampaignsApi.PaginationTest do
           })
           |> Repo.insert()
 
-        # Update inserted_at to create a predictable sequence
-        # Most recent first (15, 14, 13, ...)
         timestamp =
           DateTime.utc_now()
           |> DateTime.add(-(i * 60), :second)

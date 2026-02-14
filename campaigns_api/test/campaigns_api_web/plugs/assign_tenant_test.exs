@@ -9,7 +9,6 @@ defmodule CampaignsApiWeb.Plugs.AssignTenantTest do
     test "creates new tenant on first access (JIT provisioning)", %{conn: conn} do
       tenant_id = "new-tenant-#{System.unique_integer([:positive])}"
 
-      # Verify tenant doesn't exist yet
       assert Tenants.get_tenant(tenant_id) == nil
 
       conn =
@@ -17,28 +16,23 @@ defmodule CampaignsApiWeb.Plugs.AssignTenantTest do
         |> assign(:tenant_id, tenant_id)
         |> AssignTenant.call(%{})
 
-      # Verify tenant was created and assigned to conn
       assert %Tenant{} = conn.assigns.tenant
       assert conn.assigns.tenant.id == tenant_id
       assert conn.assigns.tenant.name == tenant_id
       assert conn.assigns.tenant.status == :active
       refute conn.halted
 
-      # Verify tenant now exists in database
       assert %Tenant{} = Tenants.get_tenant(tenant_id)
     end
 
     test "loads existing tenant on subsequent access", %{conn: conn} do
-      # Create a tenant first
-      tenant_id = "existing-tenant-#{System.unique_integer([:positive])}"
-      {:ok, existing_tenant} = Tenants.create_tenant(tenant_id, %{name: "Existing Corp"})
+      existing_tenant = insert(:tenant, name: "Existing Corp")
 
       conn =
         conn
-        |> assign(:tenant_id, tenant_id)
+        |> assign(:tenant_id, existing_tenant.id)
         |> AssignTenant.call(%{})
 
-      # Verify existing tenant was loaded
       assert conn.assigns.tenant.id == existing_tenant.id
       assert conn.assigns.tenant.name == "Existing Corp"
       assert conn.assigns.tenant.status == :active
@@ -46,13 +40,11 @@ defmodule CampaignsApiWeb.Plugs.AssignTenantTest do
     end
 
     test "returns 403 when tenant status is deleted", %{conn: conn} do
-      # Create a deleted tenant
-      tenant_id = "deleted-tenant-#{System.unique_integer([:positive])}"
-      {:ok, _tenant} = Tenants.create_tenant(tenant_id, %{status: :deleted})
+      deleted_tenant = insert(:deleted_tenant)
 
       conn =
         conn
-        |> assign(:tenant_id, tenant_id)
+        |> assign(:tenant_id, deleted_tenant.id)
         |> AssignTenant.call(%{})
 
       assert conn.status == 403
@@ -61,13 +53,11 @@ defmodule CampaignsApiWeb.Plugs.AssignTenantTest do
     end
 
     test "returns 403 when tenant status is suspended", %{conn: conn} do
-      # Create a suspended tenant
-      tenant_id = "suspended-tenant-#{System.unique_integer([:positive])}"
-      {:ok, _tenant} = Tenants.create_tenant(tenant_id, %{status: :suspended})
+      suspended_tenant = insert(:suspended_tenant)
 
       conn =
         conn
-        |> assign(:tenant_id, tenant_id)
+        |> assign(:tenant_id, suspended_tenant.id)
         |> AssignTenant.call(%{})
 
       assert conn.status == 403
@@ -76,16 +66,13 @@ defmodule CampaignsApiWeb.Plugs.AssignTenantTest do
     end
 
     test "assigns active tenant to conn", %{conn: conn} do
-      # Create an active tenant
-      tenant_id = "active-tenant-#{System.unique_integer([:positive])}"
-      {:ok, tenant} = Tenants.create_tenant(tenant_id, %{status: :active})
+      tenant = insert(:tenant, status: :active)
 
       conn =
         conn
-        |> assign(:tenant_id, tenant_id)
+        |> assign(:tenant_id, tenant.id)
         |> AssignTenant.call(%{})
 
-      # Verify tenant was assigned and request was not halted
       assert conn.assigns.tenant.id == tenant.id
       assert conn.assigns.tenant.status == :active
       refute conn.halted

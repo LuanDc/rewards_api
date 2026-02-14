@@ -2,32 +2,13 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
   use CampaignsApiWeb.ConnCase, async: true
 
   alias CampaignsApi.CampaignManagement
-  alias CampaignsApi.Tenants
 
   setup %{conn: conn} do
-    # Create an active tenant for testing
-    tenant_id = "test-tenant-#{System.unique_integer([:positive])}"
-    {:ok, tenant} = Tenants.create_tenant(tenant_id)
-
-    # Create a JWT token for authentication
-    token = create_jwt_token(%{"tenant_id" => tenant_id})
-
-    # Add authorization header to conn
+    tenant = insert(:tenant)
+    token = jwt_token(tenant.id)
     conn = put_req_header(conn, "authorization", "Bearer #{token}")
 
     {:ok, conn: conn, tenant: tenant}
-  end
-
-  # Helper function to create a JWT token for testing
-  defp create_jwt_token(claims) do
-    header = %{"alg" => "HS256", "typ" => "JWT"}
-
-    encoded_header = header |> Jason.encode!() |> Base.url_encode64(padding: false)
-    encoded_payload = claims |> Jason.encode!() |> Base.url_encode64(padding: false)
-
-    signature = "dummy_signature"
-
-    "#{encoded_header}.#{encoded_payload}.#{signature}"
   end
 
   describe "POST /api/campaigns (create)" do
@@ -115,9 +96,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "returns campaigns for the tenant", %{conn: conn, tenant: tenant} do
-      # Create some campaigns
-      {:ok, _campaign1} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 1"})
-      {:ok, _campaign2} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 2"})
+      insert_list(2, :campaign, tenant: tenant)
 
       conn = get(conn, ~p"/api/campaigns")
 
@@ -126,10 +105,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "supports pagination with limit parameter", %{conn: conn, tenant: tenant} do
-      # Create 3 campaigns
-      {:ok, _} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 1"})
-      {:ok, _} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 2"})
-      {:ok, _} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 3"})
+      insert_list(3, :campaign, tenant: tenant)
 
       conn = get(conn, ~p"/api/campaigns?limit=2")
 
@@ -141,12 +117,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "supports pagination with cursor parameter", %{conn: conn, tenant: tenant} do
-      # Create multiple campaigns
-      {:ok, _} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 1"})
-      {:ok, _} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 2"})
-      {:ok, _} = CampaignManagement.create_campaign(tenant.id, %{name: "Campaign 3"})
+      insert_list(3, :campaign, tenant: tenant)
 
-      # Get first page with limit 2
       conn1 = get(conn, ~p"/api/campaigns?limit=2")
       response1 = json_response(conn1, 200)
 
@@ -154,43 +126,39 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(page1) == 2
       assert cursor != nil
 
-      # Get second page using cursor - should get remaining campaign(s)
       conn2 = get(conn, ~p"/api/campaigns?cursor=#{cursor}")
       response2 = json_response(conn2, 200)
 
-      # The cursor parameter is being used (even if no results due to timing)
       assert %{"data" => _page2} = response2
     end
 
     test "does not return campaigns from other tenants", %{conn: conn, tenant: tenant} do
-      # Create campaign for this tenant
-      {:ok, _} = CampaignManagement.create_campaign(tenant.id, %{name: "My Campaign"})
-
-      # Create another tenant and campaign
-      {:ok, other_tenant} = Tenants.create_tenant("other-tenant-#{System.unique_integer([:positive])}")
-      {:ok, _} = CampaignManagement.create_campaign(other_tenant.id, %{name: "Other Campaign"})
+      my_campaign = insert(:campaign, tenant: tenant)
+      other_tenant = insert(:tenant)
+      insert(:campaign, tenant: other_tenant)
 
       conn = get(conn, ~p"/api/campaigns")
 
       assert %{"data" => campaigns} = json_response(conn, 200)
       assert length(campaigns) == 1
-      assert hd(campaigns)["name"] == "My Campaign"
+      assert hd(campaigns)["name"] == my_campaign.name
     end
   end
 
   describe "GET /api/campaigns/:id (show)" do
     test "returns campaign when it exists and belongs to tenant", %{conn: conn, tenant: tenant} do
-      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+      campaign = insert(:campaign, tenant: tenant)
 
       conn = get(conn, ~p"/api/campaigns/#{campaign.id}")
 
       assert %{
                "id" => id,
-               "name" => "Test Campaign",
+               "name" => name,
                "tenant_id" => tenant_id
              } = json_response(conn, 200)
 
       assert id == campaign.id
+      assert name == campaign.name
       assert tenant_id == tenant.id
     end
 
@@ -202,9 +170,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "returns 404 when campaign belongs to different tenant", %{conn: conn} do
-      # Create another tenant and campaign
-      {:ok, other_tenant} = Tenants.create_tenant("other-tenant-#{System.unique_integer([:positive])}")
-      {:ok, other_campaign} = CampaignManagement.create_campaign(other_tenant.id, %{name: "Other Campaign"})
+      other_tenant = insert(:tenant)
+      other_campaign = insert(:campaign, tenant: other_tenant)
 
       conn = get(conn, ~p"/api/campaigns/#{other_campaign.id}")
 
@@ -214,7 +181,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
   describe "PUT /api/campaigns/:id (update)" do
     test "updates campaign with valid data", %{conn: conn, tenant: tenant} do
-      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Original Name"})
+      campaign = insert(:campaign, tenant: tenant)
 
       update_params = %{
         "name" => "Updated Name",
@@ -235,7 +202,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "returns 422 with validation errors for invalid data", %{conn: conn, tenant: tenant} do
-      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+      campaign = insert(:campaign, tenant: tenant)
 
       conn = put(conn, ~p"/api/campaigns/#{campaign.id}", %{name: "ab"})
 
@@ -251,9 +218,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "returns 404 when campaign belongs to different tenant", %{conn: conn} do
-      # Create another tenant and campaign
-      {:ok, other_tenant} = Tenants.create_tenant("other-tenant-#{System.unique_integer([:positive])}")
-      {:ok, other_campaign} = CampaignManagement.create_campaign(other_tenant.id, %{name: "Other Campaign"})
+      other_tenant = insert(:tenant)
+      other_campaign = insert(:campaign, tenant: other_tenant)
 
       conn = put(conn, ~p"/api/campaigns/#{other_campaign.id}", %{name: "Hacked"})
 
@@ -263,13 +229,11 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
   describe "DELETE /api/campaigns/:id (delete)" do
     test "deletes campaign successfully", %{conn: conn, tenant: tenant} do
-      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "To Delete"})
+      campaign = insert(:campaign, tenant: tenant)
 
       conn = delete(conn, ~p"/api/campaigns/#{campaign.id}")
 
       assert response(conn, 204) == ""
-
-      # Verify campaign is deleted
       assert CampaignManagement.get_campaign(tenant.id, campaign.id) == nil
     end
 
@@ -281,9 +245,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     end
 
     test "returns 404 when campaign belongs to different tenant", %{conn: conn} do
-      # Create another tenant and campaign
-      {:ok, other_tenant} = Tenants.create_tenant("other-tenant-#{System.unique_integer([:positive])}")
-      {:ok, other_campaign} = CampaignManagement.create_campaign(other_tenant.id, %{name: "Other Campaign"})
+      other_tenant = insert(:tenant)
+      other_campaign = insert(:campaign, tenant: other_tenant)
 
       conn = delete(conn, ~p"/api/campaigns/#{other_campaign.id}")
 

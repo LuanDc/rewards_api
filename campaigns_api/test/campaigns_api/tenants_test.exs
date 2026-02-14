@@ -2,18 +2,14 @@ defmodule CampaignsApi.TenantsTest do
   use CampaignsApi.DataCase
 
   alias CampaignsApi.Tenants
-  alias CampaignsApi.Tenants.Tenant
 
   describe "get_tenant/1" do
     test "returns tenant when it exists" do
-      # Create a tenant
-      {:ok, tenant} = Tenants.create_tenant("test-tenant-1", %{name: "Test Tenant"})
-
-      # Get the tenant
-      result = Tenants.get_tenant("test-tenant-1")
+      tenant = insert(:tenant)
+      result = Tenants.get_tenant(tenant.id)
 
       assert result.id == tenant.id
-      assert result.name == "Test Tenant"
+      assert result.name == tenant.name
     end
 
     test "returns nil when tenant does not exist" do
@@ -63,22 +59,16 @@ defmodule CampaignsApi.TenantsTest do
 
   describe "get_or_create_tenant/1" do
     test "returns existing tenant when it exists" do
-      # Create a tenant
-      {:ok, existing_tenant} = Tenants.create_tenant("existing-tenant", %{name: "Existing"})
-
-      # Get or create should return the existing tenant
-      {:ok, tenant} = Tenants.get_or_create_tenant("existing-tenant")
+      existing_tenant = insert(:tenant)
+      {:ok, tenant} = Tenants.get_or_create_tenant(existing_tenant.id)
 
       assert tenant.id == existing_tenant.id
-      assert tenant.name == "Existing"
+      assert tenant.name == existing_tenant.name
       assert tenant.inserted_at == existing_tenant.inserted_at
     end
 
     test "creates new tenant when it does not exist" do
-      # Ensure tenant doesn't exist
       assert Tenants.get_tenant("new-tenant") == nil
-
-      # Get or create should create a new tenant
       {:ok, tenant} = Tenants.get_or_create_tenant("new-tenant")
 
       assert tenant.id == "new-tenant"
@@ -87,10 +77,7 @@ defmodule CampaignsApi.TenantsTest do
     end
 
     test "multiple calls with same tenant_id do not create duplicates" do
-      # First call creates the tenant
       {:ok, tenant1} = Tenants.get_or_create_tenant("idempotent-tenant")
-
-      # Second call returns the same tenant
       {:ok, tenant2} = Tenants.get_or_create_tenant("idempotent-tenant")
 
       assert tenant1.id == tenant2.id
@@ -100,17 +87,17 @@ defmodule CampaignsApi.TenantsTest do
 
   describe "tenant_active?/1" do
     test "returns true for active tenant" do
-      tenant = %Tenant{status: :active}
+      tenant = build(:tenant, status: :active)
       assert Tenants.tenant_active?(tenant) == true
     end
 
     test "returns false for suspended tenant" do
-      tenant = %Tenant{status: :suspended}
+      tenant = build(:suspended_tenant)
       assert Tenants.tenant_active?(tenant) == false
     end
 
     test "returns false for deleted tenant" do
-      tenant = %Tenant{status: :deleted}
+      tenant = build(:deleted_tenant)
       assert Tenants.tenant_active?(tenant) == false
     end
   end
