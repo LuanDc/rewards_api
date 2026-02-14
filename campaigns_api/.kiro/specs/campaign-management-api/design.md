@@ -842,6 +842,53 @@ The testing strategy employs both unit tests and property-based tests to ensure 
 - Use ExUnitProperties or StreamData for Elixir property testing
 - Generate random valid and invalid inputs to test properties
 
+### Test Data Generation
+
+The project uses **ExMachina** with **Faker** for test data generation:
+
+**ExMachina**: Factory pattern for creating test data
+- Centralized factory definitions in `test/support/factory.ex`
+- Consistent data creation across all tests
+- Specialized factories for different scenarios (suspended tenants, paused campaigns, etc.)
+- Use `insert/2` for persisted records, `build/2` for structs
+
+**Faker**: Realistic random data generation
+- Company names for tenants
+- Product names for campaigns
+- Lorem ipsum for descriptions
+- Future dates for campaign times
+
+```elixir
+# In mix.exs
+defp deps do
+  [
+    {:stream_data, "~> 0.6", only: [:test, :dev]},
+    {:ex_machina, "~> 2.7", only: :test},
+    {:faker, "~> 0.18", only: :test}
+  ]
+end
+```
+
+### Factory Usage Examples
+
+```elixir
+# Create and persist a tenant
+tenant = insert(:tenant)
+
+# Create a campaign with associations
+campaign = insert(:campaign, tenant: tenant)
+
+# Create specialized variants
+suspended_tenant = insert(:suspended_tenant)
+paused_campaign = insert(:paused_campaign)
+
+# Build without persisting
+tenant_struct = build(:tenant)
+
+# Generate JWT token for authentication
+token = CampaignsApi.Factory.jwt_token(tenant.id)
+```
+
 ### Property-Based Testing Library
 
 Use **StreamData** (Elixir's property-based testing library) with ExUnit:
@@ -874,8 +921,28 @@ test/
 │       ├── require_auth_test.exs (unit tests)
 │       └── assign_tenant_test.exs (unit tests)
 └── support/
-    └── generators.ex (StreamData generators)
+    ├── factory.ex (ExMachina factories)
+    ├── generators.ex (StreamData generators)
+    ├── data_case.ex (imports Factory)
+    └── conn_case.ex (imports Factory)
 ```
+
+### Available Factories
+
+The following factories are available in `test/support/factory.ex`:
+
+**Tenant Factories**:
+- `:tenant` - Active tenant with random company name
+- `:suspended_tenant` - Tenant with suspended status
+- `:deleted_tenant` - Soft-deleted tenant with deleted_at timestamp
+
+**Campaign Factories**:
+- `:campaign` - Active campaign with random product name and description
+- `:campaign_with_dates` - Campaign with valid start_time and end_time
+- `:paused_campaign` - Campaign with paused status
+
+**Helper Functions**:
+- `jwt_token(tenant_id)` - Generate JWT token for authentication tests
 
 ### Property Test Configuration
 
@@ -949,7 +1016,12 @@ end
 
 ### Test Data Generators
 
-Create StreamData generators for:
+**ExMachina Factories** (for unit and integration tests):
+- Use Faker for realistic random data
+- Defined in `test/support/factory.ex`
+- Provide consistent, reusable test data patterns
+
+**StreamData Generators** (for property-based tests):
 - Valid tenant_ids (strings)
 - Valid campaign names (strings, min 3 chars)
 - Optional descriptions
@@ -957,6 +1029,7 @@ Create StreamData generators for:
 - Campaign status values (:active, :paused)
 - Tenant status values (:active, :suspended, :deleted)
 - Valid JWT tokens with tenant_id claims
+- Defined in `test/support/generators.ex`
 
 ### Coverage Goals
 
