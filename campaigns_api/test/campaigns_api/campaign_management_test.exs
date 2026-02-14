@@ -193,8 +193,6 @@ defmodule CampaignsApi.CampaignManagementTest do
   end
 
   describe "flexible date management examples" do
-    # Example 1: Campaign without dates
-    # Validates: Requirements 9.1
     test "creates campaign without start_time or end_time", %{tenant1: tenant} do
       {:ok, campaign} =
         CampaignManagement.create_campaign(tenant.id, %{
@@ -206,8 +204,6 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign.name == "No Dates Campaign"
     end
 
-    # Example 2: Campaign with start_time only
-    # Validates: Requirements 9.2
     test "creates campaign with start_time but no end_time", %{tenant1: tenant} do
       start_time = ~U[2024-01-01 00:00:00Z]
 
@@ -222,8 +218,6 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign.name == "Start Only Campaign"
     end
 
-    # Example 3: Campaign with end_time only
-    # Validates: Requirements 9.3
     test "creates campaign with end_time but no start_time", %{tenant1: tenant} do
       end_time = ~U[2024-12-31 23:59:59Z]
 
@@ -238,8 +232,6 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign.name == "End Only Campaign"
     end
 
-    # Example 4: Campaign with both dates
-    # Validates: Requirements 9.4
     test "creates campaign with both start_time and end_time when start is before end", %{
       tenant1: tenant
     } do

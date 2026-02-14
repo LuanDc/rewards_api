@@ -6,13 +6,10 @@ defmodule CampaignsApi.CampaignManagement.CampaignPropertyTest do
   alias CampaignsApi.Tenants
 
   setup do
-    # Create a test tenant for campaign tests
     {:ok, tenant} = Tenants.create_tenant("test-tenant-#{System.unique_integer([:positive])}")
     {:ok, tenant: tenant}
   end
 
-  # Feature: campaign-management-api, Property 9: Campaign Name Validation
-  # **Validates: Requirements 4.5**
   property "campaign names with fewer than 3 characters are rejected, 3+ characters accepted",
            %{tenant: tenant} do
     check all(
@@ -29,18 +26,15 @@ defmodule CampaignsApi.CampaignManagement.CampaignPropertyTest do
       changeset = Campaign.changeset(%Campaign{}, attrs)
 
       if name_length < 3 do
-        # Names with fewer than 3 characters should be invalid
         assert changeset.valid? == false,
                "campaign with name length #{name_length} should be invalid"
 
         assert Keyword.has_key?(changeset.errors, :name),
                "changeset should have error on :name field"
 
-        # Verify the error is about minimum length
         {_msg, opts} = changeset.errors[:name]
         assert opts[:count] == 3, "error should specify minimum length of 3"
       else
-        # Names with 3 or more characters should be valid (assuming tenant_id is present)
         assert changeset.valid? == true,
                "campaign with name length #{name_length} should be valid"
 
@@ -50,8 +44,6 @@ defmodule CampaignsApi.CampaignManagement.CampaignPropertyTest do
     end
   end
 
-  # Feature: campaign-management-api, Property 11: Date Order Validation
-  # **Validates: Requirements 4.9**
   property "campaigns with both dates must have start_time before end_time", %{tenant: tenant} do
     check all(
             # Generate two different datetimes
@@ -61,11 +53,9 @@ defmodule CampaignsApi.CampaignManagement.CampaignPropertyTest do
             swap <- boolean(),
             max_runs: 100
           ) do
-      # Create two datetimes with known ordering
       earlier = base_datetime
       later = DateTime.add(base_datetime, offset_seconds, :second)
 
-      # Swap them based on the boolean to test both valid and invalid cases
       {start_time, end_time} =
         if swap do
           {later, earlier}
@@ -83,18 +73,15 @@ defmodule CampaignsApi.CampaignManagement.CampaignPropertyTest do
       changeset = Campaign.changeset(%Campaign{}, attrs)
 
       if swap do
-        # When start_time is after end_time, should be invalid
         assert changeset.valid? == false,
                "campaign with start_time after end_time should be invalid"
 
         assert Keyword.has_key?(changeset.errors, :start_time),
                "changeset should have error on :start_time field"
 
-        # Verify the error message
         {msg, _opts} = changeset.errors[:start_time]
         assert msg == "must be before end_time", "error message should indicate date order issue"
       else
-        # When start_time is before end_time, should be valid
         assert changeset.valid? == true,
                "campaign with start_time before end_time should be valid"
 
@@ -104,7 +91,6 @@ defmodule CampaignsApi.CampaignManagement.CampaignPropertyTest do
     end
   end
 
-  # Generator for valid UTC datetimes
   defp datetime_generator do
     gen all(
           year <- integer(2020..2030),

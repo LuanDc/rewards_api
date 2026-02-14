@@ -10,13 +10,10 @@ defmodule CampaignsApi.PaginationPropertyTest do
   import Ecto.Query
 
   setup do
-    # Create a test tenant
     {:ok, tenant} = Tenants.create_tenant("test-tenant-#{System.unique_integer([:positive])}")
     {:ok, tenant: tenant}
   end
 
-  # Feature: campaign-management-api, Property 26: Pagination Module Reusability
-  # **Validates: Requirements 5.2, 5.3, 5.4, 5.5, 5.6**
   property "pagination module works with any Ecto query and returns consistent structure",
            %{tenant: tenant} do
     check all(
@@ -27,18 +24,14 @@ defmodule CampaignsApi.PaginationPropertyTest do
             cursor_field <- member_of([:inserted_at, :updated_at]),
             max_runs: 100
           ) do
-      # Create campaigns for this test iteration
       campaigns = create_campaigns(tenant.id, campaign_count)
 
-      # Build query
       query = from c in Campaign, where: c.tenant_id == ^tenant.id
 
-      # Prepare options
       opts = [limit: limit, order: order, cursor_field: cursor_field]
 
       opts =
         if use_cursor and campaign_count > 0 do
-          # Get a cursor from the middle of the dataset
           middle_campaign = Enum.at(campaigns, div(campaign_count, 2))
 
           if middle_campaign do
@@ -51,32 +44,24 @@ defmodule CampaignsApi.PaginationPropertyTest do
           opts
         end
 
-      # Execute pagination
       result = Pagination.paginate(Repo, query, opts)
 
-      # Verify consistent structure
       assert is_map(result), "result should be a map"
       assert Map.has_key?(result, :data), "result should have :data key"
       assert Map.has_key?(result, :next_cursor), "result should have :next_cursor key"
       assert Map.has_key?(result, :has_more), "result should have :has_more key"
 
-      # Verify data is a list
       assert is_list(result.data), "data should be a list"
 
-      # Verify has_more is a boolean
       assert is_boolean(result.has_more), "has_more should be a boolean"
 
-      # Verify next_cursor is either nil or a DateTime
       assert result.next_cursor == nil or match?(%DateTime{}, result.next_cursor),
              "next_cursor should be nil or DateTime"
 
-      # Clean up campaigns for this iteration
       cleanup_campaigns(campaigns)
     end
   end
 
-  # Feature: campaign-management-api, Property 15: Cursor-Based Pagination
-  # **Validates: Requirements 5.3**
   property "campaigns after cursor have timestamps in correct order relative to cursor",
            %{tenant: tenant} do
     check all(
@@ -84,44 +69,34 @@ defmodule CampaignsApi.PaginationPropertyTest do
             order <- member_of([:asc, :desc]),
             max_runs: 100
           ) do
-      # Create campaigns with staggered timestamps
       campaigns = create_campaigns_with_timestamps(tenant.id, campaign_count)
 
-      # Get a cursor from the middle
       middle_index = div(campaign_count, 2)
       middle_campaign = Enum.at(campaigns, middle_index)
       cursor = middle_campaign.inserted_at
 
-      # Build query
       query = from c in Campaign, where: c.tenant_id == ^tenant.id
 
-      # Execute pagination with cursor
       result = Pagination.paginate(Repo, query, cursor: cursor, order: order, limit: 100)
 
-      # Verify all returned campaigns are on the correct side of the cursor
       Enum.each(result.data, fn campaign ->
         comparison = DateTime.compare(campaign.inserted_at, cursor)
 
         case order do
           :desc ->
-            # For descending order, all campaigns should be before (less than) the cursor
             assert comparison == :lt,
                    "campaign #{campaign.id} inserted_at should be before cursor in desc order"
 
           :asc ->
-            # For ascending order, all campaigns should be after (greater than) the cursor
             assert comparison == :gt,
                    "campaign #{campaign.id} inserted_at should be after cursor in asc order"
         end
       end)
 
-      # Clean up
       cleanup_campaigns(campaigns)
     end
   end
 
-  # Feature: campaign-management-api, Property 16: Pagination Limit Enforcement
-  # **Validates: Requirements 5.4**
   property "returned campaigns never exceed specified limit with maximum of 100", %{
     tenant: tenant
   } do
@@ -130,33 +105,24 @@ defmodule CampaignsApi.PaginationPropertyTest do
             requested_limit <- integer(1..200),
             max_runs: 100
           ) do
-      # Create campaigns
       campaigns = create_campaigns(tenant.id, campaign_count)
 
-      # Build query
       query = from c in Campaign, where: c.tenant_id == ^tenant.id
 
-      # Execute pagination
       result = Pagination.paginate(Repo, query, limit: requested_limit)
 
-      # Calculate expected limit (capped at 100)
       expected_max_limit = min(requested_limit, 100)
 
-      # Verify returned count doesn't exceed limit
       assert length(result.data) <= expected_max_limit,
              "returned #{length(result.data)} campaigns but limit was #{requested_limit} (max 100)"
 
-      # Also verify it doesn't exceed available campaigns
       assert length(result.data) <= campaign_count,
              "returned more campaigns than exist"
 
-      # Clean up
       cleanup_campaigns(campaigns)
     end
   end
 
-  # Feature: campaign-management-api, Property 17: Pagination Next Cursor
-  # **Validates: Requirements 5.5**
   property "next_cursor is present when more records exist and points to last record's cursor field",
            %{tenant: tenant} do
     check all(
@@ -165,38 +131,30 @@ defmodule CampaignsApi.PaginationPropertyTest do
             cursor_field <- member_of([:inserted_at, :updated_at]),
             max_runs: 100
           ) do
-      # Create campaigns
       campaigns = create_campaigns_with_timestamps(tenant.id, campaign_count)
 
-      # Build query
       query = from c in Campaign, where: c.tenant_id == ^tenant.id
 
-      # Execute pagination
       result = Pagination.paginate(Repo, query, limit: limit, cursor_field: cursor_field)
 
       if campaign_count > limit do
-        # More records exist, so next_cursor should be present
         assert result.has_more == true, "has_more should be true when more records exist"
         assert result.next_cursor != nil, "next_cursor should be present when more records exist"
 
-        # Verify next_cursor matches the last record's cursor field
         last_record = List.last(result.data)
         expected_cursor = Map.get(last_record, cursor_field)
 
         assert result.next_cursor == expected_cursor,
                "next_cursor should match last record's #{cursor_field}"
       else
-        # No more records, next_cursor should be nil
         assert result.has_more == false, "has_more should be false when no more records exist"
         assert result.next_cursor == nil, "next_cursor should be nil when no more records exist"
       end
 
-      # Clean up
       cleanup_campaigns(campaigns)
     end
   end
 
-  # Helper function to create campaigns with default timestamps
   defp create_campaigns(_tenant_id, 0), do: []
 
   defp create_campaigns(tenant_id, count) when count > 0 do
@@ -214,7 +172,6 @@ defmodule CampaignsApi.PaginationPropertyTest do
     end
   end
 
-  # Helper function to create campaigns with staggered timestamps
   defp create_campaigns_with_timestamps(_tenant_id, 0), do: []
 
   defp create_campaigns_with_timestamps(tenant_id, count) when count > 0 do
@@ -230,8 +187,6 @@ defmodule CampaignsApi.PaginationPropertyTest do
         })
         |> Repo.insert()
 
-      # Update timestamps to create a predictable sequence
-      # Each campaign is 60 seconds apart
       timestamp = DateTime.add(base_time, -(i * 60), :second)
 
       campaign
@@ -240,7 +195,6 @@ defmodule CampaignsApi.PaginationPropertyTest do
     end
   end
 
-  # Helper function to clean up campaigns
   defp cleanup_campaigns(campaigns) do
     campaign_ids = Enum.map(campaigns, & &1.id)
     from(c in Campaign, where: c.id in ^campaign_ids) |> Repo.delete_all()

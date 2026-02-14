@@ -5,8 +5,6 @@ defmodule CampaignsApi.Tenants.TenantPropertyTest do
   alias CampaignsApi.Repo
   alias CampaignsApi.Tenants.Tenant
 
-  # Feature: campaign-management-api, Property 4: Tenant Schema Completeness
-  # **Validates: Requirements 2.5, 10.1**
   property "any tenant record contains all required fields" do
     check all(
             tenant_id <- string(:alphanumeric, min_length: 1, max_length: 50),
@@ -25,22 +23,18 @@ defmodule CampaignsApi.Tenants.TenantPropertyTest do
 
       changeset = Tenant.changeset(%Tenant{}, attrs)
 
-      # Only test valid changesets (skip duplicates)
       if changeset.valid? do
         case Repo.insert(changeset) do
           {:ok, tenant} ->
-            # Verify all required fields are present
             assert tenant.id != nil, "id should not be nil"
             assert tenant.name != nil, "name should not be nil"
             assert tenant.status != nil, "status should not be nil"
             assert tenant.inserted_at != nil, "inserted_at should not be nil"
             assert tenant.updated_at != nil, "updated_at should not be nil"
 
-            # Verify deleted_at can be nil or a datetime
             assert is_nil(tenant.deleted_at) or match?(%DateTime{}, tenant.deleted_at),
                    "deleted_at should be nil or a DateTime"
 
-            # Verify the tenant can be retrieved and still has all fields
             retrieved_tenant = Repo.get(Tenant, tenant.id)
             assert retrieved_tenant != nil, "tenant should be retrievable"
             assert retrieved_tenant.id == tenant.id
@@ -51,14 +45,12 @@ defmodule CampaignsApi.Tenants.TenantPropertyTest do
             assert retrieved_tenant.updated_at != nil
 
           {:error, _changeset} ->
-            # Skip duplicate key errors (expected in property tests)
             :ok
         end
       end
     end
   end
 
-  # Helper to generate UTC datetime values
   defp datetime do
     gen all(
           year <- integer(2020..2030),
