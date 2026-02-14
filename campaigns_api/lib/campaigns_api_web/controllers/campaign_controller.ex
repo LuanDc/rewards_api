@@ -162,8 +162,6 @@ defmodule CampaignsApiWeb.CampaignController do
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, params) do
     tenant_id = conn.assigns.tenant.id
-
-    # Convert string keys to atom keys for Ecto
     attrs = atomize_keys(params)
 
     case CampaignManagement.create_campaign(tenant_id, attrs) do
@@ -233,8 +231,6 @@ defmodule CampaignsApiWeb.CampaignController do
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id} = params) do
     tenant_id = conn.assigns.tenant.id
-
-    # Convert string keys to atom keys for Ecto
     attrs = atomize_keys(params)
 
     case CampaignManagement.update_campaign(tenant_id, id, attrs) do
@@ -298,7 +294,6 @@ defmodule CampaignsApiWeb.CampaignController do
   defp atomize_keys(map) when is_map(map) do
     Map.new(map, fn
       {key, value} when is_binary(key) ->
-        # Skip "id" key as it's used for routing
         if key == "id" do
           {key, value}
         else
@@ -311,7 +306,6 @@ defmodule CampaignsApiWeb.CampaignController do
     |> Map.delete("id")
   rescue
     ArgumentError ->
-      # If atom doesn't exist, return original map
       map
   end
 

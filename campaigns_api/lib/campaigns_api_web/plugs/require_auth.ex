@@ -32,8 +32,6 @@ defmodule CampaignsApiWeb.Plugs.RequireAuth do
 
   @spec decode_jwt(binary()) :: {:ok, %{binary() => term()}} | {:error, :invalid_token}
   defp decode_jwt(token) do
-    # Mock implementation - decode without verification
-    # Uses Joken to parse JWT structure
     case Joken.peek_claims(token) do
       {:ok, claims} -> {:ok, claims}
       {:error, _} -> {:error, :invalid_token}

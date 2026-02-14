@@ -11,35 +11,13 @@ defmodule CampaignsApiWeb.SwaggerInfo do
         description: """
         Multi-tenant Campaign Management API with JWT authentication.
 
-        ## Authentication
+        Authentication: All API endpoints require JWT authentication via Bearer token in the Authorization header (Authorization: Bearer <jwt_token>). The JWT token must contain a tenant_id claim that identifies the tenant making the request.
 
-        All API endpoints require JWT authentication via Bearer token in the Authorization header:
+        Multi-Tenancy: This API implements strict tenant isolation. Each tenant can only access their own campaigns. Tenants are automatically provisioned on first access (JIT provisioning).
 
-        ```
-        Authorization: Bearer <jwt_token>
-        ```
+        Pagination: List endpoints support cursor-based pagination with the following query parameters: limit (Number of records to return, default: 50, max: 100) and cursor (Cursor value, ISO8601 datetime, to paginate from).
 
-        The JWT token must contain a `tenant_id` claim that identifies the tenant making the request.
-
-        ## Multi-Tenancy
-
-        This API implements strict tenant isolation. Each tenant can only access their own campaigns.
-        Tenants are automatically provisioned on first access (JIT provisioning).
-
-        ## Pagination
-
-        List endpoints support cursor-based pagination with the following query parameters:
-        - `limit`: Number of records to return (default: 50, max: 100)
-        - `cursor`: Cursor value (ISO8601 datetime) to paginate from
-
-        ## Error Responses
-
-        The API returns structured error responses:
-        - `400 Bad Request`: Invalid request parameters
-        - `401 Unauthorized`: Missing or invalid authentication
-        - `403 Forbidden`: Tenant access denied (suspended or deleted)
-        - `404 Not Found`: Resource not found or belongs to different tenant
-        - `422 Unprocessable Entity`: Validation errors
+        Error Responses: The API returns structured error responses (400 Bad Request: Invalid request parameters, 401 Unauthorized: Missing or invalid authentication, 403 Forbidden: Tenant access denied, 404 Not Found: Resource not found or belongs to different tenant, 422 Unprocessable Entity: Validation errors).
         """,
         contact: %{
           name: "API Support",
