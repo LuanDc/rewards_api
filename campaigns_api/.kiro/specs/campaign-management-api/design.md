@@ -844,27 +844,28 @@ The testing strategy employs both unit tests and property-based tests to ensure 
 
 ### Test Data Generation
 
-The project uses **ExMachina** with **Faker** for test data generation:
+The project uses **ExMachina** for test data generation with a simple, deterministic approach:
 
 **ExMachina**: Factory pattern for creating test data
 - Centralized factory definitions in `test/support/factory.ex`
 - Consistent data creation across all tests
 - Specialized factories for different scenarios (suspended tenants, paused campaigns, etc.)
 - Use `insert/2` for persisted records, `build/2` for structs
+- Simple, deterministic data generation using sequential IDs and predictable values
+- No external dependencies for data generation (similar to property test approach)
 
-**Faker**: Realistic random data generation
-- Company names for tenants
-- Product names for campaigns
-- Lorem ipsum for descriptions
-- Future dates for campaign times
+**Data Generation Strategy**:
+- Sequential IDs: `"tenant-#{System.unique_integer([:positive])}"`
+- Predictable names: `"Tenant #{id}"`, `"Campaign #{id}"`
+- Simple descriptions: `"Description for campaign #{id}"`
+- Deterministic dates: Fixed offsets from current time (e.g., +1 hour, +2 hours)
 
 ```elixir
 # In mix.exs
 defp deps do
   [
-    {:stream_data, "~> 0.6", only: [:test, :dev]},
-    {:ex_machina, "~> 2.7", only: :test},
-    {:faker, "~> 0.18", only: :test}
+    {:stream_data, "~> 1.1", only: [:test, :dev]},
+    {:ex_machina, "~> 2.7", only: :test}
   ]
 end
 ```
@@ -874,9 +875,11 @@ end
 ```elixir
 # Create and persist a tenant
 tenant = insert(:tenant)
+# Result: %Tenant{id: "tenant-1", name: "Tenant 1", status: :active}
 
 # Create a campaign with associations
 campaign = insert(:campaign, tenant: tenant)
+# Result: %Campaign{name: "Campaign 2", description: "Description for campaign 2", ...}
 
 # Create specialized variants
 suspended_tenant = insert(:suspended_tenant)
@@ -884,6 +887,9 @@ paused_campaign = insert(:paused_campaign)
 
 # Build without persisting
 tenant_struct = build(:tenant)
+
+# Override factory defaults
+custom_campaign = insert(:campaign, name: "Custom Name", tenant: tenant)
 
 # Generate JWT token for authentication
 token = CampaignsApi.Factory.jwt_token(tenant.id)
@@ -1017,9 +1023,10 @@ end
 ### Test Data Generators
 
 **ExMachina Factories** (for unit and integration tests):
-- Use Faker for realistic random data
+- Use simple, deterministic data generation
 - Defined in `test/support/factory.ex`
 - Provide consistent, reusable test data patterns
+- Sequential IDs and predictable values for reproducibility
 
 **StreamData Generators** (for property-based tests):
 - Valid tenant_ids (strings)

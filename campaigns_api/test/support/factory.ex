@@ -1,6 +1,7 @@
 defmodule CampaignsApi.Factory do
   @moduledoc """
-  ExMachina factory for generating test data with Faker.
+  ExMachina factory for generating test data.
+  Uses simple, deterministic data generation without external dependencies.
   """
 
   use ExMachina.Ecto, repo: CampaignsApi.Repo
@@ -9,9 +10,11 @@ defmodule CampaignsApi.Factory do
   alias CampaignsApi.Tenants.Tenant
 
   def tenant_factory do
+    id = System.unique_integer([:positive])
+
     %Tenant{
-      id: "tenant-#{System.unique_integer([:positive])}",
-      name: Faker.Company.name(),
+      id: "tenant-#{id}",
+      name: "Tenant #{id}",
       status: :active,
       deleted_at: nil
     }
@@ -35,9 +38,11 @@ defmodule CampaignsApi.Factory do
   end
 
   def campaign_factory do
+    id = System.unique_integer([:positive])
+
     %Campaign{
-      name: Faker.Commerce.product_name(),
-      description: Faker.Lorem.sentence(10..20),
+      name: "Campaign #{id}",
+      description: "Description for campaign #{id}",
       status: :active,
       start_time: nil,
       end_time: nil,
@@ -46,8 +51,9 @@ defmodule CampaignsApi.Factory do
   end
 
   def campaign_with_dates_factory do
-    start_time = Faker.DateTime.forward(30) |> DateTime.truncate(:second)
-    end_time = Faker.DateTime.forward(60) |> DateTime.truncate(:second)
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    start_time = DateTime.add(now, 3600, :second)
+    end_time = DateTime.add(now, 7200, :second)
 
     struct!(
       campaign_factory(),
