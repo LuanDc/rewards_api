@@ -118,7 +118,38 @@ This document specifies the requirements for a Challenge System that enables cam
 
 1. THE System SHALL organize challenge management logic in a Challenges context
 2. THE System SHALL define a Challenges.Challenge schema
-3. THE System SHALL define a Challenges.CampaignChallenge schema
+3. THE System SHALL define a CampaignManagement.CampaignChallenge schema (associations belong to campaign management)
 4. THE System SHALL implement a CampaignsManagmentApiWeb.CampaignChallengeController for association management
 5. THE System SHALL reuse existing authentication plugs (RequireAuth, AssignTenant)
 6. THE System SHALL NOT expose Challenge CRUD operations via HTTP endpoints (reserved for queue-based implementation)
+
+
+### Requirement 10: Challenge Read-Only API Endpoints
+
+**User Story:** As an authenticated client, I want to list and retrieve challenges via HTTP endpoints, so that I can display available challenges to users for campaign association.
+
+#### Acceptance Criteria
+
+1. WHEN an authenticated client sends a GET request to /api/challenges, THE System SHALL return all challenges with cursor-based pagination
+2. WHEN returning challenge lists, THE System SHALL order challenges by inserted_at in descending order (most recent first)
+3. WHEN a client provides a cursor parameter, THE System SHALL return challenges after that cursor position
+4. WHEN a client provides a limit parameter, THE System SHALL return at most that number of challenges (default 50, maximum 100)
+5. WHEN returning paginated results, THE System SHALL include a next_cursor field if more challenges exist
+6. WHEN an authenticated client sends a GET request to /api/challenges/:id, THE System SHALL return the challenge if it exists
+7. WHEN an authenticated client requests a non-existent challenge, THE System SHALL return HTTP 404 Not Found
+8. THE System SHALL return challenge data including: id, name, description, metadata, inserted_at, updated_at
+9. THE System SHALL recognize that challenges are globally available (no tenant filtering required)
+10. THE System SHALL NOT expose POST, PUT, PATCH, or DELETE endpoints for challenges (read-only API)
+
+### Requirement 11: Challenge API Documentation
+
+**User Story:** As an API consumer, I want comprehensive API documentation for challenge endpoints, so that I can understand how to use them.
+
+#### Acceptance Criteria
+
+1. THE System SHALL include PhoenixSwagger configuration in the ChallengeController
+2. THE System SHALL define swagger_definitions for Challenge, ChallengeListResponse, ErrorResponse schemas
+3. THE System SHALL document the GET /api/challenges endpoint with swagger_path including pagination parameters
+4. THE System SHALL document the GET /api/challenges/:id endpoint with swagger_path
+5. THE System SHALL include example responses for all documented endpoints
+6. THE System SHALL regenerate swagger.json after adding challenge endpoints

@@ -21,8 +21,9 @@ This design follows a separation of concerns where:
    - `CampaignChallenge.display_name` = Marketing name (e.g., "Buy+")
 7. **Frequency Format**: String-based to support cron expressions and keywords
 8. **Points System**: Integer allowing positive (rewards) and negative (penalties)
-9. **Challenge Management**: Challenges managed through context functions only (no HTTP endpoints)
+9. **Challenge Management**: Challenges managed through Challenges context (no HTTP endpoints)
 10. **API Exposure**: Only Campaign Challenge associations are exposed via HTTP endpoints
+11. **Architectural Separation**: CampaignChallenge schema belongs to CampaignManagement context since associating challenges with campaigns is a campaign management operation
 
 ## Architecture
 
@@ -279,7 +280,8 @@ defmodule CampaignsManagmentApi.Challenges do
   
   import Ecto.Query
   alias CampaignsManagmentApi.Repo
-  alias CampaignsManagmentApi.Challenges.{Challenge, CampaignChallenge}
+  alias CampaignsManagmentApi.Challenges.Challenge
+  alias CampaignsManagmentApi.CampaignManagement.CampaignChallenge
   alias CampaignsManagmentApi.Pagination
   
   @type pagination_opts :: [limit: pos_integer(), cursor: DateTime.t() | nil]
@@ -359,8 +361,7 @@ defmodule CampaignsManagmentApi.CampaignManagement do
   
   import Ecto.Query
   alias CampaignsManagmentApi.Repo
-  alias CampaignsManagmentApi.CampaignManagement.Campaign
-  alias CampaignsManagmentApi.Challenges.CampaignChallenge
+  alias CampaignsManagmentApi.CampaignManagement.{Campaign, CampaignChallenge}
   alias CampaignsManagmentApi.Pagination
   
   @type pagination_opts :: [limit: pos_integer(), cursor: DateTime.t() | nil]
@@ -475,7 +476,7 @@ defmodule CampaignsManagmentApi.Challenges.Challenge do
     field :description, :string
     field :metadata, :map
     
-    has_many :campaign_challenges, CampaignsManagmentApi.Challenges.CampaignChallenge
+    has_many :campaign_challenges, CampaignsManagmentApi.CampaignManagement.CampaignChallenge
     
     timestamps(type: :utc_datetime)
   end
@@ -493,13 +494,16 @@ end
 ### CampaignChallenge Schema
 
 ```elixir
-defmodule CampaignsManagmentApi.Challenges.CampaignChallenge do
+defmodule CampaignsManagmentApi.CampaignManagement.CampaignChallenge do
   @moduledoc """
   Schema for challenge-campaign associations with configuration.
   
   Represents the N:N relationship between challenges and campaigns,
   storing campaign-specific configuration including evaluation frequency,
   reward points, and marketing-friendly display information.
+  
+  This schema belongs to the CampaignManagement context because associating
+  challenges with campaigns is a campaign management operation.
   """
   
   use Ecto.Schema
@@ -1041,3 +1045,259 @@ end
 ```
 
 This design keeps the schema and associations ready for future evaluation logic without coupling the data model to specific implementations.
+
+
+## Challenge Read-Only API Endpoints
+
+### Overview
+
+In addition to the campaign challenge association endpoints, the system exposes read-only HTTP endpoints for listing and retrieving challenges. These endpoints allow authenticated clients to browse available challenges before associating them with campaigns.
+
+### ChallengeController
+
+```elixir
+defmodule CampaignsApiWeb.ChallengeController do
+  use CampaignsApiWeb, :controller
+  use PhoenixSwagger
+
+  alias CampaignsApi.Challenges
+
+  def swagger_definitions do
+    %{
+      Challenge:
+        swagger_schema do
+          title("Challenge")
+          description("A reusable challenge evaluation mechanism")
+
+          properties do
+            id(:string, "Challenge UUID", required: true, format: "uuid")
+            name(:string, "Challenge name", required: true, minLength: 3)
+            description(:string, "Challenge description")
+            metadata(:object, "Challenge metadata (flexible JSONB)")
+            inserted_at(:string, "Creation timestamp", format: "date-time")
+            updated_at(:string, "Last update timestamp", format: "date-time")
+          end
+
+          example(%{
+            id: "550e8400-e29b-41d4-a716-446655440000",
+            name: "TransactionChecker",
+            description: "Validates customer transaction patterns",
+            metadata: %{
+              "type" => "transaction_validation",
+              "threshold" => 100
+            },
+            inserted_at: "2024-05-01T10:00:00Z",
+            updated_at: "2024-05-01T10:00:00Z"
+          })
+        end,
+      ChallengeListResponse:
+        swagger_schema do
+          title("Challenge List Response")
+          description("Paginated list of challenges")
+
+          properties do
+            data(Schema.array(:Challenge), "List of challenges")
+            next_cursor(:string, "Cursor for next page", format: "date-time")
+            has_more(:boolean, "Whether more results are available")
+          end
+
+          example(%{
+            data: [
+              %{
+                id: "550e8400-e29b-41d4-a716-446655440000",
+                name: "TransactionChecker",
+                description: "Validates customer transaction patterns"
+              }
+            ],
+            next_cursor: "2024-05-01T10:00:00Z",
+            has_more: true
+          })
+        end,
+      ErrorResponse:
+        swagger_schema do
+          title("Error Response")
+          description("Error response")
+
+          properties do
+            error(:string, "Error message")
+          end
+
+          example(%{
+            error: "Challenge not found"
+          })
+        end
+    }
+  end
+
+  swagger_path :index do
+    get("/challenges")
+    summary("List challenges")
+    description("Returns a paginated list of all available challenges")
+    tag("Challenge Management")
+    security([%{Bearer: []}])
+
+    parameters do
+      limit(:query, :integer, "Number of records to return (max: 100)", required: false)
+      cursor(:query, :string, "Cursor for pagination (ISO8601 datetime)", required: false)
+    end
+
+    response(200, "Success", Schema.ref(:ChallengeListResponse))
+    response(401, "Unauthorized", Schema.ref(:ErrorResponse))
+    response(403, "Forbidden", Schema.ref(:ErrorResponse))
+  end
+
+  @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def index(conn, params) do
+    opts = [
+      limit: parse_int(params["limit"]),
+      cursor: parse_datetime(params["cursor"])
+    ]
+
+    result = Challenges.list_challenges(opts)
+    json(conn, result)
+  end
+
+  swagger_path :show do
+    get("/challenges/{id}")
+    summary("Get challenge")
+    description("Returns a single challenge by ID")
+    tag("Challenge Management")
+    security([%{Bearer: []}])
+
+    parameters do
+      id(:path, :string, "Challenge ID", required: true, format: "uuid")
+    end
+
+    response(200, "Success", Schema.ref(:Challenge))
+    response(401, "Unauthorized", Schema.ref(:ErrorResponse))
+    response(403, "Forbidden", Schema.ref(:ErrorResponse))
+    response(404, "Not Found", Schema.ref(:ErrorResponse))
+  end
+
+  @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def show(conn, %{"id" => id}) do
+    case Challenges.get_challenge(id) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Challenge not found"})
+
+      challenge ->
+        json(conn, challenge)
+    end
+  end
+
+  # Helper functions
+
+  @spec parse_int(String.t() | integer() | nil) :: integer() | nil
+  defp parse_int(nil), do: nil
+  defp parse_int(""), do: nil
+  defp parse_int(str) when is_binary(str) do
+    case Integer.parse(str) do
+      {int, _} -> int
+      :error -> nil
+    end
+  end
+  defp parse_int(int) when is_integer(int), do: int
+
+  @spec parse_datetime(String.t() | nil) :: DateTime.t() | nil
+  defp parse_datetime(nil), do: nil
+  defp parse_datetime(str) when is_binary(str) do
+    case DateTime.from_iso8601(str) do
+      {:ok, dt, _} -> dt
+      _ -> nil
+    end
+  end
+end
+```
+
+### Router Updates
+
+```elixir
+scope "/api", CampaignsApiWeb do
+  pipe_through [:api, :authenticated]
+
+  resources "/campaigns", CampaignController, except: [:new, :edit] do
+    resources "/challenges", CampaignChallengeController, except: [:new, :edit]
+  end
+
+  # Read-only challenge endpoints
+  resources "/challenges", ChallengeController, only: [:index, :show]
+end
+```
+
+### API Response Examples
+
+**List Challenges Response**:
+```json
+{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "TransactionChecker",
+      "description": "Validates customer transaction patterns",
+      "metadata": {
+        "type": "transaction_validation",
+        "threshold": 100
+      },
+      "inserted_at": "2024-05-01T10:00:00Z",
+      "updated_at": "2024-05-01T10:00:00Z"
+    }
+  ],
+  "next_cursor": "2024-05-01T10:00:00Z",
+  "has_more": true
+}
+```
+
+**Get Challenge Response**:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "TransactionChecker",
+  "description": "Validates customer transaction patterns",
+  "metadata": {
+    "type": "transaction_validation",
+    "threshold": 100
+  },
+  "inserted_at": "2024-05-01T10:00:00Z",
+  "updated_at": "2024-05-01T10:00:00Z"
+}
+```
+
+### Correctness Properties for Challenge API
+
+**Property 11: List Endpoint Returns Complete Challenge Data**
+
+*For any* request to GET /api/challenges, the response should contain a paginated list where each challenge includes all required fields: id, name, description, metadata, inserted_at, updated_at.
+
+**Validates: Requirements 10.1, 10.8**
+
+**Property 12: Challenges Ordered by Insertion Time**
+
+*For any* request to GET /api/challenges, the returned challenges should be ordered by inserted_at in descending order (most recent first).
+
+**Validates: Requirements 10.2**
+
+**Property 13: Cursor Pagination Filters Correctly**
+
+*For any* request to GET /api/challenges with a cursor parameter, all returned challenges should have inserted_at timestamps before the cursor value.
+
+**Validates: Requirements 10.3**
+
+**Property 14: Limit Parameter Enforced**
+
+*For any* request to GET /api/challenges with a limit parameter, the number of returned challenges should not exceed the specified limit, with a maximum of 100.
+
+**Validates: Requirements 10.4**
+
+**Property 15: Get Challenge by ID Returns Complete Data**
+
+*For any* existing challenge ID, a request to GET /api/challenges/:id should return the challenge with all required fields.
+
+**Validates: Requirements 10.6, 10.8**
+
+**Property 16: Error Responses Formatted as JSON**
+
+*For any* error condition (404, 401, 403), the response should be formatted as structured JSON with an "error" field.
+
+**Validates: Requirements 10.7**

@@ -45,7 +45,7 @@ This implementation plan breaks down the Challenge System into incremental codin
 
 - [x] 3. Implement CampaignChallenge schema
   - [x] 3.1 Create CampaignChallenge schema
-    - Define Challenges.CampaignChallenge schema with all fields
+    - Define CampaignManagement.CampaignChallenge schema with all fields (belongs to CampaignManagement context)
     - Implement changeset with validations (display_name min 3 chars, frequency validation, points required)
     - Add custom validate_evaluation_frequency/1 function
     - Add Jason.Encoder derivation for JSON serialization
@@ -308,6 +308,91 @@ This implementation plan breaks down the Challenge System into incremental codin
     - Fix all type warnings
     - Ensure zero Dialyzer warnings
     - _Requirements: Code Quality_
+
+- [x] 13. Implement Challenge API Endpoints (Read-Only)
+  - [x] 13.1 Create ChallengeController with Swagger documentation
+    - Create `lib/campaigns_api_web/controllers/challenge_controller.ex`
+    - Implement `index/2` action for GET /api/challenges
+    - Implement `show/2` action for GET /api/challenges/:id
+    - Add `swagger_definitions/0` with Challenge, ChallengeListResponse, ErrorResponse schemas
+    - Add `swagger_path` documentation for both endpoints
+    - Include helper functions: `parse_int/1`, `parse_datetime/1`
+    - Follow exact same patterns as CampaignController
+    - _Requirements: 1.1, 1.4, 4.1, 4.2, 4.3, 4.4, 4.5, 4.7, 5.1, 5.3, 9.1, 9.4, 10.1, 10.2, 10.3, 10.4, 10.5_
+
+  - [x] 13.2 Add challenge routes to router
+    - Modify `lib/campaigns_api_web/router.ex`
+    - Add `resources "/challenges", ChallengeController, only: [:index, :show]` to authenticated scope
+    - Ensure routes use existing `:api` and `:authenticated` pipelines
+    - _Requirements: 7.5, 9.3_
+
+  - [x] 13.3 Write unit tests for ChallengeController
+    - Create `test/campaigns_api_web/controllers/challenge_controller_test.exs`
+    - Test successful list challenges (GET /api/challenges)
+    - Test successful get challenge by ID (GET /api/challenges/:id)
+    - Test 404 for non-existent challenge ID
+    - Test POST /api/challenges returns 404 or 405
+    - Test PUT /api/challenges/:id returns 404 or 405
+    - Test PATCH /api/challenges/:id returns 404 or 405
+    - Test DELETE /api/challenges/:id returns 404 or 405
+    - Test pagination parameters (limit, cursor)
+    - Test response JSON structure
+    - Use ExMachina for test data
+    - _Requirements: 5.2, 7.1, 7.2, 7.3, 7.4, 8.3, 8.4_
+
+  - [x] 13.4 Write property tests for ChallengeController
+    - [x] 13.4.1 Write property test for complete challenge data in list response
+      - **Property: List Endpoint Returns Complete Challenge Data**
+      - **Validates: Requirements 3.4, 4.1**
+    
+    - [x] 13.4.2 Write property test for challenge ordering
+      - **Property: Challenges Ordered by Insertion Time**
+      - **Validates: Requirements 4.2**
+    
+    - [x] 13.4.3 Write property test for cursor pagination
+      - **Property: Cursor Pagination Filters Correctly**
+      - **Validates: Requirements 4.3**
+    
+    - [x] 13.4.4 Write property test for limit enforcement
+      - **Property: Limit Parameter Enforced**
+      - **Validates: Requirements 4.4**
+    
+    - [x] 13.4.5 Write property test for pagination metadata
+      - **Property: Pagination Metadata Accuracy**
+      - **Validates: Requirements 4.5**
+    
+    - [x] 13.4.6 Write property test for global challenge availability
+      - **Property: Global Challenge Availability**
+      - **Validates: Requirements 4.9, 6.1, 6.2**
+    
+    - [x] 13.4.7 Write property test for get challenge by ID
+      - **Property: Get Challenge by ID Returns Complete Data**
+      - **Validates: Requirements 5.1, 5.3**
+    
+    - [x] 13.4.8 Write property test for error response format
+      - **Property: Error Responses Formatted as JSON**
+      - **Validates: Requirements 8.5**
+
+  - [x] 13.5 Generate and verify Swagger documentation
+    - Run `mix phx.swagger.generate` to update swagger.json
+    - Verify `priv/static/swagger.json` includes /api/challenges endpoints
+    - Verify Challenge schema definitions are present
+    - Verify pagination parameters documented
+    - Test Swagger UI at /api/swagger displays challenge endpoints
+    - _Requirements: 10.6_
+
+  - [x] 13.6 Run static analysis and fix issues
+    - Run `mix credo --strict` and fix all issues
+    - Run `mix dialyzer` and fix all type warnings
+    - Ensure all public functions have `@spec` annotations
+    - Ensure controller follows Elixir quality standards
+    - _Requirements: 9.4_
+
+  - [x] 13.7 Final checkpoint - Ensure all tests pass
+    - Run `mix test` and verify all tests pass
+    - Verify property tests run minimum 20 iterations (optimized for speed)
+    - Verify unit tests cover all edge cases
+    - Verify Swagger documentation is complete
 
 ## Notes
 
