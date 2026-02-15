@@ -10,190 +10,6 @@
   },
   "host": "localhost:4000",
   "definitions": {
-    "Campaign": {
-      "description": "A reward campaign belonging to a tenant",
-      "example": {
-        "description": "A great summer promotion",
-        "end_time": "2024-08-31T23:59:59Z",
-        "id": "550e8400-e29b-41d4-a716-446655440000",
-        "inserted_at": "2024-05-01T10:00:00Z",
-        "name": "Summer Sale Campaign",
-        "start_time": "2024-06-01T00:00:00Z",
-        "status": "active",
-        "tenant_id": "tenant-123",
-        "updated_at": "2024-05-01T10:00:00Z"
-      },
-      "properties": {
-        "description": {
-          "description": "Campaign description",
-          "type": "string"
-        },
-        "end_time": {
-          "description": "Campaign end time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "id": {
-          "description": "Campaign UUID",
-          "format": "uuid",
-          "type": "string"
-        },
-        "inserted_at": {
-          "description": "Creation timestamp",
-          "format": "date-time",
-          "type": "string"
-        },
-        "name": {
-          "description": "Campaign name",
-          "minLength": 3,
-          "type": "string"
-        },
-        "start_time": {
-          "description": "Campaign start time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "default": "active",
-          "description": "Campaign status",
-          "enum": [
-            "active",
-            "paused"
-          ],
-          "type": "string"
-        },
-        "tenant_id": {
-          "description": "Tenant ID",
-          "type": "string"
-        },
-        "updated_at": {
-          "description": "Last update timestamp",
-          "format": "date-time",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name",
-        "tenant_id",
-        "id"
-      ],
-      "title": "Campaign",
-      "type": "object"
-    },
-    "CampaignListResponse": {
-      "description": "Paginated list of campaigns",
-      "example": {
-        "data": [
-          {
-            "id": "550e8400-e29b-41d4-a716-446655440000",
-            "name": "Summer Sale Campaign",
-            "status": "active",
-            "tenant_id": "tenant-123"
-          }
-        ],
-        "has_more": true,
-        "next_cursor": "2024-05-01T10:00:00Z"
-      },
-      "properties": {
-        "data": {
-          "description": "List of campaigns",
-          "items": {
-            "$ref": "#/definitions/Campaign"
-          },
-          "type": "array"
-        },
-        "has_more": {
-          "description": "Whether more results are available",
-          "type": "boolean"
-        },
-        "next_cursor": {
-          "description": "Cursor for next page",
-          "format": "date-time",
-          "type": "string"
-        }
-      },
-      "title": "Campaign List Response",
-      "type": "object"
-    },
-    "CampaignRequest": {
-      "description": "Campaign creation/update request",
-      "example": {
-        "description": "A great summer promotion",
-        "end_time": "2024-08-31T23:59:59Z",
-        "name": "Summer Sale Campaign",
-        "start_time": "2024-06-01T00:00:00Z",
-        "status": "active"
-      },
-      "properties": {
-        "description": {
-          "description": "Campaign description",
-          "type": "string"
-        },
-        "end_time": {
-          "description": "Campaign end time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "name": {
-          "description": "Campaign name",
-          "minLength": 3,
-          "type": "string"
-        },
-        "start_time": {
-          "description": "Campaign start time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "description": "Campaign status",
-          "enum": [
-            "active",
-            "paused"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "Campaign Request",
-      "type": "object"
-    },
-    "ErrorResponse": {
-      "description": "Error response",
-      "example": {
-        "error": "Campaign not found"
-      },
-      "properties": {
-        "error": {
-          "description": "Error message",
-          "type": "string"
-        }
-      },
-      "title": "Error Response",
-      "type": "object"
-    },
-    "ValidationErrorResponse": {
-      "description": "Validation error response",
-      "example": {
-        "errors": {
-          "name": [
-            "should be at least 3 character(s)"
-          ],
-          "start_time": [
-            "must be before end_time"
-          ]
-        }
-      },
-      "properties": {
-        "errors": {
-          "description": "Validation errors by field",
-          "type": "object"
-        }
-      },
-      "title": "Validation Error Response",
-      "type": "object"
-    },
     "CampaignChallenge": {
       "description": "Association between a campaign and a challenge with configuration",
       "example": {
@@ -269,57 +85,6 @@
       "title": "Campaign Challenge",
       "type": "object"
     },
-    "CampaignChallengeErrorResponse": {
-      "description": "Error response",
-      "example": {
-        "error": "Campaign challenge not found"
-      },
-      "properties": {
-        "error": {
-          "description": "Error message",
-          "type": "string"
-        }
-      },
-      "title": "Error Response",
-      "type": "object"
-    },
-    "CampaignChallengeListResponse": {
-      "description": "Paginated list of campaign challenges",
-      "example": {
-        "data": [
-          {
-            "campaign_id": "660e8400-e29b-41d4-a716-446655440001",
-            "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
-            "display_name": "Buy+ Challenge",
-            "evaluation_frequency": "daily",
-            "id": "550e8400-e29b-41d4-a716-446655440000",
-            "reward_points": 100
-          }
-        ],
-        "has_more": true,
-        "next_cursor": "2024-05-01T10:00:00Z"
-      },
-      "properties": {
-        "data": {
-          "description": "List of campaign challenges",
-          "items": {
-            "$ref": "#/definitions/CampaignChallenge"
-          },
-          "type": "array"
-        },
-        "has_more": {
-          "description": "Whether more results are available",
-          "type": "boolean"
-        },
-        "next_cursor": {
-          "description": "Cursor for next page",
-          "format": "date-time",
-          "type": "string"
-        }
-      },
-      "title": "Campaign Challenge List Response",
-      "type": "object"
-    },
     "CampaignChallengeRequest": {
       "description": "Campaign challenge creation/update request",
       "example": {
@@ -369,6 +134,243 @@
       "title": "Campaign Challenge Request",
       "type": "object"
     },
+    "Campaign": {
+      "description": "A reward campaign belonging to a tenant",
+      "example": {
+        "description": "A great summer promotion",
+        "end_time": "2024-08-31T23:59:59Z",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "inserted_at": "2024-05-01T10:00:00Z",
+        "name": "Summer Sale Campaign",
+        "start_time": "2024-06-01T00:00:00Z",
+        "status": "active",
+        "tenant_id": "tenant-123",
+        "updated_at": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "description": {
+          "description": "Campaign description",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "Campaign end time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "id": {
+          "description": "Campaign UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "inserted_at": {
+          "description": "Creation timestamp",
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "description": "Campaign name",
+          "minLength": 3,
+          "type": "string"
+        },
+        "start_time": {
+          "description": "Campaign start time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "default": "active",
+          "description": "Campaign status",
+          "enum": [
+            "active",
+            "paused"
+          ],
+          "type": "string"
+        },
+        "tenant_id": {
+          "description": "Tenant ID",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "Last update timestamp",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "tenant_id",
+        "id"
+      ],
+      "title": "Campaign",
+      "type": "object"
+    },
+    "CampaignRequest": {
+      "description": "Campaign creation/update request",
+      "example": {
+        "description": "A great summer promotion",
+        "end_time": "2024-08-31T23:59:59Z",
+        "name": "Summer Sale Campaign",
+        "start_time": "2024-06-01T00:00:00Z",
+        "status": "active"
+      },
+      "properties": {
+        "description": {
+          "description": "Campaign description",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "Campaign end time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "description": "Campaign name",
+          "minLength": 3,
+          "type": "string"
+        },
+        "start_time": {
+          "description": "Campaign start time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "description": "Campaign status",
+          "enum": [
+            "active",
+            "paused"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Campaign Request",
+      "type": "object"
+    },
+    "CampaignChallengeListResponse": {
+      "description": "Paginated list of campaign challenges",
+      "example": {
+        "data": [
+          {
+            "campaign_id": "660e8400-e29b-41d4-a716-446655440001",
+            "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
+            "display_name": "Buy+ Challenge",
+            "evaluation_frequency": "daily",
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "reward_points": 100
+          }
+        ],
+        "has_more": true,
+        "next_cursor": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "data": {
+          "description": "List of campaign challenges",
+          "items": {
+            "$ref": "#/definitions/CampaignChallenge"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "description": "Whether more results are available",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "description": "Cursor for next page (null if no more pages)",
+          "format": "date-time",
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "title": "Campaign Challenge List Response",
+      "type": "object"
+    },
+    "CampaignListResponse": {
+      "description": "Paginated list of campaigns",
+      "example": {
+        "data": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "Summer Sale Campaign",
+            "status": "active",
+            "tenant_id": "tenant-123"
+          }
+        ],
+        "has_more": true,
+        "next_cursor": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "data": {
+          "description": "List of campaigns",
+          "items": {
+            "$ref": "#/definitions/Campaign"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "description": "Whether more results are available",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "description": "Cursor for next page (null if no more pages)",
+          "format": "date-time",
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "title": "Campaign List Response",
+      "type": "object"
+    },
+    "ErrorResponse": {
+      "description": "Error response",
+      "example": {
+        "error": "Campaign not found"
+      },
+      "properties": {
+        "error": {
+          "description": "Error message",
+          "type": "string"
+        }
+      },
+      "title": "Error Response",
+      "type": "object"
+    },
+    "ValidationErrorResponse": {
+      "description": "Validation error response",
+      "example": {
+        "errors": {
+          "name": [
+            "should be at least 3 character(s)"
+          ],
+          "start_time": [
+            "must be before end_time"
+          ]
+        }
+      },
+      "properties": {
+        "errors": {
+          "description": "Validation errors by field",
+          "type": "object"
+        }
+      },
+      "title": "Validation Error Response",
+      "type": "object"
+    },
+    "CampaignChallengeErrorResponse": {
+      "description": "Error response",
+      "example": {
+        "error": "Campaign challenge not found"
+      },
+      "properties": {
+        "error": {
+          "description": "Error message",
+          "type": "string"
+        }
+      },
+      "title": "Error Response",
+      "type": "object"
+    },
     "CampaignChallengeValidationErrorResponse": {
       "description": "Validation error response",
       "example": {
@@ -388,6 +390,91 @@
         }
       },
       "title": "Validation Error Response",
+      "type": "object"
+    },
+    "Challenge": {
+      "description": "A reusable challenge evaluation mechanism",
+      "example": {
+        "description": "Validates customer transaction patterns",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "inserted_at": "2024-05-01T10:00:00Z",
+        "metadata": {
+          "threshold": 100,
+          "type": "transaction_validation"
+        },
+        "name": "TransactionChecker",
+        "updated_at": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "description": {
+          "description": "Challenge description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Challenge UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "inserted_at": {
+          "description": "Creation timestamp",
+          "format": "date-time",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Challenge metadata (flexible JSONB)",
+          "type": "object"
+        },
+        "name": {
+          "description": "Challenge name",
+          "minLength": 3,
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "Last update timestamp",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "id"
+      ],
+      "title": "Challenge",
+      "type": "object"
+    },
+    "ChallengeListResponse": {
+      "description": "Paginated list of challenges",
+      "example": {
+        "data": [
+          {
+            "description": "Validates customer transaction patterns",
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "TransactionChecker"
+          }
+        ],
+        "has_more": true,
+        "next_cursor": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "data": {
+          "description": "List of challenges",
+          "items": {
+            "$ref": "#/definitions/Challenge"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "description": "Whether more results are available",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "description": "Cursor for next page (null if no more pages)",
+          "format": "date-time",
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "title": "Challenge List Response",
       "type": "object"
     }
   },
@@ -961,10 +1048,111 @@
           "Campaign Management"
         ]
       }
+    },
+    "/challenges": {
+      "get": {
+        "description": "Returns a paginated list of all available challenges",
+        "operationId": "CampaignsApiWeb.ChallengeController.index",
+        "parameters": [
+          {
+            "description": "Number of records to return (max: 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "description": "Cursor for pagination (ISO8601 datetime)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ChallengeListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "List challenges",
+        "tags": [
+          "Challenge Management"
+        ]
+      }
+    },
+    "/challenges/{id}": {
+      "get": {
+        "description": "Returns a single challenge by ID",
+        "operationId": "CampaignsApiWeb.ChallengeController.show",
+        "parameters": [
+          {
+            "description": "Challenge ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Challenge"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get challenge",
+        "tags": [
+          "Challenge Management"
+        ]
+      }
     }
   },
   "swagger": "2.0",
-  "basePath": "/api",
   "security": [
     {
       "Bearer": []
@@ -977,5 +1165,6 @@
       "type": "apiKey",
       "description": "JWT Bearer token. Format: Bearer <token>"
     }
-  }
+  },
+  "basePath": "/api"
 }

@@ -64,6 +64,8 @@ defmodule CampaignsApiWeb.Router do
     resources "/campaigns", CampaignController, except: [:new, :edit] do
       resources "/challenges", CampaignChallengeController, except: [:new, :edit]
     end
+
+    resources "/challenges", ChallengeController, only: [:index, :show]
   end
 
   if Application.compile_env(:campaigns_api, :dev_routes) do

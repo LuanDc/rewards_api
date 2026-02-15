@@ -63,7 +63,7 @@ defmodule CampaignsApiWeb.CampaignController do
 
           properties do
             data(Schema.array(:Campaign), "List of campaigns")
-            next_cursor(:string, "Cursor for next page", format: "date-time")
+            next_cursor(:string, "Cursor for next page (null if no more pages)", format: "date-time", "x-nullable": true)
             has_more(:boolean, "Whether more results are available")
           end
 
