@@ -14,10 +14,12 @@ defmodule CampaignsApi.CampaignManagement.CampaignParticipant do
           id: Ecto.UUID.t(),
           participant_id: Ecto.UUID.t(),
           campaign_id: Ecto.UUID.t(),
-          participant: CampaignsApi.CampaignManagement.Participant.t()
-                       | Ecto.Association.NotLoaded.t(),
-          campaign: CampaignsApi.CampaignManagement.Campaign.t()
-                    | Ecto.Association.NotLoaded.t(),
+          participant:
+            CampaignsApi.CampaignManagement.Participant.t()
+            | Ecto.Association.NotLoaded.t(),
+          campaign:
+            CampaignsApi.CampaignManagement.Campaign.t()
+            | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
         }

@@ -15,12 +15,15 @@ defmodule CampaignsApi.CampaignManagement.ParticipantChallenge do
           participant_id: Ecto.UUID.t(),
           challenge_id: Ecto.UUID.t(),
           campaign_id: Ecto.UUID.t(),
-          participant: CampaignsApi.CampaignManagement.Participant.t()
-                       | Ecto.Association.NotLoaded.t(),
-          challenge: CampaignsApi.Challenges.Challenge.t()
-                     | Ecto.Association.NotLoaded.t(),
-          campaign: CampaignsApi.CampaignManagement.Campaign.t()
-                    | Ecto.Association.NotLoaded.t(),
+          participant:
+            CampaignsApi.CampaignManagement.Participant.t()
+            | Ecto.Association.NotLoaded.t(),
+          challenge:
+            CampaignsApi.Challenges.Challenge.t()
+            | Ecto.Association.NotLoaded.t(),
+          campaign:
+            CampaignsApi.CampaignManagement.Campaign.t()
+            | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
         }

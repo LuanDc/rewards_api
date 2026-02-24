@@ -151,7 +151,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn, challenge: challenge} do
+    test "returns 404 when campaign belongs to different tenant", %{
+      conn: conn,
+      challenge: challenge
+    } do
       other_tenant = insert(:tenant)
       other_campaign = insert(:campaign, tenant: other_tenant)
 
@@ -357,7 +360,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign challenge not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn, challenge: challenge} do
+    test "returns 404 when campaign belongs to different tenant", %{
+      conn: conn,
+      challenge: challenge
+    } do
       other_tenant = insert(:tenant)
       other_campaign = insert(:campaign, tenant: other_tenant)
       other_cc = insert(:campaign_challenge, campaign: other_campaign, challenge: challenge)
@@ -423,7 +429,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign challenge not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn, challenge: challenge} do
+    test "returns 404 when campaign belongs to different tenant", %{
+      conn: conn,
+      challenge: challenge
+    } do
       other_tenant = insert(:tenant)
       other_campaign = insert(:campaign, tenant: other_tenant)
       other_cc = insert(:campaign_challenge, campaign: other_campaign, challenge: challenge)
@@ -459,7 +468,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign challenge not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn, challenge: challenge} do
+    test "returns 404 when campaign belongs to different tenant", %{
+      conn: conn,
+      challenge: challenge
+    } do
       other_tenant = insert(:tenant)
       other_campaign = insert(:campaign, tenant: other_tenant)
       other_cc = insert(:campaign_challenge, campaign: other_campaign, challenge: challenge)
@@ -473,9 +485,11 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
   describe "property-based tests" do
     @tag :property
     property "campaign challenge responses include all required fields" do
-      check all display_name <- string(:alphanumeric, min_length: 3, max_length: 50),
-                reward_points <- integer(-1000..1000),
-                frequency <- member_of(["daily", "weekly", "monthly", "on_event"]) do
+      check all(
+              display_name <- string(:alphanumeric, min_length: 3, max_length: 50),
+              reward_points <- integer(-1000..1000),
+              frequency <- member_of(["daily", "weekly", "monthly", "on_event"])
+            ) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -517,14 +531,20 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
     @tag :property
     property "successful campaign challenge deletion returns HTTP 204 No Content" do
-      check all display_name <- string(:alphanumeric, min_length: 3, max_length: 50) do
+      check all(display_name <- string(:alphanumeric, min_length: 3, max_length: 50)) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
         campaign = insert(:campaign, tenant: tenant)
         challenge = insert(:challenge)
 
-        cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge, display_name: display_name)
+        cc =
+          insert(:campaign_challenge,
+            campaign: campaign,
+            challenge: challenge,
+            display_name: display_name
+          )
+
         conn = delete(conn, ~p"/api/campaigns/#{campaign.id}/challenges/#{cc.id}")
         assert response(conn, 204) == ""
         assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id) == nil
@@ -533,7 +553,7 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
     @tag :property
     property "validation errors return structured JSON with 422 status" do
-      check all display_name <- string(:alphanumeric, min_length: 0, max_length: 2) do
+      check all(display_name <- string(:alphanumeric, min_length: 0, max_length: 2)) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -556,8 +576,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
     @tag :property
     property "invalid evaluation frequency returns structured JSON with 422 status" do
-      check all invalid_frequency <- string(:alphanumeric, min_length: 1, max_length: 20),
-                invalid_frequency not in ["daily", "weekly", "monthly", "on_event"] do
+      check all(
+              invalid_frequency <- string(:alphanumeric, min_length: 1, max_length: 20),
+              invalid_frequency not in ["daily", "weekly", "monthly", "on_event"]
+            ) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -585,7 +607,7 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
     @tag :property
     property "404 errors return structured JSON" do
-      check all _iteration <- integer(1..10) do
+      check all(_iteration <- integer(1..10)) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -601,7 +623,7 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
     @tag :property
     property "reward points can be positive, negative, or zero" do
-      check all reward_points <- integer(-10_000..10_000) do
+      check all(reward_points <- integer(-10_000..10_000)) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -626,11 +648,13 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
     @tag :property
     property "cron expressions with 5 parts are accepted" do
-      check all part1 <- string(:alphanumeric, min_length: 1, max_length: 2),
-                part2 <- string(:alphanumeric, min_length: 1, max_length: 2),
-                part3 <- string(:alphanumeric, min_length: 1, max_length: 2),
-                part4 <- string(:alphanumeric, min_length: 1, max_length: 2),
-                part5 <- string(:alphanumeric, min_length: 1, max_length: 2) do
+      check all(
+              part1 <- string(:alphanumeric, min_length: 1, max_length: 2),
+              part2 <- string(:alphanumeric, min_length: 1, max_length: 2),
+              part3 <- string(:alphanumeric, min_length: 1, max_length: 2),
+              part4 <- string(:alphanumeric, min_length: 1, max_length: 2),
+              part5 <- string(:alphanumeric, min_length: 1, max_length: 2)
+            ) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")

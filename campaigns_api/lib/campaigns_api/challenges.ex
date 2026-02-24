@@ -44,7 +44,7 @@ defmodule CampaignsApi.Challenges do
   """
   @spec list_challenges(pagination_opts()) :: pagination_result()
   def list_challenges(opts \\ []) do
-    query = from c in Challenge
+    query = from(c in Challenge)
     Pagination.paginate(Repo, query, opts)
   end
 
@@ -107,7 +107,9 @@ defmodule CampaignsApi.Challenges do
           {:ok, Challenge.t()} | {:error, :not_found | Ecto.Changeset.t()}
   def update_challenge(challenge_id, attrs) do
     case get_challenge(challenge_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       challenge ->
         challenge
         |> Challenge.changeset(attrs)

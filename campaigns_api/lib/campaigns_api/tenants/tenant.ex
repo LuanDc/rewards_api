@@ -16,7 +16,8 @@ defmodule CampaignsApi.Tenants.Tenant do
           name: String.t(),
           status: :active | :suspended | :deleted,
           deleted_at: DateTime.t() | nil,
-          campaigns: [CampaignsApi.CampaignManagement.Campaign.t()] | Ecto.Association.NotLoaded.t(),
+          campaigns:
+            [CampaignsApi.CampaignManagement.Campaign.t()] | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
         }

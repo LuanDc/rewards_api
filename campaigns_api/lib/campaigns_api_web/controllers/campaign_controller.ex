@@ -63,7 +63,12 @@ defmodule CampaignsApiWeb.CampaignController do
 
           properties do
             data(Schema.array(:Campaign), "List of campaigns")
-            next_cursor(:string, "Cursor for next page (null if no more pages)", format: "date-time", "x-nullable": true)
+
+            next_cursor(:string, "Cursor for next page (null if no more pages)",
+              format: "date-time",
+              "x-nullable": true
+            )
+
             has_more(:boolean, "Whether more results are available")
           end
 
@@ -312,12 +317,14 @@ defmodule CampaignsApiWeb.CampaignController do
   @spec parse_int(String.t() | integer() | nil) :: integer() | nil
   defp parse_int(nil), do: nil
   defp parse_int(""), do: nil
+
   defp parse_int(str) when is_binary(str) do
     case Integer.parse(str) do
       {int, _} -> int
       :error -> nil
     end
   end
+
   defp parse_int(int) when is_integer(int), do: int
 
   @spec parse_datetime(String.t() | nil) :: DateTime.t() | nil

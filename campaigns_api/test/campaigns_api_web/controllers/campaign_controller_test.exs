@@ -43,7 +43,10 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
       # Start time only
       start_time = DateTime.utc_now() |> DateTime.to_iso8601()
-      conn2 = post(conn, ~p"/api/campaigns", %{"name" => "Campaign 2", "start_time" => start_time})
+
+      conn2 =
+        post(conn, ~p"/api/campaigns", %{"name" => "Campaign 2", "start_time" => start_time})
+
       assert json_response(conn2, 201)["start_time"] != nil
       assert json_response(conn2, 201)["end_time"] == nil
 
@@ -312,7 +315,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
   describe "property-based tests" do
     @tag :property
     property "successful campaign deletion returns HTTP 204 No Content" do
-      check all name <- string(:alphanumeric, min_length: 3, max_length: 50) do
+      check all(name <- string(:alphanumeric, min_length: 3, max_length: 50)) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -326,7 +329,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
     @tag :property
     property "validation errors return structured JSON with 422 status" do
-      check all name <- string(:alphanumeric, min_length: 0, max_length: 2) do
+      check all(name <- string(:alphanumeric, min_length: 0, max_length: 2)) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -340,8 +343,10 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
     @tag :property
     property "date validation errors return structured JSON with 422 status" do
-      check all start_offset <- integer(1..100),
-                end_offset <- integer(-100..-1) do
+      check all(
+              start_offset <- integer(1..100),
+              end_offset <- integer(-100..-1)
+            ) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
@@ -365,7 +370,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
     @tag :property
     property "404 errors return structured JSON" do
-      check all _iteration <- integer(1..10) do
+      check all(_iteration <- integer(1..10)) do
         tenant = insert(:tenant)
         token = jwt_token(tenant.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")

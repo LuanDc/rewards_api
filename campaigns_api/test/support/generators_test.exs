@@ -6,7 +6,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "tenant_id_generator/0" do
     property "generates non-empty strings" do
-      check all tenant_id <- tenant_id_generator() do
+      check all(tenant_id <- tenant_id_generator()) do
         assert is_binary(tenant_id)
         assert String.length(tenant_id) > 0
         assert String.starts_with?(tenant_id, "tenant-")
@@ -16,7 +16,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "campaign_name_generator/0" do
     property "generates strings with minimum 3 characters" do
-      check all name <- campaign_name_generator() do
+      check all(name <- campaign_name_generator()) do
         assert is_binary(name)
         assert String.length(name) >= 3
       end
@@ -25,7 +25,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "datetime_generator/0" do
     property "generates valid UTC datetimes" do
-      check all dt <- datetime_generator() do
+      check all(dt <- datetime_generator()) do
         assert %DateTime{} = dt
         assert dt.time_zone == "Etc/UTC"
         # Should be between 2020 and 2030
@@ -37,7 +37,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "campaign_status_generator/0" do
     property "generates valid campaign status values" do
-      check all status <- campaign_status_generator() do
+      check all(status <- campaign_status_generator()) do
         assert status in [:active, :paused]
       end
     end
@@ -45,7 +45,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "tenant_status_generator/0" do
     property "generates valid tenant status values" do
-      check all status <- tenant_status_generator() do
+      check all(status <- tenant_status_generator()) do
         assert status in [:active, :suspended, :deleted]
       end
     end
@@ -53,7 +53,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "jwt_generator/1" do
     property "generates valid JWT tokens with claims" do
-      check all tenant_id <- tenant_id_generator() do
+      check all(tenant_id <- tenant_id_generator()) do
         claims = %{"tenant_id" => tenant_id}
         token = jwt_generator(claims) |> Enum.take(1) |> List.first()
 
@@ -69,20 +69,22 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "optional_field_generator/1" do
     property "generates nil or the wrapped value" do
-      check all value <- optional_field_generator(string(:alphanumeric)) do
+      check all(value <- optional_field_generator(string(:alphanumeric))) do
         assert is_nil(value) or is_binary(value)
       end
     end
 
     property "generates nil at least once in 100 iterations" do
-      values = optional_field_generator(string(:alphanumeric))
+      values =
+        optional_field_generator(string(:alphanumeric))
         |> Enum.take(100)
 
       assert Enum.any?(values, &is_nil/1)
     end
 
     property "generates non-nil values at least once in 100 iterations" do
-      values = optional_field_generator(string(:alphanumeric))
+      values =
+        optional_field_generator(string(:alphanumeric))
         |> Enum.take(100)
 
       assert Enum.any?(values, &(not is_nil(&1)))
@@ -91,7 +93,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "ordered_datetime_pair_generator/0" do
     property "generates datetime pairs where first is before second" do
-      check all {start_time, end_time} <- ordered_datetime_pair_generator() do
+      check all({start_time, end_time} <- ordered_datetime_pair_generator()) do
         assert %DateTime{} = start_time
         assert %DateTime{} = end_time
         assert DateTime.compare(start_time, end_time) == :lt
@@ -101,7 +103,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "campaign_attrs_generator/0" do
     property "generates valid campaign attributes" do
-      check all attrs <- campaign_attrs_generator() do
+      check all(attrs <- campaign_attrs_generator()) do
         assert is_map(attrs)
         assert Map.has_key?(attrs, :name)
         assert Map.has_key?(attrs, :description)
@@ -122,7 +124,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "campaign_attrs_with_ordered_dates_generator/0" do
     property "generates campaign attributes with ordered dates" do
-      check all attrs <- campaign_attrs_with_ordered_dates_generator() do
+      check all(attrs <- campaign_attrs_with_ordered_dates_generator()) do
         assert is_map(attrs)
         assert %DateTime{} = attrs.start_time
         assert %DateTime{} = attrs.end_time

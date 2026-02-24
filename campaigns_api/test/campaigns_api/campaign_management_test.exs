@@ -748,6 +748,7 @@ defmodule CampaignsApi.CampaignManagementTest do
     end
   end
 end
+
 defmodule CampaignsApi.ParticipantManagementTest do
   use CampaignsApi.DataCase, async: true
   use ExUnitProperties
@@ -823,7 +824,9 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       attrs = %{name: "Jane Doe", nickname: "janedoe"}
 
-      assert {:ok, updated} = CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+      assert {:ok, updated} =
+               CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+
       assert updated.id == participant.id
       assert updated.name == "Jane Doe"
       assert updated.nickname == "janedoe"
@@ -836,7 +839,9 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       attrs = %{name: "", nickname: "ab"}
 
-      assert {:error, changeset} = CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+      assert {:error, changeset} =
+               CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+
       assert %{name: ["can't be blank"]} = errors_on(changeset)
       assert %{nickname: ["should be at least 3 character(s)"]} = errors_on(changeset)
     end
@@ -847,7 +852,8 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       attrs = %{name: "Jane Doe"}
 
-      assert {:error, :not_found} = CampaignManagement.update_participant(tenant.id, non_existent_id, attrs)
+      assert {:error, :not_found} =
+               CampaignManagement.update_participant(tenant.id, non_existent_id, attrs)
     end
 
     test "returns error when participant belongs to different tenant" do
@@ -857,7 +863,8 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       attrs = %{name: "Jane Doe"}
 
-      assert {:error, :not_found} = CampaignManagement.update_participant(tenant_b.id, participant.id, attrs)
+      assert {:error, :not_found} =
+               CampaignManagement.update_participant(tenant_b.id, participant.id, attrs)
     end
 
     test "returns error when nickname is not unique" do
@@ -867,7 +874,9 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       attrs = %{nickname: "johndoe"}
 
-      assert {:error, changeset} = CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+      assert {:error, changeset} =
+               CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+
       assert %{nickname: ["has already been taken"]} = errors_on(changeset)
     end
   end
@@ -888,7 +897,8 @@ defmodule CampaignsApi.ParticipantManagementTest do
       tenant = insert(:tenant)
       non_existent_id = Ecto.UUID.generate()
 
-      assert {:error, :not_found} = CampaignManagement.delete_participant(tenant.id, non_existent_id)
+      assert {:error, :not_found} =
+               CampaignManagement.delete_participant(tenant.id, non_existent_id)
     end
 
     test "returns error when participant belongs to different tenant" do
@@ -896,7 +906,8 @@ defmodule CampaignsApi.ParticipantManagementTest do
       tenant_b = insert(:tenant)
       participant = insert(:participant, tenant: tenant_a)
 
-      assert {:error, :not_found} = CampaignManagement.delete_participant(tenant_b.id, participant.id)
+      assert {:error, :not_found} =
+               CampaignManagement.delete_participant(tenant_b.id, participant.id)
 
       # Verify participant still exists for tenant_a
       assert CampaignManagement.get_participant(tenant_a.id, participant.id)
@@ -937,7 +948,11 @@ defmodule CampaignsApi.ParticipantManagementTest do
         assert first_page.next_cursor != nil
 
         # Get second page using cursor
-        second_page = CampaignManagement.list_participants(tenant.id, limit: 5, cursor: first_page.next_cursor)
+        second_page =
+          CampaignManagement.list_participants(tenant.id,
+            limit: 5,
+            cursor: first_page.next_cursor
+          )
 
         # Verify no duplicates between pages
         first_page_ids = Enum.map(first_page.data, & &1.id)
@@ -1034,7 +1049,10 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       # Update
       update_attrs = %{name: "Jane Doe", nickname: "janedoe"}
-      assert {:ok, updated} = CampaignManagement.update_participant(tenant.id, participant_id, update_attrs)
+
+      assert {:ok, updated} =
+               CampaignManagement.update_participant(tenant.id, participant_id, update_attrs)
+
       assert updated.id == participant_id
       assert updated.name == "Jane Doe"
       assert updated.nickname == "janedoe"
@@ -1220,9 +1238,23 @@ defmodule CampaignsApi.ParticipantManagementTest do
       campaign3 = insert(:campaign, tenant: tenant, name: "Campaign 3")
 
       # Associate participant with campaigns
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant.id, campaign1.id)
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant.id, campaign2.id)
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant.id, campaign3.id)
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant.id,
+        campaign1.id
+      )
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant.id,
+        campaign2.id
+      )
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant.id,
+        campaign3.id
+      )
 
       result = CampaignManagement.list_campaigns_for_participant(tenant.id, participant.id, [])
 
@@ -1251,7 +1283,11 @@ defmodule CampaignsApi.ParticipantManagementTest do
       campaign = insert(:campaign, tenant: tenant_a)
 
       # Associate in tenant_a
-      CampaignManagement.associate_participant_with_campaign(tenant_a.id, participant.id, campaign.id)
+      CampaignManagement.associate_participant_with_campaign(
+        tenant_a.id,
+        participant.id,
+        campaign.id
+      )
 
       # Try to list using tenant_b
       result = CampaignManagement.list_campaigns_for_participant(tenant_b.id, participant.id, [])
@@ -1265,21 +1301,37 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       # Create and associate 3 campaigns with delays to ensure different timestamps
       campaign1 = insert(:campaign, tenant: tenant, name: "Campaign 1")
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant.id, campaign1.id)
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant.id,
+        campaign1.id
+      )
 
       # Sleep 1 second to ensure different timestamp
       Process.sleep(1100)
 
       campaign2 = insert(:campaign, tenant: tenant, name: "Campaign 2")
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant.id, campaign2.id)
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant.id,
+        campaign2.id
+      )
 
       Process.sleep(1100)
 
       campaign3 = insert(:campaign, tenant: tenant, name: "Campaign 3")
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant.id, campaign3.id)
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant.id,
+        campaign3.id
+      )
 
       # Get first page with limit 2
-      first_page = CampaignManagement.list_campaigns_for_participant(tenant.id, participant.id, limit: 2)
+      first_page =
+        CampaignManagement.list_campaigns_for_participant(tenant.id, participant.id, limit: 2)
 
       assert length(first_page.data) == 2
       assert first_page.has_more == true
@@ -1313,9 +1365,23 @@ defmodule CampaignsApi.ParticipantManagementTest do
       participant3 = insert(:participant, tenant: tenant, nickname: "user3")
 
       # Associate participants with campaign
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant1.id, campaign.id)
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant2.id, campaign.id)
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant3.id, campaign.id)
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant1.id,
+        campaign.id
+      )
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant2.id,
+        campaign.id
+      )
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant3.id,
+        campaign.id
+      )
 
       result = CampaignManagement.list_participants_for_campaign(tenant.id, campaign.id, [])
 
@@ -1344,7 +1410,11 @@ defmodule CampaignsApi.ParticipantManagementTest do
       campaign = insert(:campaign, tenant: tenant_a)
 
       # Associate in tenant_a
-      CampaignManagement.associate_participant_with_campaign(tenant_a.id, participant.id, campaign.id)
+      CampaignManagement.associate_participant_with_campaign(
+        tenant_a.id,
+        participant.id,
+        campaign.id
+      )
 
       # Try to list using tenant_b
       result = CampaignManagement.list_participants_for_campaign(tenant_b.id, campaign.id, [])
@@ -1358,21 +1428,37 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       # Create and associate 3 participants with delays to ensure different timestamps
       participant1 = insert(:participant, tenant: tenant, nickname: "user1")
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant1.id, campaign.id)
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant1.id,
+        campaign.id
+      )
 
       # Sleep 1 second to ensure different timestamp
       Process.sleep(1100)
 
       participant2 = insert(:participant, tenant: tenant, nickname: "user2")
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant2.id, campaign.id)
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant2.id,
+        campaign.id
+      )
 
       Process.sleep(1100)
 
       participant3 = insert(:participant, tenant: tenant, nickname: "user3")
-      CampaignManagement.associate_participant_with_campaign(tenant.id, participant3.id, campaign.id)
+
+      CampaignManagement.associate_participant_with_campaign(
+        tenant.id,
+        participant3.id,
+        campaign.id
+      )
 
       # Get first page with limit 2
-      first_page = CampaignManagement.list_participants_for_campaign(tenant.id, campaign.id, limit: 2)
+      first_page =
+        CampaignManagement.list_participants_for_campaign(tenant.id, campaign.id, limit: 2)
 
       assert length(first_page.data) == 2
       assert first_page.has_more == true
@@ -1400,9 +1486,10 @@ defmodule CampaignsApi.ParticipantManagementTest do
   describe "property-based tests" do
     # **Validates: Requirements 3.4, 11.1-11.8**
     property "tenant isolation: cross-tenant access always fails" do
-      check all participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
-                nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15) do
-
+      check all(
+              participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
+              nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15)
+            ) do
         # Create two different tenants with unique IDs
         tenant_a = insert(:tenant)
         tenant_b = insert(:tenant)
@@ -1417,10 +1504,13 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
         # Tenant B should not be able to update Tenant A's participant
         update_attrs = %{name: "Updated Name"}
-        assert {:error, :not_found} == CampaignManagement.update_participant(tenant_b.id, participant.id, update_attrs)
+
+        assert {:error, :not_found} ==
+                 CampaignManagement.update_participant(tenant_b.id, participant.id, update_attrs)
 
         # Tenant B should not be able to delete Tenant A's participant
-        assert {:error, :not_found} == CampaignManagement.delete_participant(tenant_b.id, participant.id)
+        assert {:error, :not_found} ==
+                 CampaignManagement.delete_participant(tenant_b.id, participant.id)
 
         # Verify participant still exists for Tenant A
         assert CampaignManagement.get_participant(tenant_a.id, participant.id)
@@ -1429,11 +1519,12 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
     # **Validates: Requirements 3.8, 5.4**
     property "cascade deletion: all associations removed when participant is deleted" do
-      check all participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
-                nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
-                num_campaigns <- integer(1..3),
-                num_challenges_per_campaign <- integer(1..2) do
-
+      check all(
+              participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
+              nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
+              num_campaigns <- integer(1..3),
+              num_challenges_per_campaign <- integer(1..2)
+            ) do
         # Create tenant and participant with unique nickname
         tenant = insert(:tenant)
         nickname = "#{nickname_base}-#{System.unique_integer([:positive])}"
@@ -1441,19 +1532,20 @@ defmodule CampaignsApi.ParticipantManagementTest do
         {:ok, participant} = CampaignManagement.create_participant(tenant.id, attrs)
 
         # Create campaigns and manually insert campaign_participants associations
-        campaigns = for _ <- 1..num_campaigns do
-          campaign = insert(:campaign, tenant: tenant)
+        campaigns =
+          for _ <- 1..num_campaigns do
+            campaign = insert(:campaign, tenant: tenant)
 
-          # Manually insert campaign_participant association
-          %CampaignsApi.CampaignManagement.CampaignParticipant{}
-          |> Ecto.Changeset.change(%{
-            participant_id: participant.id,
-            campaign_id: campaign.id
-          })
-          |> Repo.insert!()
+            # Manually insert campaign_participant association
+            %CampaignsApi.CampaignManagement.CampaignParticipant{}
+            |> Ecto.Changeset.change(%{
+              participant_id: participant.id,
+              campaign_id: campaign.id
+            })
+            |> Repo.insert!()
 
-          campaign
-        end
+            campaign
+          end
 
         # Create challenges and manually insert participant_challenges associations
         for campaign <- campaigns do
@@ -1472,16 +1564,20 @@ defmodule CampaignsApi.ParticipantManagementTest do
         end
 
         # Verify associations exist
-        campaign_associations = Repo.all(
-          from cp in CampaignsApi.CampaignManagement.CampaignParticipant,
-          where: cp.participant_id == ^participant.id
-        )
+        campaign_associations =
+          Repo.all(
+            from cp in CampaignsApi.CampaignManagement.CampaignParticipant,
+              where: cp.participant_id == ^participant.id
+          )
+
         assert length(campaign_associations) == num_campaigns
 
-        challenge_associations = Repo.all(
-          from pc in CampaignsApi.CampaignManagement.ParticipantChallenge,
-          where: pc.participant_id == ^participant.id
-        )
+        challenge_associations =
+          Repo.all(
+            from pc in CampaignsApi.CampaignManagement.ParticipantChallenge,
+              where: pc.participant_id == ^participant.id
+          )
+
         assert length(challenge_associations) == num_campaigns * num_challenges_per_campaign
 
         # Delete participant
@@ -1491,28 +1587,33 @@ defmodule CampaignsApi.ParticipantManagementTest do
         assert nil == CampaignManagement.get_participant(tenant.id, participant.id)
 
         # Verify all campaign associations are deleted (cascade)
-        remaining_campaign_associations = Repo.all(
-          from cp in CampaignsApi.CampaignManagement.CampaignParticipant,
-          where: cp.participant_id == ^participant.id
-        )
+        remaining_campaign_associations =
+          Repo.all(
+            from cp in CampaignsApi.CampaignManagement.CampaignParticipant,
+              where: cp.participant_id == ^participant.id
+          )
+
         assert Enum.empty?(remaining_campaign_associations)
 
         # Verify all challenge associations are deleted (cascade)
-        remaining_challenge_associations = Repo.all(
-          from pc in CampaignsApi.CampaignManagement.ParticipantChallenge,
-          where: pc.participant_id == ^participant.id
-        )
+        remaining_challenge_associations =
+          Repo.all(
+            from pc in CampaignsApi.CampaignManagement.ParticipantChallenge,
+              where: pc.participant_id == ^participant.id
+          )
+
         assert Enum.empty?(remaining_challenge_associations)
       end
     end
 
     # **Validates: Requirements 2.6, 5.1, 5.2, 9.6, 11.5**
     property "campaign-participant tenant validation: only same-tenant associations succeed" do
-      check all participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
-                nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
-                campaign_name <- string(:alphanumeric, min_length: 1, max_length: 20),
-                same_tenant <- boolean() do
-
+      check all(
+              participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
+              nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
+              campaign_name <- string(:alphanumeric, min_length: 1, max_length: 20),
+              same_tenant <- boolean()
+            ) do
         # Create two tenants
         tenant_a = insert(:tenant)
         tenant_b = insert(:tenant)
@@ -1567,11 +1668,12 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Associate participant with campaign first
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant.id,
-        campaign.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant.id,
+          campaign.id
+        )
 
       # Associate challenge with campaign
       _campaign_challenge = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
@@ -1616,14 +1718,16 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Associate participant with campaign_a
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant_a.id,
-        participant.id,
-        campaign_a.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant_a.id,
+          participant.id,
+          campaign_a.id
+        )
 
       # Associate challenge with campaign_b (different tenant)
-      _campaign_challenge = insert(:campaign_challenge, campaign: campaign_b, challenge: challenge)
+      _campaign_challenge =
+        insert(:campaign_challenge, campaign: campaign_b, challenge: challenge)
 
       # Attempt to associate participant with challenge
       assert {:error, :tenant_mismatch} =
@@ -1660,11 +1764,12 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Associate participant with campaign
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant.id,
-        campaign.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant.id,
+          campaign.id
+        )
 
       # Associate challenge with campaign
       _campaign_challenge = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
@@ -1697,12 +1802,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Set up associations
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant.id,
-        campaign.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant.id,
+          campaign.id
+        )
+
       _campaign_challenge = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
       {:ok, participant_challenge} =
         CampaignManagement.associate_participant_with_challenge(
           tenant.id,
@@ -1721,7 +1829,10 @@ defmodule CampaignsApi.ParticipantManagementTest do
       assert deleted.id == participant_challenge.id
 
       # Verify association is deleted
-      refute Repo.get(CampaignsApi.CampaignManagement.ParticipantChallenge, participant_challenge.id)
+      refute Repo.get(
+               CampaignsApi.CampaignManagement.ParticipantChallenge,
+               participant_challenge.id
+             )
     end
 
     test "returns error when association does not exist" do
@@ -1745,12 +1856,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Set up associations in tenant_a
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant_a.id,
-        participant.id,
-        campaign.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant_a.id,
+          participant.id,
+          campaign.id
+        )
+
       _campaign_challenge = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
       {:ok, _pc} =
         CampaignManagement.associate_participant_with_challenge(
           tenant_a.id,
@@ -1777,19 +1891,23 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge2 = insert(:challenge, name: "Challenge 2")
 
       # Set up associations
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant.id,
-        campaign.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant.id,
+          campaign.id
+        )
+
       _cc1 = insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
       _cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
+
       {:ok, _pc1} =
         CampaignManagement.associate_participant_with_challenge(
           tenant.id,
           participant.id,
           challenge1.id
         )
+
       {:ok, _pc2} =
         CampaignManagement.associate_participant_with_challenge(
           tenant.id,
@@ -1816,16 +1934,19 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge2 = insert(:challenge, name: "Challenge 2")
 
       # Associate participant with both campaigns
-      {:ok, _cp1} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant.id,
-        campaign1.id
-      )
-      {:ok, _cp2} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant.id,
-        campaign2.id
-      )
+      {:ok, _cp1} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant.id,
+          campaign1.id
+        )
+
+      {:ok, _cp2} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant.id,
+          campaign2.id
+        )
 
       # Associate challenges with campaigns
       _cc1 = insert(:campaign_challenge, campaign: campaign1, challenge: challenge1)
@@ -1838,6 +1959,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
           participant.id,
           challenge1.id
         )
+
       {:ok, _pc2} =
         CampaignManagement.associate_participant_with_challenge(
           tenant.id,
@@ -1846,11 +1968,12 @@ defmodule CampaignsApi.ParticipantManagementTest do
         )
 
       # List challenges filtered by campaign1
-      result = CampaignManagement.list_challenges_for_participant(
-        tenant.id,
-        participant.id,
-        campaign_id: campaign1.id
-      )
+      result =
+        CampaignManagement.list_challenges_for_participant(
+          tenant.id,
+          participant.id,
+          campaign_id: campaign1.id
+        )
 
       assert %{data: challenges, has_more: false} = result
       assert length(challenges) == 1
@@ -1874,12 +1997,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Set up associations in tenant_a
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant_a.id,
-        participant.id,
-        campaign.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant_a.id,
+          participant.id,
+          campaign.id
+        )
+
       _cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
       {:ok, _pc} =
         CampaignManagement.associate_participant_with_challenge(
           tenant_a.id,
@@ -1903,23 +2029,29 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Set up associations
-      {:ok, _cp1} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant1.id,
-        campaign.id
-      )
-      {:ok, _cp2} = CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
-        participant2.id,
-        campaign.id
-      )
+      {:ok, _cp1} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant1.id,
+          campaign.id
+        )
+
+      {:ok, _cp2} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant.id,
+          participant2.id,
+          campaign.id
+        )
+
       _cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
       {:ok, _pc1} =
         CampaignManagement.associate_participant_with_challenge(
           tenant.id,
           participant1.id,
           challenge.id
         )
+
       {:ok, _pc2} =
         CampaignManagement.associate_participant_with_challenge(
           tenant.id,
@@ -1954,12 +2086,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
       challenge = insert(:challenge)
 
       # Set up associations in tenant_a
-      {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-        tenant_a.id,
-        participant.id,
-        campaign.id
-      )
+      {:ok, _cp} =
+        CampaignManagement.associate_participant_with_campaign(
+          tenant_a.id,
+          participant.id,
+          campaign.id
+        )
+
       _cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
       {:ok, _pc} =
         CampaignManagement.associate_participant_with_challenge(
           tenant_a.id,
@@ -1977,10 +2112,11 @@ defmodule CampaignsApi.ParticipantManagementTest do
   describe "challenge associations - property tests" do
     # **Validates: Requirements 2.1.7, 2.1.8, 2.1.9, 5.1.1-5.1.4**
     property "participant-challenge campaign membership: only campaign members can be assigned to challenges" do
-      check all participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
-                nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
-                is_campaign_member <- boolean() do
-
+      check all(
+              participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
+              nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
+              is_campaign_member <- boolean()
+            ) do
         # Create tenant, participant, campaign, and challenge
         tenant = insert(:tenant)
         nickname = "#{nickname_base}-#{System.unique_integer([:positive])}"
@@ -1989,15 +2125,18 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
         campaign = insert(:campaign, tenant: tenant)
         challenge = insert(:challenge)
-        _campaign_challenge = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
+
+        _campaign_challenge =
+          insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
         # Conditionally associate participant with campaign
         if is_campaign_member do
-          {:ok, _cp} = CampaignManagement.associate_participant_with_campaign(
-            tenant.id,
-            participant.id,
-            campaign.id
-          )
+          {:ok, _cp} =
+            CampaignManagement.associate_participant_with_campaign(
+              tenant.id,
+              participant.id,
+              campaign.id
+            )
         end
 
         # Attempt to associate participant with challenge

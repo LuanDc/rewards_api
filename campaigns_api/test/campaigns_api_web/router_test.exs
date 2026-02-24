@@ -4,28 +4,84 @@ defmodule CampaignsApiWeb.RouterTest do
   describe "router configuration" do
     test "campaigns routes are properly configured" do
       # Verify all expected routes exist
-      assert %{route: "/api/campaigns"} = Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns", "")
-      assert %{route: "/api/campaigns/:id"} = Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123", "")
-      assert %{route: "/api/campaigns"} = Phoenix.Router.route_info(CampaignsApiWeb.Router, "POST", "/api/campaigns", "")
-      assert %{route: "/api/campaigns/:id"} = Phoenix.Router.route_info(CampaignsApiWeb.Router, "PUT", "/api/campaigns/123", "")
-      assert %{route: "/api/campaigns/:id"} = Phoenix.Router.route_info(CampaignsApiWeb.Router, "PATCH", "/api/campaigns/123", "")
-      assert %{route: "/api/campaigns/:id"} = Phoenix.Router.route_info(CampaignsApiWeb.Router, "DELETE", "/api/campaigns/123", "")
+      assert %{route: "/api/campaigns"} =
+               Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns", "")
+
+      assert %{route: "/api/campaigns/:id"} =
+               Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123", "")
+
+      assert %{route: "/api/campaigns"} =
+               Phoenix.Router.route_info(CampaignsApiWeb.Router, "POST", "/api/campaigns", "")
+
+      assert %{route: "/api/campaigns/:id"} =
+               Phoenix.Router.route_info(CampaignsApiWeb.Router, "PUT", "/api/campaigns/123", "")
+
+      assert %{route: "/api/campaigns/:id"} =
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "PATCH",
+                 "/api/campaigns/123",
+                 ""
+               )
+
+      assert %{route: "/api/campaigns/:id"} =
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "DELETE",
+                 "/api/campaigns/123",
+                 ""
+               )
     end
 
     test "campaign challenge routes are properly configured" do
       # Verify all expected nested routes exist
       assert %{route: "/api/campaigns/:campaign_id/challenges"} =
-        Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123/challenges", "")
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "GET",
+                 "/api/campaigns/123/challenges",
+                 ""
+               )
+
       assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
-        Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123/challenges/456", "")
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "GET",
+                 "/api/campaigns/123/challenges/456",
+                 ""
+               )
+
       assert %{route: "/api/campaigns/:campaign_id/challenges"} =
-        Phoenix.Router.route_info(CampaignsApiWeb.Router, "POST", "/api/campaigns/123/challenges", "")
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "POST",
+                 "/api/campaigns/123/challenges",
+                 ""
+               )
+
       assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
-        Phoenix.Router.route_info(CampaignsApiWeb.Router, "PUT", "/api/campaigns/123/challenges/456", "")
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "PUT",
+                 "/api/campaigns/123/challenges/456",
+                 ""
+               )
+
       assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
-        Phoenix.Router.route_info(CampaignsApiWeb.Router, "PATCH", "/api/campaigns/123/challenges/456", "")
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "PATCH",
+                 "/api/campaigns/123/challenges/456",
+                 ""
+               )
+
       assert %{route: "/api/campaigns/:campaign_id/challenges/:id"} =
-        Phoenix.Router.route_info(CampaignsApiWeb.Router, "DELETE", "/api/campaigns/123/challenges/456", "")
+               Phoenix.Router.route_info(
+                 CampaignsApiWeb.Router,
+                 "DELETE",
+                 "/api/campaigns/123/challenges/456",
+                 ""
+               )
     end
 
     test "campaigns routes use CampaignController" do
@@ -34,13 +90,21 @@ defmodule CampaignsApiWeb.RouterTest do
     end
 
     test "campaign challenge routes use CampaignChallengeController" do
-      route_info = Phoenix.Router.route_info(CampaignsApiWeb.Router, "GET", "/api/campaigns/123/challenges", "")
+      route_info =
+        Phoenix.Router.route_info(
+          CampaignsApiWeb.Router,
+          "GET",
+          "/api/campaigns/123/challenges",
+          ""
+        )
+
       assert route_info.plug == CampaignsApiWeb.CampaignChallengeController
     end
 
     test "authenticated pipeline includes RequireAuth plug" do
       # Make a request without auth header to verify RequireAuth is applied
-      conn = build_conn()
+      conn =
+        build_conn()
         |> put_req_header("accept", "application/json")
         |> get("/api/campaigns")
 
@@ -50,7 +114,8 @@ defmodule CampaignsApiWeb.RouterTest do
 
     test "campaign challenge routes require authentication" do
       # Make a request without auth header to verify RequireAuth is applied
-      conn = build_conn()
+      conn =
+        build_conn()
         |> put_req_header("accept", "application/json")
         |> get("/api/campaigns/123/challenges")
 
@@ -65,19 +130,26 @@ defmodule CampaignsApiWeb.RouterTest do
       token = create_test_jwt(claims)
 
       # Make request with valid auth - should reach AssignTenant which creates tenant
-      conn = build_conn()
+      conn =
+        build_conn()
         |> put_req_header("accept", "application/json")
         |> put_req_header("authorization", "Bearer #{token}")
         |> get("/api/campaigns")
 
       # Should succeed (200) with empty list, proving both plugs executed
       assert conn.status == 200
-      assert json_response(conn, 200) == %{"data" => [], "has_more" => false, "next_cursor" => nil}
+
+      assert json_response(conn, 200) == %{
+               "data" => [],
+               "has_more" => false,
+               "next_cursor" => nil
+             }
     end
 
     test "plugs are executed in correct order: RequireAuth then AssignTenant" do
       # Test that missing auth is caught by RequireAuth before AssignTenant
-      conn = build_conn()
+      conn =
+        build_conn()
         |> put_req_header("accept", "application/json")
         |> get("/api/campaigns")
 
@@ -88,7 +160,8 @@ defmodule CampaignsApiWeb.RouterTest do
 
     test "routes outside /api scope do not require authentication" do
       # Home page should be accessible without auth
-      conn = build_conn()
+      conn =
+        build_conn()
         |> get("/")
 
       assert conn.status == 200

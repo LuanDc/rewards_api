@@ -19,8 +19,9 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallenge do
           evaluation_frequency: String.t(),
           reward_points: integer(),
           configuration: map() | nil,
-          campaign: CampaignsApi.CampaignManagement.Campaign.t()
-                    | Ecto.Association.NotLoaded.t(),
+          campaign:
+            CampaignsApi.CampaignManagement.Campaign.t()
+            | Ecto.Association.NotLoaded.t(),
           challenge: CampaignsApi.Challenges.Challenge.t() | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()

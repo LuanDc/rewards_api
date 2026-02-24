@@ -69,7 +69,8 @@ defmodule CampaignsApi.Generators do
   def ordered_datetime_pair_generator do
     bind(datetime_generator(), fn start_time ->
       # Generate end_time that's after start_time
-      integer(1..365 * 24 * 3600) # 1 second to 1 year later
+      # 1 second to 1 year later
+      integer(1..(365 * 24 * 3600))
       |> map(fn seconds_later ->
         end_time = DateTime.add(start_time, seconds_later, :second)
         {start_time, end_time}
@@ -195,14 +196,16 @@ defmodule CampaignsApi.Generators do
       }),
       # Map with nested object
       fixed_map(%{
-        "rules" => fixed_map(%{
-          "min_amount" => integer(0..1000),
-          "max_amount" => integer(1001..10_000)
-        }),
-        "metadata" => fixed_map(%{
-          "type" => member_of(["premium", "standard", "basic"]),
-          "priority" => integer(1..10)
-        })
+        "rules" =>
+          fixed_map(%{
+            "min_amount" => integer(0..1000),
+            "max_amount" => integer(1001..10_000)
+          }),
+        "metadata" =>
+          fixed_map(%{
+            "type" => member_of(["premium", "standard", "basic"]),
+            "priority" => integer(1..10)
+          })
       })
     ])
   end

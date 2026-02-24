@@ -85,6 +85,19 @@ All error responses MUST be explicitly typed:
 
 ## Static Analysis
 
+### Code Formatting
+
+Run Elixir formatter to ensure consistent code style:
+
+```bash
+mix format
+```
+
+**Requirements:**
+- All code must be formatted according to Elixir standards
+- Run before committing changes
+- Verify no formatting changes are needed: `mix format --check-formatted`
+
 ### Credo
 
 Run Credo in strict mode at the end of implementation:
@@ -161,6 +174,7 @@ Before considering any implementation complete, verify:
 - [ ] All schemas have `@type t` definitions
 - [ ] All keyword options are typed
 - [ ] Complex types have `@typedoc` documentation
+- [ ] `mix format` passes without changes
 - [ ] `mix credo --strict` returns zero issues
 - [ ] `mix dialyzer` returns zero warnings
 - [ ] All tests use ExMachina for data setup

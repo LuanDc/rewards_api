@@ -241,7 +241,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
 
-      assert %{"error" => "Participant or campaign not found in tenant"} = json_response(conn, 403)
+      assert %{"error" => "Participant or campaign not found in tenant"} =
+               json_response(conn, 403)
     end
 
     test "returns 403 when campaign belongs to different tenant", %{conn: conn, tenant: tenant} do
@@ -251,7 +252,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
 
-      assert %{"error" => "Participant or campaign not found in tenant"} = json_response(conn, 403)
+      assert %{"error" => "Participant or campaign not found in tenant"} =
+               json_response(conn, 403)
     end
 
     test "returns 422 when association already exists", %{conn: conn, tenant: tenant} do
@@ -406,7 +408,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/challenges/#{challenge.id}")
 
-      assert %{"error" => "Participant or challenge not found in tenant"} = json_response(conn, 403)
+      assert %{"error" => "Participant or challenge not found in tenant"} =
+               json_response(conn, 403)
     end
 
     test "returns 422 when participant not in campaign", %{conn: conn, tenant: tenant} do

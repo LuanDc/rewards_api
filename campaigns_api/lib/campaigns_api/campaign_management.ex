@@ -51,7 +51,8 @@ defmodule CampaignsApi.CampaignManagement do
   @doc """
   Creates a new campaign for a specific tenant.
   """
-  @spec create_campaign(tenant_id(), attrs()) :: {:ok, Campaign.t()} | {:error, Ecto.Changeset.t()}
+  @spec create_campaign(tenant_id(), attrs()) ::
+          {:ok, Campaign.t()} | {:error, Ecto.Changeset.t()}
   def create_campaign(tenant_id, attrs) do
     %Campaign{}
     |> Campaign.changeset(Map.put(attrs, :tenant_id, tenant_id))
@@ -445,9 +446,7 @@ defmodule CampaignsApi.CampaignManagement do
     participant_challenge =
       ParticipantChallenge
       |> join(:inner, [pc], p in Participant, on: pc.participant_id == p.id)
-      |> join(:inner, [pc], cc in CampaignChallenge,
-        on: pc.challenge_id == cc.challenge_id
-      )
+      |> join(:inner, [pc], cc in CampaignChallenge, on: pc.challenge_id == cc.challenge_id)
       |> join(:inner, [pc, p, cc], c in Campaign, on: cc.campaign_id == c.id)
       |> where(
         [pc, p, cc, c],

@@ -267,7 +267,9 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
       refute changeset.valid?
 
       assert %{evaluation_frequency: [error_msg]} = errors_on(changeset)
-      assert error_msg =~ "must be a valid cron expression or one of: daily, weekly, monthly, on_event"
+
+      assert error_msg =~
+               "must be a valid cron expression or one of: daily, weekly, monthly, on_event"
     end
 
     test "rejects empty string" do

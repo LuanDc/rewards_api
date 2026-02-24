@@ -22,9 +22,11 @@ defmodule CampaignsApiWeb.Plugs.RequireAuth do
         case decode_jwt(token) do
           {:ok, %{"tenant_id" => tenant_id}} ->
             assign(conn, :tenant_id, tenant_id)
+
           _ ->
             unauthorized(conn)
         end
+
       _ ->
         unauthorized(conn)
     end

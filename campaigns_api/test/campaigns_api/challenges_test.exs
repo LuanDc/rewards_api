@@ -166,7 +166,8 @@ defmodule CampaignsApi.ChallengesTest do
     test "returns error when challenge does not exist" do
       non_existent_id = Ecto.UUID.generate()
 
-      assert {:error, :not_found} = Challenges.update_challenge(non_existent_id, %{name: "NewName"})
+      assert {:error, :not_found} =
+               Challenges.update_challenge(non_existent_id, %{name: "NewName"})
     end
 
     test "returns error when update data is invalid" do
@@ -456,7 +457,8 @@ defmodule CampaignsApi.ChallengesTest do
         reward_points: 100
       }
 
-      result = CampaignManagement.create_campaign_challenge(tenant.id, non_existent_campaign_id, attrs)
+      result =
+        CampaignManagement.create_campaign_challenge(tenant.id, non_existent_campaign_id, attrs)
 
       assert {:error, :campaign_not_found} = result
     end
@@ -522,10 +524,14 @@ defmodule CampaignsApi.ChallengesTest do
       tenant = insert(:tenant)
       campaign = insert(:campaign, tenant: tenant)
       challenge = insert(:challenge)
-      cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge, reward_points: 100)
+
+      cc =
+        insert(:campaign_challenge, campaign: campaign, challenge: challenge, reward_points: 100)
 
       {:ok, updated} =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{reward_points: 200})
+        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{
+          reward_points: 200
+        })
 
       assert updated.id == cc.id
       assert updated.reward_points == 200
@@ -552,7 +558,9 @@ defmodule CampaignsApi.ChallengesTest do
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       result =
-        CampaignManagement.update_campaign_challenge(tenant2.id, campaign.id, cc.id, %{reward_points: 200})
+        CampaignManagement.update_campaign_challenge(tenant2.id, campaign.id, cc.id, %{
+          reward_points: 200
+        })
 
       assert {:error, :not_found} = result
     end
@@ -564,7 +572,9 @@ defmodule CampaignsApi.ChallengesTest do
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       result =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{display_name: "ab"})
+        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{
+          display_name: "ab"
+        })
 
       assert {:error, changeset} = result
       assert %{display_name: ["should be at least 3 character(s)"]} = errors_on(changeset)
@@ -607,7 +617,8 @@ defmodule CampaignsApi.ChallengesTest do
       campaign = insert(:campaign, tenant: tenant)
       non_existent_id = Ecto.UUID.generate()
 
-      result = CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, non_existent_id)
+      result =
+        CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, non_existent_id)
 
       assert {:error, :not_found} = result
     end

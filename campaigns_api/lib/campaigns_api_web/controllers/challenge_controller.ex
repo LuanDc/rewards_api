@@ -44,7 +44,12 @@ defmodule CampaignsApiWeb.ChallengeController do
 
           properties do
             data(Schema.array(:Challenge), "List of challenges")
-            next_cursor(:string, "Cursor for next page (null if no more pages)", format: "date-time", "x-nullable": true)
+
+            next_cursor(:string, "Cursor for next page (null if no more pages)",
+              format: "date-time",
+              "x-nullable": true
+            )
+
             has_more(:boolean, "Whether more results are available")
           end
 

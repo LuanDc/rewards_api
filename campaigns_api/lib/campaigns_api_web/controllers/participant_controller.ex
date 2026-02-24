@@ -48,7 +48,10 @@ defmodule CampaignsApiWeb.ParticipantController do
     parameters do
       limit(:query, :integer, "Number of records to return (max: 100)", required: false)
       cursor(:query, :string, "Cursor for pagination (ISO8601 datetime)", required: false)
-      nickname(:query, :string, "Filter by nickname (case-insensitive substring match)", required: false)
+
+      nickname(:query, :string, "Filter by nickname (case-insensitive substring match)",
+        required: false
+      )
     end
 
     response(200, "Success", Schema.ref(:ParticipantListResponse))
@@ -78,7 +81,9 @@ defmodule CampaignsApiWeb.ParticipantController do
     security([%{Bearer: []}])
 
     parameters do
-      participant(:body, Schema.ref(:ParticipantRequest), "Participant attributes", required: true)
+      participant(:body, Schema.ref(:ParticipantRequest), "Participant attributes",
+        required: true
+      )
     end
 
     response(201, "Created", Schema.ref(:Participant))
@@ -146,7 +151,10 @@ defmodule CampaignsApiWeb.ParticipantController do
 
     parameters do
       id(:path, :string, "Participant ID", required: true, format: "uuid")
-      participant(:body, Schema.ref(:ParticipantRequest), "Participant attributes", required: true)
+
+      participant(:body, Schema.ref(:ParticipantRequest), "Participant attributes",
+        required: true
+      )
     end
 
     response(200, "Success", Schema.ref(:Participant))
@@ -212,7 +220,11 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :associate_campaign do
     post("/participants/{participant_id}/campaigns/{campaign_id}")
     summary("Associate participant with campaign")
-    description("Creates an association between a participant and a campaign within the authenticated tenant")
+
+    description(
+      "Creates an association between a participant and a campaign within the authenticated tenant"
+    )
+
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -231,7 +243,11 @@ defmodule CampaignsApiWeb.ParticipantController do
   def associate_campaign(conn, %{"participant_id" => participant_id, "campaign_id" => campaign_id}) do
     tenant_id = conn.assigns.tenant_id
 
-    case CampaignManagement.associate_participant_with_campaign(tenant_id, participant_id, campaign_id) do
+    case CampaignManagement.associate_participant_with_campaign(
+           tenant_id,
+           participant_id,
+           campaign_id
+         ) do
       {:ok, association} ->
         conn
         |> put_status(:created)
@@ -252,7 +268,11 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :disassociate_campaign do
     PhoenixSwagger.Path.delete("/participants/{participant_id}/campaigns/{campaign_id}")
     summary("Disassociate participant from campaign")
-    description("Removes the association between a participant and a campaign within the authenticated tenant. All participant-challenge associations for this campaign will also be removed.")
+
+    description(
+      "Removes the association between a participant and a campaign within the authenticated tenant. All participant-challenge associations for this campaign will also be removed."
+    )
+
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -268,10 +288,17 @@ defmodule CampaignsApiWeb.ParticipantController do
   end
 
   @spec disassociate_campaign(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def disassociate_campaign(conn, %{"participant_id" => participant_id, "campaign_id" => campaign_id}) do
+  def disassociate_campaign(conn, %{
+        "participant_id" => participant_id,
+        "campaign_id" => campaign_id
+      }) do
     tenant_id = conn.assigns.tenant_id
 
-    case CampaignManagement.disassociate_participant_from_campaign(tenant_id, participant_id, campaign_id) do
+    case CampaignManagement.disassociate_participant_from_campaign(
+           tenant_id,
+           participant_id,
+           campaign_id
+         ) do
       {:ok, association} ->
         json(conn, association)
 
@@ -347,7 +374,11 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :associate_challenge do
     post("/participants/{participant_id}/challenges/{challenge_id}")
     summary("Associate participant with challenge")
-    description("Creates an association between a participant and a challenge within the authenticated tenant. The participant must already be associated with the challenge's campaign.")
+
+    description(
+      "Creates an association between a participant and a challenge within the authenticated tenant. The participant must already be associated with the challenge's campaign."
+    )
+
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -359,14 +390,26 @@ defmodule CampaignsApiWeb.ParticipantController do
     response(201, "Created", Schema.ref(:ParticipantChallenge))
     response(401, "Unauthorized", Schema.ref(:ErrorResponse))
     response(403, "Forbidden - Tenant mismatch", Schema.ref(:ErrorResponse))
-    response(422, "Validation Error - Participant not in campaign or duplicate association", Schema.ref(:ValidationErrorResponse))
+
+    response(
+      422,
+      "Validation Error - Participant not in campaign or duplicate association",
+      Schema.ref(:ValidationErrorResponse)
+    )
   end
 
   @spec associate_challenge(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def associate_challenge(conn, %{"participant_id" => participant_id, "challenge_id" => challenge_id}) do
+  def associate_challenge(conn, %{
+        "participant_id" => participant_id,
+        "challenge_id" => challenge_id
+      }) do
     tenant_id = conn.assigns.tenant_id
 
-    case CampaignManagement.associate_participant_with_challenge(tenant_id, participant_id, challenge_id) do
+    case CampaignManagement.associate_participant_with_challenge(
+           tenant_id,
+           participant_id,
+           challenge_id
+         ) do
       {:ok, association} ->
         conn
         |> put_status(:created)
@@ -392,7 +435,11 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :disassociate_challenge do
     PhoenixSwagger.Path.delete("/participants/{participant_id}/challenges/{challenge_id}")
     summary("Disassociate participant from challenge")
-    description("Removes the association between a participant and a challenge within the authenticated tenant")
+
+    description(
+      "Removes the association between a participant and a challenge within the authenticated tenant"
+    )
+
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -408,10 +455,17 @@ defmodule CampaignsApiWeb.ParticipantController do
   end
 
   @spec disassociate_challenge(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def disassociate_challenge(conn, %{"participant_id" => participant_id, "challenge_id" => challenge_id}) do
+  def disassociate_challenge(conn, %{
+        "participant_id" => participant_id,
+        "challenge_id" => challenge_id
+      }) do
     tenant_id = conn.assigns.tenant_id
 
-    case CampaignManagement.disassociate_participant_from_challenge(tenant_id, participant_id, challenge_id) do
+    case CampaignManagement.disassociate_participant_from_challenge(
+           tenant_id,
+           participant_id,
+           challenge_id
+         ) do
       {:ok, association} ->
         json(conn, association)
 
@@ -425,7 +479,11 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :list_challenges do
     get("/participants/{participant_id}/challenges")
     summary("List challenges for participant")
-    description("Returns a paginated list of challenges that a participant is enrolled in. Optionally filter by campaign_id to show only challenges from a specific campaign.")
+
+    description(
+      "Returns a paginated list of challenges that a participant is enrolled in. Optionally filter by campaign_id to show only challenges from a specific campaign."
+    )
+
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -498,7 +556,12 @@ defmodule CampaignsApiWeb.ParticipantController do
             name(:string, "Participant full name", required: true, minLength: 1)
             nickname(:string, "Unique participant identifier", required: true, minLength: 3)
             tenant_id(:string, "Tenant ID", required: true)
-            status(:string, "Participant status", enum: [:active, :inactive, :ineligible], default: :active)
+
+            status(:string, "Participant status",
+              enum: [:active, :inactive, :ineligible],
+              default: :active
+            )
+
             inserted_at(:string, "Creation timestamp", format: "date-time")
             updated_at(:string, "Last update timestamp", format: "date-time")
           end
@@ -537,7 +600,12 @@ defmodule CampaignsApiWeb.ParticipantController do
 
           properties do
             data(Schema.array(:Participant), "List of participants")
-            next_cursor(:string, "Cursor for next page (null if no more pages)", format: "date-time", "x-nullable": true)
+
+            next_cursor(:string, "Cursor for next page (null if no more pages)",
+              format: "date-time",
+              "x-nullable": true
+            )
+
             has_more(:boolean, "Whether more results are available")
           end
 
@@ -585,7 +653,12 @@ defmodule CampaignsApiWeb.ParticipantController do
 
           properties do
             data(Schema.array(:Campaign), "List of campaigns")
-            next_cursor(:string, "Cursor for next page (null if no more pages)", format: "date-time", "x-nullable": true)
+
+            next_cursor(:string, "Cursor for next page (null if no more pages)",
+              format: "date-time",
+              "x-nullable": true
+            )
+
             has_more(:boolean, "Whether more results are available")
           end
 
@@ -676,7 +749,12 @@ defmodule CampaignsApiWeb.ParticipantController do
 
           properties do
             data(Schema.array(:Challenge), "List of challenges")
-            next_cursor(:string, "Cursor for next page (null if no more pages)", format: "date-time", "x-nullable": true)
+
+            next_cursor(:string, "Cursor for next page (null if no more pages)",
+              format: "date-time",
+              "x-nullable": true
+            )
+
             has_more(:boolean, "Whether more results are available")
           end
 
@@ -756,12 +834,14 @@ defmodule CampaignsApiWeb.ParticipantController do
   @spec parse_int(String.t() | integer() | nil) :: integer() | nil
   defp parse_int(nil), do: nil
   defp parse_int(""), do: nil
+
   defp parse_int(str) when is_binary(str) do
     case Integer.parse(str) do
       {int, _} -> int
       :error -> nil
     end
   end
+
   defp parse_int(int) when is_integer(int), do: int
 
   @spec parse_datetime(String.t() | nil) :: DateTime.t() | nil

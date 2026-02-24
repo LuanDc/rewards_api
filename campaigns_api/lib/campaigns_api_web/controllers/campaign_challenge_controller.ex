@@ -31,7 +31,10 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
               required: true
             )
 
-            reward_points(:integer, "Reward points (can be positive, negative, or zero)", required: true)
+            reward_points(:integer, "Reward points (can be positive, negative, or zero)",
+              required: true
+            )
+
             configuration(:object, "Additional configuration as JSON")
             inserted_at(:string, "Creation timestamp", format: "date-time")
             updated_at(:string, "Last update timestamp", format: "date-time")
@@ -66,7 +69,10 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
               required: true
             )
 
-            reward_points(:integer, "Reward points (can be positive, negative, or zero)", required: true)
+            reward_points(:integer, "Reward points (can be positive, negative, or zero)",
+              required: true
+            )
+
             configuration(:object, "Additional configuration as JSON")
           end
 
@@ -86,7 +92,12 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
 
           properties do
             data(Schema.array(:CampaignChallenge), "List of campaign challenges")
-            next_cursor(:string, "Cursor for next page (null if no more pages)", format: "date-time", "x-nullable": true)
+
+            next_cursor(:string, "Cursor for next page (null if no more pages)",
+              format: "date-time",
+              "x-nullable": true
+            )
+
             has_more(:boolean, "Whether more results are available")
           end
 
@@ -130,7 +141,9 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
           example(%{
             errors: %{
               display_name: ["should be at least 3 character(s)"],
-              evaluation_frequency: ["must be a valid cron expression or one of: daily, weekly, monthly, on_event"]
+              evaluation_frequency: [
+                "must be a valid cron expression or one of: daily, weekly, monthly, on_event"
+              ]
             }
           })
         end
@@ -161,6 +174,7 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, %{"campaign_id" => campaign_id} = params) do
     tenant_id = conn.assigns.tenant.id
+
     opts = [
       limit: parse_int(params["limit"]),
       cursor: parse_datetime(params["cursor"])
@@ -346,12 +360,14 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   @spec parse_int(nil | String.t() | integer()) :: nil | integer()
   defp parse_int(nil), do: nil
   defp parse_int(""), do: nil
+
   defp parse_int(str) when is_binary(str) do
     case Integer.parse(str) do
       {int, _} -> int
       :error -> nil
     end
   end
+
   defp parse_int(int) when is_integer(int), do: int
 
   @spec parse_datetime(nil | String.t()) :: nil | DateTime.t()

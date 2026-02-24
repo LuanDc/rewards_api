@@ -15,8 +15,9 @@ defmodule CampaignsApi.Challenges.Challenge do
           name: String.t(),
           description: String.t() | nil,
           metadata: map() | nil,
-          campaign_challenges: [CampaignsApi.CampaignManagement.CampaignChallenge.t()]
-                               | Ecto.Association.NotLoaded.t(),
+          campaign_challenges:
+            [CampaignsApi.CampaignManagement.CampaignChallenge.t()]
+            | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
         }

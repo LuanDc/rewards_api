@@ -265,7 +265,9 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
             minute <- integer(0..59),
             second <- integer(0..59)
           ) do
-        {:ok, datetime} = DateTime.new(Date.new!(year, month, day), Time.new!(hour, minute, second))
+        {:ok, datetime} =
+          DateTime.new(Date.new!(year, month, day), Time.new!(hour, minute, second))
+
         datetime
       end
     end

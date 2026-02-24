@@ -4,8 +4,13 @@ defmodule CampaignsApi.Repo.Migrations.CreateCampaignChallenges do
   def change do
     create table(:campaign_challenges, primary_key: false) do
       add :id, :binary_id, primary_key: true
-      add :campaign_id, references(:campaigns, type: :binary_id, on_delete: :delete_all), null: false
-      add :challenge_id, references(:challenges, type: :binary_id, on_delete: :restrict), null: false
+
+      add :campaign_id, references(:campaigns, type: :binary_id, on_delete: :delete_all),
+        null: false
+
+      add :challenge_id, references(:challenges, type: :binary_id, on_delete: :restrict),
+        null: false
+
       add :display_name, :string, null: false
       add :display_description, :text
       add :evaluation_frequency, :string, null: false

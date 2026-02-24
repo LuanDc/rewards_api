@@ -82,9 +82,11 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
   describe "property-based tests" do
     @tag :property
     property "extracts tenant_id from any valid JWT containing tenant_id claim" do
-      check all tenant_id <- tenant_id_generator(),
-                additional_claims <- optional_claims_generator(),
-                max_runs: 30 do
+      check all(
+              tenant_id <- tenant_id_generator(),
+              additional_claims <- optional_claims_generator(),
+              max_runs: 30
+            ) do
         claims = Map.put(additional_claims, "tenant_id", tenant_id)
         token = create_jwt_token(claims)
 
@@ -109,7 +111,10 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
         fn {a, b, c, d, e} -> "#{a}-#{b}-#{c}-#{d}-#{e}" end
       ),
       map(
-        list_of(string(:alphanumeric, min_length: 1, max_length: 10), min_length: 1, max_length: 5),
+        list_of(string(:alphanumeric, min_length: 1, max_length: 10),
+          min_length: 1,
+          max_length: 5
+        ),
         fn parts -> Enum.join(parts, "-") end
       ),
       map(positive_integer(), &to_string/1)
