@@ -1,5 +1,6 @@
 defmodule CampaignsApi.PaginationTest do
   use CampaignsApi.DataCase
+  use ExUnitProperties
 
   alias CampaignsApi.CampaignManagement.Campaign
   alias CampaignsApi.Pagination
@@ -190,6 +191,119 @@ defmodule CampaignsApi.PaginationTest do
       assert length(result.data) == 15
       assert result.has_more == false
       assert result.next_cursor == nil
+    end
+  end
+
+  describe "Property: Cursor Ordering Consistency (Business Invariant)" do
+    @tag :property
+    property "pagination with cursor maintains ordering and no duplicates/gaps" do
+      check all(
+              campaign_count <- integer(10..30),
+              limit <- integer(3..10),
+              max_runs: 50
+            ) do
+        tenant = insert(:tenant)
+
+        # Create campaigns with distinct timestamps
+        campaigns =
+          for i <- 1..campaign_count do
+            {:ok, campaign} =
+              %Campaign{}
+              |> Campaign.changeset(%{
+                tenant_id: tenant.id,
+                name: "Campaign #{i} #{System.unique_integer([:positive])}",
+                description: "Test campaign #{i}"
+              })
+              |> Repo.insert()
+
+            timestamp =
+              DateTime.utc_now()
+              |> DateTime.add(-(i * 60), :second)
+              |> DateTime.truncate(:second)
+
+            campaign
+            |> Ecto.Changeset.change(inserted_at: timestamp)
+            |> Repo.update!()
+          end
+
+        query = from c in Campaign, where: c.tenant_id == ^tenant.id
+
+        # Paginate through all records
+        all_pages = collect_all_pages(query, limit)
+        all_ids = Enum.flat_map(all_pages, fn page -> Enum.map(page.data, & &1.id) end)
+
+        # Assert: No duplicates across pages
+        assert length(all_ids) == length(Enum.uniq(all_ids)),
+               "Found duplicate campaigns across pages"
+
+        # Assert: No gaps - all campaigns should be returned
+        assert length(all_ids) == campaign_count,
+               "Expected #{campaign_count} campaigns, got #{length(all_ids)}"
+
+        # Assert: Ordering is maintained (descending by inserted_at)
+        all_campaigns = Enum.flat_map(all_pages, & &1.data)
+        timestamps = Enum.map(all_campaigns, & &1.inserted_at)
+
+        timestamps
+        |> Enum.chunk_every(2, 1, :discard)
+        |> Enum.each(fn [first, second] ->
+          assert DateTime.compare(first, second) in [:gt, :eq],
+                 "Ordering not maintained: #{first} should be >= #{second}"
+        end)
+
+        # Cleanup
+        campaign_ids = Enum.map(campaigns, & &1.id)
+        from(c in Campaign, where: c.id in ^campaign_ids) |> Repo.delete_all()
+      end
+    end
+
+    defp collect_all_pages(query, limit, cursor \\ nil, acc \\ []) do
+      opts = [limit: limit]
+      opts = if cursor, do: Keyword.put(opts, :cursor, cursor), else: opts
+
+      result = Pagination.paginate(Repo, query, opts)
+      acc = [result | acc]
+
+      if result.has_more do
+        collect_all_pages(query, limit, result.next_cursor, acc)
+      else
+        Enum.reverse(acc)
+      end
+    end
+  end
+
+  describe "Unit tests for properties converted from property tests" do
+    test "pagination returns consistent structure", %{tenant: tenant} do
+      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+
+      result = Pagination.paginate(Repo, query)
+
+      assert is_map(result)
+      assert Map.has_key?(result, :data)
+      assert Map.has_key?(result, :next_cursor)
+      assert Map.has_key?(result, :has_more)
+      assert is_list(result.data)
+      assert is_boolean(result.has_more)
+    end
+
+    test "limit enforcement with maximum of 100", %{tenant: tenant} do
+      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+
+      result = Pagination.paginate(Repo, query, limit: 200)
+
+      assert length(result.data) <= 100
+    end
+
+    test "next_cursor presence when more records exist", %{tenant: tenant} do
+      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+
+      result = Pagination.paginate(Repo, query, limit: 5)
+
+      assert result.has_more == true
+      assert result.next_cursor != nil
+
+      last_record = List.last(result.data)
+      assert result.next_cursor == last_record.inserted_at
     end
   end
 end

@@ -1,5 +1,6 @@
 defmodule CampaignsApi.TenantsTest do
   use CampaignsApi.DataCase
+  use ExUnitProperties
 
   alias CampaignsApi.Tenants
 
@@ -99,6 +100,70 @@ defmodule CampaignsApi.TenantsTest do
     test "returns false for deleted tenant" do
       tenant = build(:deleted_tenant)
       assert Tenants.tenant_active?(tenant) == false
+    end
+  end
+
+  describe "Properties: Tenant Creation and Status Validation (Business Invariants)" do
+    @tag :property
+    property "tenant creation with new tenant_id creates active tenant" do
+      check all(
+              tenant_id <- string(:alphanumeric, min_length: 5, max_length: 30),
+              max_runs: 50
+            ) do
+        tenant_id = "tenant-#{tenant_id}"
+
+        {:ok, tenant} = Tenants.get_or_create_tenant(tenant_id)
+
+        assert tenant.id == tenant_id
+        assert tenant.status == :active
+        assert tenant.name == tenant_id
+        assert tenant.inserted_at != nil
+        assert tenant.updated_at != nil
+      end
+    end
+
+    @tag :property
+    property "multiple requests with same tenant_id do not create duplicates" do
+      check all(
+              tenant_id <- string(:alphanumeric, min_length: 5, max_length: 30),
+              request_count <- integer(2..5),
+              max_runs: 50
+            ) do
+        tenant_id = "tenant-#{tenant_id}"
+
+        results =
+          Enum.map(1..request_count, fn _ ->
+            Tenants.get_or_create_tenant(tenant_id)
+          end)
+
+        assert Enum.all?(results, fn result -> match?({:ok, _}, result) end)
+
+        tenants = Enum.map(results, fn {:ok, tenant} -> tenant end)
+        assert Enum.all?(tenants, fn t -> t.id == tenant_id end)
+
+        first_inserted_at = hd(tenants).inserted_at
+        assert Enum.all?(tenants, fn t -> t.inserted_at == first_inserted_at end)
+      end
+    end
+
+    @tag :property
+    property "tenant status validation - non-active tenants denied access" do
+      check all(
+              tenant_id <- string(:alphanumeric, min_length: 5, max_length: 30),
+              non_active_status <- member_of([:deleted, :suspended]),
+              max_runs: 50
+            ) do
+        tenant_id = "tenant-#{tenant_id}"
+
+        {:ok, tenant} = Tenants.create_tenant(tenant_id, %{status: non_active_status})
+
+        assert Tenants.tenant_active?(tenant) == false
+
+        retrieved_tenant = Tenants.get_tenant(tenant_id)
+        assert retrieved_tenant != nil
+        assert retrieved_tenant.status == non_active_status
+        assert Tenants.tenant_active?(retrieved_tenant) == false
+      end
     end
   end
 end

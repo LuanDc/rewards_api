@@ -322,5 +322,46 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
       assert Map.has_key?(response, "error")
       assert is_binary(response["error"])
     end
+
+    test "401 errors return structured JSON when not authenticated" do
+      conn = build_conn() |> get(~p"/api/challenges")
+
+      assert conn.status in [401, 403]
+      response = json_response(conn, conn.status)
+
+      assert Map.has_key?(response, "error")
+      assert is_binary(response["error"])
+    end
+
+    test "403 errors return structured JSON for suspended tenants" do
+      suspended_tenant = insert(:suspended_tenant)
+      token = jwt_token(suspended_tenant.id)
+
+      conn =
+        build_conn()
+        |> put_req_header("authorization", "Bearer #{token}")
+        |> get(~p"/api/challenges")
+
+      assert conn.status == 403
+      response = json_response(conn, 403)
+
+      assert Map.has_key?(response, "error")
+      assert is_binary(response["error"])
+    end
+
+    test "error responses contain only error field" do
+      fake_id = Ecto.UUID.generate()
+      tenant = insert(:tenant)
+      token = jwt_token(tenant.id)
+
+      conn =
+        build_conn()
+        |> put_req_header("authorization", "Bearer #{token}")
+        |> get(~p"/api/challenges/#{fake_id}")
+
+      response = json_response(conn, 404)
+
+      assert Map.keys(response) == ["error"]
+    end
   end
 end

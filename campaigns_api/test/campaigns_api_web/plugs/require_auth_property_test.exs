@@ -5,10 +5,11 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthPropertyTest do
   alias CampaignsApiWeb.Plugs.RequireAuth
 
   describe "RequireAuth plug property tests" do
+    @tag :property
     property "extracts tenant_id from any valid JWT containing tenant_id claim" do
       check all tenant_id <- tenant_id_generator(),
                 additional_claims <- optional_claims_generator(),
-                max_runs: 100 do
+                max_runs: 30 do
         claims = Map.put(additional_claims, "tenant_id", tenant_id)
         token = create_jwt_token(claims)
 

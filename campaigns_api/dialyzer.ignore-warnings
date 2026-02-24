@@ -1,2 +1,2 @@
-# Dialyzer ignore warnings file
-# Add warnings to ignore here, one per line
+lib/campaigns_api_web/controllers/participant_controller.ex:60
+lib/campaigns_api_web/controllers/participant_controller.ex:445

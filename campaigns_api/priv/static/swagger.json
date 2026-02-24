@@ -10,6 +10,168 @@
   },
   "host": "localhost:4000",
   "definitions": {
+    "Campaign": {
+      "description": "A reward campaign",
+      "example": {
+        "description": "Summer rewards campaign",
+        "id": "770e8400-e29b-41d4-a716-446655440002",
+        "inserted_at": "2024-05-01T10:00:00Z",
+        "name": "Summer Campaign",
+        "tenant_id": "tenant-123",
+        "updated_at": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "description": {
+          "description": "Campaign description",
+          "type": "string"
+        },
+        "id": {
+          "description": "Campaign UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "inserted_at": {
+          "description": "Creation timestamp",
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "description": "Campaign name",
+          "type": "string"
+        },
+        "tenant_id": {
+          "description": "Tenant ID",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "Last update timestamp",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "name",
+        "id"
+      ],
+      "title": "Campaign",
+      "type": "object"
+    },
+    "CampaignListResponse": {
+      "description": "Paginated list of campaigns",
+      "example": {
+        "data": [
+          {
+            "description": "Summer rewards campaign",
+            "id": "770e8400-e29b-41d4-a716-446655440002",
+            "name": "Summer Campaign",
+            "tenant_id": "tenant-123"
+          }
+        ],
+        "has_more": true,
+        "next_cursor": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "data": {
+          "description": "List of campaigns",
+          "items": {
+            "$ref": "#/definitions/Campaign"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "description": "Whether more results are available",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "description": "Cursor for next page (null if no more pages)",
+          "format": "date-time",
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "title": "Campaign List Response",
+      "type": "object"
+    },
+    "CampaignRequest": {
+      "description": "Campaign creation/update request",
+      "example": {
+        "description": "A great summer promotion",
+        "end_time": "2024-08-31T23:59:59Z",
+        "name": "Summer Sale Campaign",
+        "start_time": "2024-06-01T00:00:00Z",
+        "status": "active"
+      },
+      "properties": {
+        "description": {
+          "description": "Campaign description",
+          "type": "string"
+        },
+        "end_time": {
+          "description": "Campaign end time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "description": "Campaign name",
+          "minLength": 3,
+          "type": "string"
+        },
+        "start_time": {
+          "description": "Campaign start time",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "description": "Campaign status",
+          "enum": [
+            "active",
+            "paused"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Campaign Request",
+      "type": "object"
+    },
+    "ErrorResponse": {
+      "description": "Error response",
+      "example": {
+        "error": "Participant not found"
+      },
+      "properties": {
+        "error": {
+          "description": "Error message",
+          "type": "string"
+        }
+      },
+      "title": "Error Response",
+      "type": "object"
+    },
+    "ValidationErrorResponse": {
+      "description": "Validation error response",
+      "example": {
+        "errors": {
+          "name": [
+            "can't be blank"
+          ],
+          "nickname": [
+            "should be at least 3 character(s)"
+          ]
+        }
+      },
+      "properties": {
+        "errors": {
+          "description": "Validation errors by field",
+          "type": "object"
+        }
+      },
+      "title": "Validation Error Response",
+      "type": "object"
+    },
     "CampaignChallenge": {
       "description": "Association between a campaign and a challenge with configuration",
       "example": {
@@ -85,6 +247,58 @@
       "title": "Campaign Challenge",
       "type": "object"
     },
+    "CampaignChallengeErrorResponse": {
+      "description": "Error response",
+      "example": {
+        "error": "Campaign challenge not found"
+      },
+      "properties": {
+        "error": {
+          "description": "Error message",
+          "type": "string"
+        }
+      },
+      "title": "Error Response",
+      "type": "object"
+    },
+    "CampaignChallengeListResponse": {
+      "description": "Paginated list of campaign challenges",
+      "example": {
+        "data": [
+          {
+            "campaign_id": "660e8400-e29b-41d4-a716-446655440001",
+            "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
+            "display_name": "Buy+ Challenge",
+            "evaluation_frequency": "daily",
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "reward_points": 100
+          }
+        ],
+        "has_more": true,
+        "next_cursor": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "data": {
+          "description": "List of campaign challenges",
+          "items": {
+            "$ref": "#/definitions/CampaignChallenge"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "description": "Whether more results are available",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "description": "Cursor for next page (null if no more pages)",
+          "format": "date-time",
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "title": "Campaign Challenge List Response",
+      "type": "object"
+    },
     "CampaignChallengeRequest": {
       "description": "Campaign challenge creation/update request",
       "example": {
@@ -134,243 +348,6 @@
       "title": "Campaign Challenge Request",
       "type": "object"
     },
-    "Campaign": {
-      "description": "A reward campaign belonging to a tenant",
-      "example": {
-        "description": "A great summer promotion",
-        "end_time": "2024-08-31T23:59:59Z",
-        "id": "550e8400-e29b-41d4-a716-446655440000",
-        "inserted_at": "2024-05-01T10:00:00Z",
-        "name": "Summer Sale Campaign",
-        "start_time": "2024-06-01T00:00:00Z",
-        "status": "active",
-        "tenant_id": "tenant-123",
-        "updated_at": "2024-05-01T10:00:00Z"
-      },
-      "properties": {
-        "description": {
-          "description": "Campaign description",
-          "type": "string"
-        },
-        "end_time": {
-          "description": "Campaign end time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "id": {
-          "description": "Campaign UUID",
-          "format": "uuid",
-          "type": "string"
-        },
-        "inserted_at": {
-          "description": "Creation timestamp",
-          "format": "date-time",
-          "type": "string"
-        },
-        "name": {
-          "description": "Campaign name",
-          "minLength": 3,
-          "type": "string"
-        },
-        "start_time": {
-          "description": "Campaign start time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "default": "active",
-          "description": "Campaign status",
-          "enum": [
-            "active",
-            "paused"
-          ],
-          "type": "string"
-        },
-        "tenant_id": {
-          "description": "Tenant ID",
-          "type": "string"
-        },
-        "updated_at": {
-          "description": "Last update timestamp",
-          "format": "date-time",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name",
-        "tenant_id",
-        "id"
-      ],
-      "title": "Campaign",
-      "type": "object"
-    },
-    "CampaignRequest": {
-      "description": "Campaign creation/update request",
-      "example": {
-        "description": "A great summer promotion",
-        "end_time": "2024-08-31T23:59:59Z",
-        "name": "Summer Sale Campaign",
-        "start_time": "2024-06-01T00:00:00Z",
-        "status": "active"
-      },
-      "properties": {
-        "description": {
-          "description": "Campaign description",
-          "type": "string"
-        },
-        "end_time": {
-          "description": "Campaign end time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "name": {
-          "description": "Campaign name",
-          "minLength": 3,
-          "type": "string"
-        },
-        "start_time": {
-          "description": "Campaign start time",
-          "format": "date-time",
-          "type": "string"
-        },
-        "status": {
-          "description": "Campaign status",
-          "enum": [
-            "active",
-            "paused"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "Campaign Request",
-      "type": "object"
-    },
-    "CampaignChallengeListResponse": {
-      "description": "Paginated list of campaign challenges",
-      "example": {
-        "data": [
-          {
-            "campaign_id": "660e8400-e29b-41d4-a716-446655440001",
-            "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
-            "display_name": "Buy+ Challenge",
-            "evaluation_frequency": "daily",
-            "id": "550e8400-e29b-41d4-a716-446655440000",
-            "reward_points": 100
-          }
-        ],
-        "has_more": true,
-        "next_cursor": "2024-05-01T10:00:00Z"
-      },
-      "properties": {
-        "data": {
-          "description": "List of campaign challenges",
-          "items": {
-            "$ref": "#/definitions/CampaignChallenge"
-          },
-          "type": "array"
-        },
-        "has_more": {
-          "description": "Whether more results are available",
-          "type": "boolean"
-        },
-        "next_cursor": {
-          "description": "Cursor for next page (null if no more pages)",
-          "format": "date-time",
-          "type": "string",
-          "x-nullable": true
-        }
-      },
-      "title": "Campaign Challenge List Response",
-      "type": "object"
-    },
-    "CampaignListResponse": {
-      "description": "Paginated list of campaigns",
-      "example": {
-        "data": [
-          {
-            "id": "550e8400-e29b-41d4-a716-446655440000",
-            "name": "Summer Sale Campaign",
-            "status": "active",
-            "tenant_id": "tenant-123"
-          }
-        ],
-        "has_more": true,
-        "next_cursor": "2024-05-01T10:00:00Z"
-      },
-      "properties": {
-        "data": {
-          "description": "List of campaigns",
-          "items": {
-            "$ref": "#/definitions/Campaign"
-          },
-          "type": "array"
-        },
-        "has_more": {
-          "description": "Whether more results are available",
-          "type": "boolean"
-        },
-        "next_cursor": {
-          "description": "Cursor for next page (null if no more pages)",
-          "format": "date-time",
-          "type": "string",
-          "x-nullable": true
-        }
-      },
-      "title": "Campaign List Response",
-      "type": "object"
-    },
-    "ErrorResponse": {
-      "description": "Error response",
-      "example": {
-        "error": "Campaign not found"
-      },
-      "properties": {
-        "error": {
-          "description": "Error message",
-          "type": "string"
-        }
-      },
-      "title": "Error Response",
-      "type": "object"
-    },
-    "ValidationErrorResponse": {
-      "description": "Validation error response",
-      "example": {
-        "errors": {
-          "name": [
-            "should be at least 3 character(s)"
-          ],
-          "start_time": [
-            "must be before end_time"
-          ]
-        }
-      },
-      "properties": {
-        "errors": {
-          "description": "Validation errors by field",
-          "type": "object"
-        }
-      },
-      "title": "Validation Error Response",
-      "type": "object"
-    },
-    "CampaignChallengeErrorResponse": {
-      "description": "Error response",
-      "example": {
-        "error": "Campaign challenge not found"
-      },
-      "properties": {
-        "error": {
-          "description": "Error message",
-          "type": "string"
-        }
-      },
-      "title": "Error Response",
-      "type": "object"
-    },
     "CampaignChallengeValidationErrorResponse": {
       "description": "Validation error response",
       "example": {
@@ -395,14 +372,14 @@
     "Challenge": {
       "description": "A reusable challenge evaluation mechanism",
       "example": {
-        "description": "Validates customer transaction patterns",
-        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "description": "Log in daily for 7 consecutive days",
+        "id": "990e8400-e29b-41d4-a716-446655440004",
         "inserted_at": "2024-05-01T10:00:00Z",
         "metadata": {
-          "threshold": 100,
-          "type": "transaction_validation"
+          "points": 100,
+          "type": "evaluation"
         },
-        "name": "TransactionChecker",
+        "name": "Daily Login Challenge",
         "updated_at": "2024-05-01T10:00:00Z"
       },
       "properties": {
@@ -421,7 +398,7 @@
           "type": "string"
         },
         "metadata": {
-          "description": "Challenge metadata (flexible JSONB)",
+          "description": "Challenge metadata",
           "type": "object"
         },
         "name": {
@@ -447,9 +424,12 @@
       "example": {
         "data": [
           {
-            "description": "Validates customer transaction patterns",
-            "id": "550e8400-e29b-41d4-a716-446655440000",
-            "name": "TransactionChecker"
+            "description": "Log in daily for 7 consecutive days",
+            "id": "990e8400-e29b-41d4-a716-446655440004",
+            "metadata": {
+              "type": "evaluation"
+            },
+            "name": "Daily Login Challenge"
           }
         ],
         "has_more": true,
@@ -475,6 +455,234 @@
         }
       },
       "title": "Challenge List Response",
+      "type": "object"
+    },
+    "Participant": {
+      "description": "A participant who can participate in campaigns and challenges",
+      "example": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "inserted_at": "2024-05-01T10:00:00Z",
+        "name": "John Doe",
+        "nickname": "johndoe",
+        "status": "active",
+        "tenant_id": "tenant-123",
+        "updated_at": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "id": {
+          "description": "Participant UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "inserted_at": {
+          "description": "Creation timestamp",
+          "format": "date-time",
+          "type": "string"
+        },
+        "name": {
+          "description": "Participant full name",
+          "minLength": 1,
+          "type": "string"
+        },
+        "nickname": {
+          "description": "Unique participant identifier",
+          "minLength": 3,
+          "type": "string"
+        },
+        "status": {
+          "default": "active",
+          "description": "Participant status",
+          "enum": [
+            "active",
+            "inactive",
+            "ineligible"
+          ],
+          "type": "string"
+        },
+        "tenant_id": {
+          "description": "Tenant ID",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "Last update timestamp",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "nickname",
+        "name",
+        "id"
+      ],
+      "title": "Participant",
+      "type": "object"
+    },
+    "CampaignParticipant": {
+      "description": "Association between a participant and a campaign",
+      "example": {
+        "campaign_id": "770e8400-e29b-41d4-a716-446655440002",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "inserted_at": "2024-05-01T10:00:00Z",
+        "participant_id": "660e8400-e29b-41d4-a716-446655440001",
+        "updated_at": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "campaign_id": {
+          "description": "Campaign UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "id": {
+          "description": "Association UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "inserted_at": {
+          "description": "Creation timestamp",
+          "format": "date-time",
+          "type": "string"
+        },
+        "participant_id": {
+          "description": "Participant UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "Last update timestamp",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "campaign_id",
+        "participant_id",
+        "id"
+      ],
+      "title": "Campaign Participant",
+      "type": "object"
+    },
+    "ParticipantChallenge": {
+      "description": "Association between a participant and a challenge within a campaign",
+      "example": {
+        "campaign_id": "880e8400-e29b-41d4-a716-446655440003",
+        "challenge_id": "770e8400-e29b-41d4-a716-446655440002",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "inserted_at": "2024-05-01T10:00:00Z",
+        "participant_id": "660e8400-e29b-41d4-a716-446655440001",
+        "updated_at": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "campaign_id": {
+          "description": "Campaign UUID for context",
+          "format": "uuid",
+          "type": "string"
+        },
+        "challenge_id": {
+          "description": "Challenge UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "id": {
+          "description": "Association UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "inserted_at": {
+          "description": "Creation timestamp",
+          "format": "date-time",
+          "type": "string"
+        },
+        "participant_id": {
+          "description": "Participant UUID",
+          "format": "uuid",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "Last update timestamp",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "campaign_id",
+        "challenge_id",
+        "participant_id",
+        "id"
+      ],
+      "title": "Participant Challenge",
+      "type": "object"
+    },
+    "ParticipantListResponse": {
+      "description": "Paginated list of participants",
+      "example": {
+        "data": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "name": "John Doe",
+            "nickname": "johndoe",
+            "status": "active",
+            "tenant_id": "tenant-123"
+          }
+        ],
+        "has_more": true,
+        "next_cursor": "2024-05-01T10:00:00Z"
+      },
+      "properties": {
+        "data": {
+          "description": "List of participants",
+          "items": {
+            "$ref": "#/definitions/Participant"
+          },
+          "type": "array"
+        },
+        "has_more": {
+          "description": "Whether more results are available",
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "description": "Cursor for next page (null if no more pages)",
+          "format": "date-time",
+          "type": "string",
+          "x-nullable": true
+        }
+      },
+      "title": "Participant List Response",
+      "type": "object"
+    },
+    "ParticipantRequest": {
+      "description": "Participant creation/update request",
+      "example": {
+        "name": "John Doe",
+        "nickname": "johndoe",
+        "status": "active"
+      },
+      "properties": {
+        "name": {
+          "description": "Participant full name",
+          "minLength": 1,
+          "type": "string"
+        },
+        "nickname": {
+          "description": "Unique participant identifier",
+          "minLength": 3,
+          "type": "string"
+        },
+        "status": {
+          "description": "Participant status",
+          "enum": [
+            "active",
+            "inactive",
+            "ineligible"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nickname",
+        "name"
+      ],
+      "title": "Participant Request",
       "type": "object"
     }
   },
@@ -888,6 +1096,65 @@
         ]
       }
     },
+    "/campaigns/{campaign_id}/participants": {
+      "get": {
+        "description": "Returns a paginated list of participants enrolled in a specific campaign",
+        "operationId": "CampaignsApiWeb.ParticipantController.list_participants",
+        "parameters": [
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Number of records to return (max: 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "description": "Cursor for pagination (ISO8601 datetime)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ParticipantListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "List participants for campaign",
+        "tags": [
+          "Participant Management"
+        ]
+      }
+    },
     "/campaigns/{id}": {
       "delete": {
         "description": "Permanently deletes a campaign for the authenticated tenant",
@@ -1100,6 +1367,65 @@
         ]
       }
     },
+    "/challenges/{challenge_id}/participants": {
+      "get": {
+        "description": "Returns a paginated list of participants enrolled in a specific challenge",
+        "operationId": "CampaignsApiWeb.ParticipantController.list_challenge_participants",
+        "parameters": [
+          {
+            "description": "Challenge ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Number of records to return (max: 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "description": "Cursor for pagination (ISO8601 datetime)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ParticipantListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "List participants for challenge",
+        "tags": [
+          "Participant Management"
+        ]
+      }
+    },
     "/challenges/{id}": {
       "get": {
         "description": "Returns a single challenge by ID",
@@ -1150,9 +1476,640 @@
           "Challenge Management"
         ]
       }
+    },
+    "/participants": {
+      "get": {
+        "description": "Returns a paginated list of participants for the authenticated tenant",
+        "operationId": "CampaignsApiWeb.ParticipantController.index",
+        "parameters": [
+          {
+            "description": "Number of records to return (max: 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "description": "Cursor for pagination (ISO8601 datetime)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Filter by nickname (case-insensitive substring match)",
+            "in": "query",
+            "name": "nickname",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ParticipantListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "List participants",
+        "tags": [
+          "Participant Management"
+        ]
+      },
+      "post": {
+        "description": "Creates a new participant for the authenticated tenant",
+        "operationId": "CampaignsApiWeb.ParticipantController.create",
+        "parameters": [
+          {
+            "description": "Participant attributes",
+            "in": "body",
+            "name": "participant",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipantRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/Participant"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Create participant",
+        "tags": [
+          "Participant Management"
+        ]
+      }
+    },
+    "/participants/{id}": {
+      "delete": {
+        "description": "Permanently deletes a participant for the authenticated tenant",
+        "operationId": "CampaignsApiWeb.ParticipantController.delete",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Participant"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Delete participant",
+        "tags": [
+          "Participant Management"
+        ]
+      },
+      "get": {
+        "description": "Returns a single participant by ID for the authenticated tenant",
+        "operationId": "CampaignsApiWeb.ParticipantController.show",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Participant"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Get participant",
+        "tags": [
+          "Participant Management"
+        ]
+      },
+      "put": {
+        "description": "Updates an existing participant for the authenticated tenant",
+        "operationId": "CampaignsApiWeb.ParticipantController.update",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Participant attributes",
+            "in": "body",
+            "name": "participant",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ParticipantRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Participant"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Update participant",
+        "tags": [
+          "Participant Management"
+        ]
+      }
+    },
+    "/participants/{participant_id}/campaigns": {
+      "get": {
+        "description": "Returns a paginated list of campaigns that a participant is enrolled in",
+        "operationId": "CampaignsApiWeb.ParticipantController.list_campaigns",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "participant_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Number of records to return (max: 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "description": "Cursor for pagination (ISO8601 datetime)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CampaignListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "List campaigns for participant",
+        "tags": [
+          "Participant Management"
+        ]
+      }
+    },
+    "/participants/{participant_id}/campaigns/{campaign_id}": {
+      "delete": {
+        "description": "Removes the association between a participant and a campaign within the authenticated tenant. All participant-challenge associations for this campaign will also be removed.",
+        "operationId": "CampaignsApiWeb.ParticipantController.disassociate_campaign",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "participant_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/CampaignParticipant"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Disassociate participant from campaign",
+        "tags": [
+          "Participant Management"
+        ]
+      },
+      "post": {
+        "description": "Creates an association between a participant and a campaign within the authenticated tenant",
+        "operationId": "CampaignsApiWeb.ParticipantController.associate_campaign",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "participant_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Campaign ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/CampaignParticipant"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden - Tenant mismatch",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Associate participant with campaign",
+        "tags": [
+          "Participant Management"
+        ]
+      }
+    },
+    "/participants/{participant_id}/challenges": {
+      "get": {
+        "description": "Returns a paginated list of challenges that a participant is enrolled in. Optionally filter by campaign_id to show only challenges from a specific campaign.",
+        "operationId": "CampaignsApiWeb.ParticipantController.list_challenges",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "participant_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Number of records to return (max: 100)",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "description": "Cursor for pagination (ISO8601 datetime)",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Filter by campaign ID",
+            "format": "uuid",
+            "in": "query",
+            "name": "campaign_id",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ChallengeListResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "List challenges for participant",
+        "tags": [
+          "Participant Management"
+        ]
+      }
+    },
+    "/participants/{participant_id}/challenges/{challenge_id}": {
+      "delete": {
+        "description": "Removes the association between a participant and a challenge within the authenticated tenant",
+        "operationId": "CampaignsApiWeb.ParticipantController.disassociate_challenge",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "participant_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Challenge ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/ParticipantChallenge"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Disassociate participant from challenge",
+        "tags": [
+          "Participant Management"
+        ]
+      },
+      "post": {
+        "description": "Creates an association between a participant and a challenge within the authenticated tenant. The participant must already be associated with the challenge's campaign.",
+        "operationId": "CampaignsApiWeb.ParticipantController.associate_challenge",
+        "parameters": [
+          {
+            "description": "Participant ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "participant_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Challenge ID",
+            "format": "uuid",
+            "in": "path",
+            "name": "challenge_id",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/ParticipantChallenge"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden - Tenant mismatch",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "422": {
+            "description": "Validation Error - Participant not in campaign or duplicate association",
+            "schema": {
+              "$ref": "#/definitions/ValidationErrorResponse"
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "summary": "Associate participant with challenge",
+        "tags": [
+          "Participant Management"
+        ]
+      }
     }
   },
   "swagger": "2.0",
+  "basePath": "/api",
   "security": [
     {
       "Bearer": []
@@ -1165,6 +2122,5 @@
       "type": "apiKey",
       "description": "JWT Bearer token. Format: Bearer <token>"
     }
-  },
-  "basePath": "/api"
+  }
 }

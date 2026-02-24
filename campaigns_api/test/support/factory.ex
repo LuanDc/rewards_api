@@ -9,6 +9,9 @@ defmodule CampaignsApi.Factory do
   alias CampaignsApi.CampaignManagement.Campaign
   alias CampaignsApi.CampaignManagement.CampaignChallenge
   alias CampaignsApi.Challenges.Challenge
+  alias CampaignsApi.ParticipantManagement.CampaignParticipant
+  alias CampaignsApi.ParticipantManagement.Participant
+  alias CampaignsApi.ParticipantManagement.ParticipantChallenge
   alias CampaignsApi.Tenants.Tenant
 
   def tenant_factory do
@@ -92,6 +95,32 @@ defmodule CampaignsApi.Factory do
       configuration: %{"threshold" => 10},
       campaign: build(:campaign),
       challenge: build(:challenge)
+    }
+  end
+
+  def participant_factory do
+    id = System.unique_integer([:positive])
+
+    %Participant{
+      name: "Participant #{id}",
+      nickname: "user#{id}",
+      status: :active,
+      tenant: build(:tenant)
+    }
+  end
+
+  def campaign_participant_factory do
+    %CampaignParticipant{
+      participant: build(:participant),
+      campaign: build(:campaign)
+    }
+  end
+
+  def participant_challenge_factory do
+    %ParticipantChallenge{
+      participant: build(:participant),
+      challenge: build(:challenge),
+      campaign: build(:campaign)
     }
   end
 

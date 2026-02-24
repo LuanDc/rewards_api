@@ -1,8 +1,11 @@
 defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
   use CampaignsApi.DataCase
+  use ExUnitProperties
 
   import CampaignsApi.Factory
+  import CampaignsApi.Generators
 
+  alias CampaignsApi.CampaignManagement
   alias CampaignsApi.CampaignManagement.CampaignChallenge
 
   describe "changeset/2" do
@@ -596,6 +599,135 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
 
       # Both should succeed
       assert true
+    end
+  end
+
+  describe "Properties: Campaign Challenge Business Invariants" do
+    @tag :property
+    property "unique association - duplicate campaign-challenge associations fail" do
+      check all(
+              display_name1 <- string(:alphanumeric, min_length: 3, max_length: 50),
+              display_name2 <- string(:alphanumeric, min_length: 3, max_length: 50),
+              frequency1 <- evaluation_frequency_generator(),
+              frequency2 <- evaluation_frequency_generator(),
+              points1 <- reward_points_generator(),
+              points2 <- reward_points_generator(),
+              max_runs: 50
+            ) do
+        tenant = insert(:tenant)
+        campaign = insert(:campaign, tenant: tenant)
+        challenge = insert(:challenge)
+
+        attrs1 = %{
+          challenge_id: challenge.id,
+          display_name: display_name1,
+          evaluation_frequency: frequency1,
+          reward_points: points1
+        }
+
+        {:ok, _cc1} =
+          CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs1)
+
+        attrs2 = %{
+          challenge_id: challenge.id,
+          display_name: display_name2,
+          evaluation_frequency: frequency2,
+          reward_points: points2
+        }
+
+        result = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs2)
+
+        assert {:error, changeset} = result
+        assert %{campaign_id: ["has already been taken"]} = errors_on(changeset)
+      end
+    end
+
+    @tag :property
+    property "cascade deletion - deleting campaign deletes all campaign_challenges" do
+      check all(
+              num_challenges <- integer(1..5),
+              max_runs: 50
+            ) do
+        tenant = insert(:tenant)
+        campaign = insert(:campaign, tenant: tenant)
+
+        campaign_challenge_ids =
+          Enum.map(1..num_challenges, fn _ ->
+            challenge = insert(:challenge)
+
+            attrs = %{
+              challenge_id: challenge.id,
+              display_name: "Challenge #{System.unique_integer([:positive])}",
+              evaluation_frequency: "daily",
+              reward_points: 100
+            }
+
+            {:ok, cc} =
+              CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+
+            cc.id
+          end)
+
+        Enum.each(campaign_challenge_ids, fn cc_id ->
+          assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc_id) != nil
+        end)
+
+        {:ok, _deleted_campaign} = CampaignManagement.delete_campaign(tenant.id, campaign.id)
+
+        Enum.each(campaign_challenge_ids, fn cc_id ->
+          assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc_id) == nil
+        end)
+      end
+    end
+
+    @tag :property
+    property "tenant validation - cross-tenant access always fails" do
+      check all(
+              display_name <- string(:alphanumeric, min_length: 3, max_length: 50),
+              frequency <- evaluation_frequency_generator(),
+              points <- reward_points_generator(),
+              max_runs: 50
+            ) do
+        tenant1 = insert(:tenant)
+        tenant2 = insert(:tenant)
+        campaign = insert(:campaign, tenant: tenant1)
+        challenge = insert(:challenge)
+
+        attrs = %{
+          challenge_id: challenge.id,
+          display_name: display_name,
+          evaluation_frequency: frequency,
+          reward_points: points
+        }
+
+        # Tenant2 cannot create association with tenant1's campaign
+        result = CampaignManagement.create_campaign_challenge(tenant2.id, campaign.id, attrs)
+        assert {:error, :campaign_not_found} = result
+
+        # Tenant1 can create the association
+        {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant1.id, campaign.id, attrs)
+
+        # Tenant2 cannot get tenant1's campaign challenge
+        assert CampaignManagement.get_campaign_challenge(tenant2.id, campaign.id, cc.id) == nil
+
+        # Tenant2 cannot update tenant1's campaign challenge
+        update_attrs = %{reward_points: points + 100}
+
+        assert {:error, :not_found} =
+                 CampaignManagement.update_campaign_challenge(
+                   tenant2.id,
+                   campaign.id,
+                   cc.id,
+                   update_attrs
+                 )
+
+        # Tenant2 cannot delete tenant1's campaign challenge
+        assert {:error, :not_found} =
+                 CampaignManagement.delete_campaign_challenge(tenant2.id, campaign.id, cc.id)
+
+        # Verify tenant1 can still access
+        assert CampaignManagement.get_campaign_challenge(tenant1.id, campaign.id, cc.id) != nil
+      end
     end
   end
 end

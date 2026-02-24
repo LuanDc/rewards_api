@@ -65,7 +65,23 @@ defmodule CampaignsApiWeb.Router do
       resources "/challenges", CampaignChallengeController, except: [:new, :edit]
     end
 
-    resources "/challenges", ChallengeController, only: [:index, :show]
+    resources "/challenges", ChallengeController, only: [:index, :show] do
+      get "/participants", ParticipantController, :list_challenge_participants
+    end
+
+    resources "/participants", ParticipantController, except: [:new, :edit] do
+      post "/campaigns/:campaign_id", ParticipantController, :associate_campaign
+      delete "/campaigns/:campaign_id", ParticipantController, :disassociate_campaign
+      get "/campaigns", ParticipantController, :list_campaigns
+
+      post "/challenges/:challenge_id", ParticipantController, :associate_challenge
+      delete "/challenges/:challenge_id", ParticipantController, :disassociate_challenge
+      get "/challenges", ParticipantController, :list_challenges
+    end
+
+    scope "/campaigns/:campaign_id" do
+      get "/participants", ParticipantController, :list_participants
+    end
   end
 
   if Application.compile_env(:campaigns_api, :dev_routes) do

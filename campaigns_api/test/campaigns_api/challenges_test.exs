@@ -667,4 +667,57 @@ defmodule CampaignsApi.ChallengesTest do
       assert Challenges.get_challenge(challenge2.id) != nil
     end
   end
+
+  describe "Unit tests for properties converted from property tests" do
+    test "challenge created has UUID format" do
+      {:ok, challenge} = Challenges.create_challenge(%{name: "Test Challenge"})
+
+      assert is_binary(challenge.id)
+      assert String.length(challenge.id) == 36
+      assert challenge.id =~ ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    end
+
+    test "challenge can be created with optional fields" do
+      {:ok, challenge} =
+        Challenges.create_challenge(%{
+          name: "Full Challenge",
+          description: "Test description",
+          metadata: %{"type" => "evaluation", "version" => 1}
+        })
+
+      assert challenge.description == "Test description"
+      assert challenge.metadata == %{"type" => "evaluation", "version" => 1}
+    end
+
+    test "challenges are ordered by inserted_at descending" do
+      insert_list(5, :challenge)
+
+      result = Challenges.list_challenges()
+      challenges = result.data
+
+      assert length(challenges) == 5
+
+      # Verify descending order
+      timestamps = Enum.map(challenges, & &1.inserted_at)
+      assert timestamps == Enum.sort(timestamps, {:desc, DateTime})
+    end
+
+    test "challenge includes all required fields" do
+      {:ok, challenge} = Challenges.create_challenge(%{name: "Test Challenge"})
+
+      assert Map.has_key?(challenge, :id)
+      assert Map.has_key?(challenge, :name)
+      assert Map.has_key?(challenge, :description)
+      assert Map.has_key?(challenge, :metadata)
+      assert Map.has_key?(challenge, :inserted_at)
+      assert Map.has_key?(challenge, :updated_at)
+    end
+
+    test "challenge timestamps are stored in UTC" do
+      {:ok, challenge} = Challenges.create_challenge(%{name: "Test Challenge"})
+
+      assert challenge.inserted_at.time_zone == "Etc/UTC"
+      assert challenge.updated_at.time_zone == "Etc/UTC"
+    end
+  end
 end

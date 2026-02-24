@@ -1,5 +1,6 @@
 defmodule CampaignsApi.CampaignManagementTest do
   use CampaignsApi.DataCase
+  use ExUnitProperties
 
   alias CampaignsApi.CampaignManagement
 
@@ -607,6 +608,143 @@ defmodule CampaignsApi.CampaignManagementTest do
 
       assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc1.id) == nil
       assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc2.id) == nil
+    end
+  end
+
+  describe "Property: Tenant Isolation (Business Invariant)" do
+    @tag :property
+    property "tenant cannot access campaigns belonging to other tenants", %{
+      tenant1: tenant1,
+      tenant2: tenant2
+    } do
+      check all(
+              name <- string(:alphanumeric, min_length: 3, max_length: 50),
+              max_runs: 50
+            ) do
+        {:ok, campaign} = CampaignManagement.create_campaign(tenant1.id, %{name: name})
+
+        # Tenant1 can access their own campaign
+        assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil,
+               "tenant1 should be able to retrieve their own campaign"
+
+        # Tenant2 cannot access tenant1's campaign
+        assert CampaignManagement.get_campaign(tenant2.id, campaign.id) == nil,
+               "tenant2 should not be able to retrieve tenant1's campaign"
+
+        # Tenant2 cannot update tenant1's campaign
+        assert {:error, :not_found} =
+                 CampaignManagement.update_campaign(tenant2.id, campaign.id, %{name: "Updated"}),
+               "tenant2 should not be able to update tenant1's campaign"
+
+        # Tenant2 cannot delete tenant1's campaign
+        assert {:error, :not_found} = CampaignManagement.delete_campaign(tenant2.id, campaign.id),
+               "tenant2 should not be able to delete tenant1's campaign"
+
+        # Campaign still exists for tenant1
+        assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil,
+               "campaign should still exist for tenant1 after cross-tenant access attempts"
+
+        # Tenant2's list doesn't include tenant1's campaign
+        tenant2_campaigns = CampaignManagement.list_campaigns(tenant2.id)
+        campaign_ids = Enum.map(tenant2_campaigns.data, & &1.id)
+
+        assert campaign.id not in campaign_ids,
+               "tenant1's campaign should not appear in tenant2's campaign list"
+      end
+    end
+  end
+
+  describe "Unit tests for properties converted from property tests" do
+    test "campaign created has UUID format", %{tenant1: tenant} do
+      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+
+      assert is_binary(campaign.id)
+      assert String.length(campaign.id) == 36
+      assert campaign.id =~ ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    end
+
+    test "campaign defaults to active status when not specified", %{tenant1: tenant} do
+      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+
+      assert campaign.status == :active
+    end
+
+    test "campaign can be created with optional fields", %{tenant1: tenant} do
+      start_time = ~U[2024-01-01 00:00:00Z]
+      end_time = ~U[2024-12-31 23:59:59Z]
+
+      {:ok, campaign} =
+        CampaignManagement.create_campaign(tenant.id, %{
+          name: "Full Campaign",
+          description: "Test description",
+          start_time: start_time,
+          end_time: end_time
+        })
+
+      assert campaign.description == "Test description"
+      assert campaign.start_time == start_time
+      assert campaign.end_time == end_time
+    end
+
+    test "campaign timestamps are stored in UTC", %{tenant1: tenant} do
+      start_time = ~U[2024-01-01 00:00:00Z]
+      end_time = ~U[2024-12-31 23:59:59Z]
+
+      {:ok, campaign} =
+        CampaignManagement.create_campaign(tenant.id, %{
+          name: "Test Campaign",
+          start_time: start_time,
+          end_time: end_time
+        })
+
+      assert campaign.start_time.time_zone == "Etc/UTC"
+      assert campaign.end_time.time_zone == "Etc/UTC"
+      assert campaign.inserted_at.time_zone == "Etc/UTC"
+      assert campaign.updated_at.time_zone == "Etc/UTC"
+    end
+
+    test "campaigns are ordered by inserted_at descending", %{tenant1: tenant} do
+      insert_list(5, :campaign, tenant: tenant)
+
+      result = CampaignManagement.list_campaigns(tenant.id)
+      campaigns = result.data
+
+      assert length(campaigns) == 5
+
+      # Verify descending order
+      timestamps = Enum.map(campaigns, & &1.inserted_at)
+      assert timestamps == Enum.sort(timestamps, {:desc, DateTime})
+    end
+
+    test "campaign includes all required fields", %{tenant1: tenant} do
+      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+
+      assert Map.has_key?(campaign, :id)
+      assert Map.has_key?(campaign, :tenant_id)
+      assert Map.has_key?(campaign, :name)
+      assert Map.has_key?(campaign, :description)
+      assert Map.has_key?(campaign, :start_time)
+      assert Map.has_key?(campaign, :end_time)
+      assert Map.has_key?(campaign, :status)
+      assert Map.has_key?(campaign, :inserted_at)
+      assert Map.has_key?(campaign, :updated_at)
+    end
+
+    test "campaign status can transition between active and paused", %{tenant1: tenant} do
+      {:ok, campaign} =
+        CampaignManagement.create_campaign(tenant.id, %{name: "Test", status: :active})
+
+      assert campaign.status == :active
+
+      {:ok, updated} =
+        CampaignManagement.update_campaign(tenant.id, campaign.id, %{status: :paused})
+
+      assert updated.status == :paused
+
+      {:ok, updated_again} =
+        CampaignManagement.update_campaign(tenant.id, campaign.id, %{status: :active})
+
+      assert updated_again.status == :active
     end
   end
 end
