@@ -1,10 +1,10 @@
 {
   "name": "Campaigns API",
-  "dockerComposeFile": ["docker-compose.yml"],
+  "dockerComposeFile": ["../../docker-compose.dev.yml"],
   "service": "app",
   "workspaceFolder": "/workspace/campaigns_api",
   "forwardPorts": [4000],
-  "postCreateCommand": "mix deps.get && mix ecto.setup",
+  "postCreateCommand": "mix deps.get && mix ecto.setup && mix run priv/repo/seeds.exs",
   "customizations": {
     "vscode": {
       "extensions": [

@@ -1,18 +1,15 @@
 services:
   app:
     build:
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
+      context: .
+      dockerfile: campaigns_api/.devcontainer/Dockerfile
     volumes:
-      - ..:/workspace:cached
+      - .:/workspace:cached
       - hex-cache:/root/.hex
       - mix-cache:/root/.mix
       - build-cache:/workspace/campaigns_api/_build
       - deps-cache:/workspace/campaigns_api/deps
     command: sleep infinity
-    environment:
-      - PGHOST=postgres_db
-      - MIX_ENV=dev
     ports:
       - "4000:4000"
     networks:
