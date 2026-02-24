@@ -1,5 +1,6 @@
 defmodule CampaignsApiWeb.CampaignControllerTest do
   use CampaignsApiWeb.ConnCase, async: true
+  use ExUnitProperties
 
   alias CampaignsApi.CampaignManagement
 
@@ -305,6 +306,76 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       conn = delete(conn, ~p"/api/campaigns/#{other_campaign.id}")
 
       assert %{"error" => "Campaign not found"} = json_response(conn, 404)
+    end
+  end
+
+  describe "property-based tests" do
+    @tag :property
+    property "successful campaign deletion returns HTTP 204 No Content" do
+      check all name <- string(:alphanumeric, min_length: 3, max_length: 50) do
+        tenant = insert(:tenant)
+        token = jwt_token(tenant.id)
+        conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
+
+        campaign = insert(:campaign, tenant: tenant, name: name)
+        conn = delete(conn, ~p"/api/campaigns/#{campaign.id}")
+        assert response(conn, 204) == ""
+        assert CampaignManagement.get_campaign(tenant.id, campaign.id) == nil
+      end
+    end
+
+    @tag :property
+    property "validation errors return structured JSON with 422 status" do
+      check all name <- string(:alphanumeric, min_length: 0, max_length: 2) do
+        tenant = insert(:tenant)
+        token = jwt_token(tenant.id)
+        conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
+
+        conn = post(conn, ~p"/api/campaigns", %{"name" => name})
+        assert %{"errors" => errors} = json_response(conn, 422)
+        assert is_map(errors)
+        assert Map.has_key?(errors, "name")
+      end
+    end
+
+    @tag :property
+    property "date validation errors return structured JSON with 422 status" do
+      check all start_offset <- integer(1..100),
+                end_offset <- integer(-100..-1) do
+        tenant = insert(:tenant)
+        token = jwt_token(tenant.id)
+        conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
+
+        now = DateTime.utc_now()
+        start_time = DateTime.add(now, start_offset, :second) |> DateTime.to_iso8601()
+        end_time = DateTime.add(now, end_offset, :second) |> DateTime.to_iso8601()
+
+        conn =
+          post(conn, ~p"/api/campaigns", %{
+            "name" => "Invalid Campaign",
+            "start_time" => start_time,
+            "end_time" => end_time
+          })
+
+        assert %{"errors" => errors} = json_response(conn, 422)
+        assert is_map(errors)
+        assert Map.has_key?(errors, "start_time")
+      end
+    end
+
+    @tag :property
+    property "404 errors return structured JSON" do
+      check all _iteration <- integer(1..10) do
+        tenant = insert(:tenant)
+        token = jwt_token(tenant.id)
+        conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
+
+        fake_id = Ecto.UUID.generate()
+        conn = get(conn, ~p"/api/campaigns/#{fake_id}")
+        assert %{"error" => error_message} = json_response(conn, 404)
+        assert is_binary(error_message)
+        assert error_message == "Campaign not found"
+      end
     end
   end
 end

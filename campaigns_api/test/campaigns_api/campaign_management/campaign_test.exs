@@ -1,5 +1,6 @@
 defmodule CampaignsApi.CampaignManagement.CampaignTest do
   use CampaignsApi.DataCase
+  use ExUnitProperties
 
   alias CampaignsApi.CampaignManagement.Campaign
   alias CampaignsApi.Tenants
@@ -183,6 +184,90 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
 
       assert changeset.valid?
       assert get_field(changeset, :description) == "This is a test campaign description"
+    end
+  end
+
+  describe "Property: Campaign Name and Date Validation" do
+    @tag :property
+    property "campaign names with fewer than 3 characters are rejected, 3+ accepted" do
+      check all(
+              name_length <- integer(1..10),
+              max_runs: 50
+            ) do
+        tenant = insert(:tenant)
+        name = String.duplicate("a", name_length)
+
+        attrs = %{
+          tenant_id: tenant.id,
+          name: name
+        }
+
+        changeset = Campaign.changeset(%Campaign{}, attrs)
+
+        if name_length < 3 do
+          assert changeset.valid? == false
+          assert Keyword.has_key?(changeset.errors, :name)
+          {_msg, opts} = changeset.errors[:name]
+          assert opts[:count] == 3
+        else
+          assert changeset.valid? == true
+          assert not Keyword.has_key?(changeset.errors, :name)
+        end
+      end
+    end
+
+    @tag :property
+    property "campaigns with both dates must have start_time before end_time" do
+      check all(
+              base_datetime <- datetime_generator(),
+              offset_seconds <- integer(1..86_400),
+              swap <- boolean(),
+              max_runs: 50
+            ) do
+        tenant = insert(:tenant)
+        earlier = base_datetime
+        later = DateTime.add(base_datetime, offset_seconds, :second)
+
+        {start_time, end_time} =
+          if swap do
+            {later, earlier}
+          else
+            {earlier, later}
+          end
+
+        attrs = %{
+          tenant_id: tenant.id,
+          name: "Test Campaign",
+          start_time: start_time,
+          end_time: end_time
+        }
+
+        changeset = Campaign.changeset(%Campaign{}, attrs)
+
+        if swap do
+          assert changeset.valid? == false
+          assert Keyword.has_key?(changeset.errors, :start_time)
+          {msg, _opts} = changeset.errors[:start_time]
+          assert msg == "must be before end_time"
+        else
+          assert changeset.valid? == true
+          assert not Keyword.has_key?(changeset.errors, :start_time)
+        end
+      end
+    end
+
+    defp datetime_generator do
+      gen all(
+            year <- integer(2020..2030),
+            month <- integer(1..12),
+            day <- integer(1..28),
+            hour <- integer(0..23),
+            minute <- integer(0..59),
+            second <- integer(0..59)
+          ) do
+        {:ok, datetime} = DateTime.new(Date.new!(year, month, day), Time.new!(hour, minute, second))
+        datetime
+      end
     end
   end
 end
