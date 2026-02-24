@@ -1,5 +1,32 @@
 # CampaignsApi
 
+## RabbitMQ for challenge ingestion
+
+Start RabbitMQ locally with Docker CLI:
+
+```bash
+docker run -d \
+  --name campaigns-rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  rabbitmq:3.13-management
+```
+
+Management UI: http://localhost:15672 (guest / guest)
+
+Optional env vars:
+
+```bash
+export RABBITMQ_URL=amqp://guest:guest@localhost:5672
+export RABBITMQ_ENABLED=true
+```
+
+The seed script publishes challenge messages to RabbitMQ and waits for Broadway consumer persistence:
+
+```bash
+mix run priv/repo/seeds.exs
+```
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies

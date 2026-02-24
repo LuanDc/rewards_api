@@ -16,6 +16,7 @@ services:
       - bsystem_network
     depends_on:
       - postgres_db
+      - rabbitmq
 
   postgres_db:
     image: postgres:18.1
@@ -30,12 +31,27 @@ services:
     networks:
       - bsystem_network
 
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - bsystem_network
+
 volumes:
   hex-cache:
   mix-cache:
   build-cache:
   deps-cache:
   pgdata:
+  rabbitmq_data:
 
 networks:
   bsystem_network:

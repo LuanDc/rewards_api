@@ -12,6 +12,7 @@ defmodule CampaignsApi.Challenges.Challenge do
 
   @type t :: %__MODULE__{
           id: Ecto.UUID.t(),
+          external_id: String.t(),
           name: String.t(),
           description: String.t() | nil,
           metadata: map() | nil,
@@ -24,9 +25,11 @@ defmodule CampaignsApi.Challenges.Challenge do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  @derive {Jason.Encoder, only: [:id, :name, :description, :metadata, :inserted_at, :updated_at]}
+  @derive {Jason.Encoder,
+           only: [:id, :external_id, :name, :description, :metadata, :inserted_at, :updated_at]}
 
   schema "challenges" do
+    field :external_id, :string
     field :name, :string
     field :description, :string
     field :metadata, :map
@@ -39,8 +42,10 @@ defmodule CampaignsApi.Challenges.Challenge do
   @spec changeset(t() | Ecto.Changeset.t() | %__MODULE__{}, map()) :: Ecto.Changeset.t()
   def changeset(challenge, attrs) do
     challenge
-    |> cast(attrs, [:name, :description, :metadata])
-    |> validate_required([:name])
+    |> cast(attrs, [:external_id, :name, :description, :metadata])
+    |> validate_required([:external_id, :name])
     |> validate_length(:name, min: 3)
+    |> validate_length(:external_id, min: 3)
+    |> unique_constraint(:external_id)
   end
 end

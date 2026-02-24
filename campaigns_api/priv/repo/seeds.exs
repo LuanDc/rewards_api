@@ -10,32 +10,17 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias CampaignsApi.CampaignManagement
-alias CampaignsApi.Challenges
+alias CampaignsApi.Challenges.Challenge
+alias CampaignsApi.Messaging.ChallengePublisher
 alias CampaignsApi.Repo
-alias CampaignsApi.Products
 
-# Clear existing data (optional - comment out if you want to keep existing data)
-IO.puts("Cleaning existing data...")
+IO.puts("Cleaning existing challenge data...")
 Repo.delete_all(CampaignsApi.CampaignManagement.CampaignChallenge)
-Repo.delete_all(CampaignsApi.CampaignManagement.Campaign)
-Repo.delete_all(CampaignsApi.Challenges.Challenge)
-Repo.delete_all(CampaignsApi.Products.Product)
+Repo.delete_all(Challenge)
 
-# Create Products
-IO.puts("Creating products...")
-
-{:ok, product1} = Products.create_product("acme-corp")
-{:ok, product2} = Products.create_product("tech-startup")
-{:ok, product3} = Products.create_product("retail-chain")
-
-IO.puts("✓ Created #{Repo.aggregate(CampaignsApi.Products.Product, :count)} products")
-
-# Create Challenges (global, available to all products)
-IO.puts("Creating challenges...")
-
-{:ok, challenge1} =
-  Challenges.create_challenge(%{
+challenges = [
+  %{
+    external_id: "purchase-frequency",
     name: "Purchase Frequency",
     description: "Rewards customers for making frequent purchases",
     metadata: %{
@@ -43,10 +28,9 @@ IO.puts("Creating challenges...")
       "category" => "engagement",
       "difficulty" => "easy"
     }
-  })
-
-{:ok, challenge2} =
-  Challenges.create_challenge(%{
+  },
+  %{
+    external_id: "high-value-transaction",
     name: "High Value Transaction",
     description: "Rewards customers for high-value purchases",
     metadata: %{
@@ -54,10 +38,9 @@ IO.puts("Creating challenges...")
       "category" => "revenue",
       "difficulty" => "medium"
     }
-  })
-
-{:ok, challenge3} =
-  Challenges.create_challenge(%{
+  },
+  %{
+    external_id: "loyalty-milestone",
     name: "Loyalty Milestone",
     description: "Rewards long-term customer loyalty",
     metadata: %{
@@ -65,10 +48,9 @@ IO.puts("Creating challenges...")
       "category" => "retention",
       "difficulty" => "hard"
     }
-  })
-
-{:ok, challenge4} =
-  Challenges.create_challenge(%{
+  },
+  %{
+    external_id: "referral-program",
     name: "Referral Program",
     description: "Rewards customers for referring new customers",
     metadata: %{
@@ -76,10 +58,9 @@ IO.puts("Creating challenges...")
       "category" => "acquisition",
       "difficulty" => "medium"
     }
-  })
-
-{:ok, challenge5} =
-  Challenges.create_challenge(%{
+  },
+  %{
+    external_id: "social-media-engagement",
     name: "Social Media Engagement",
     description: "Rewards customers for social media interactions",
     metadata: %{
@@ -87,207 +68,48 @@ IO.puts("Creating challenges...")
       "category" => "engagement",
       "difficulty" => "easy"
     }
-  })
+  }
+]
 
-IO.puts("✓ Created #{Repo.aggregate(CampaignsApi.Challenges.Challenge, :count)} challenges")
+IO.puts("Publishing challenge messages...")
 
-# Create Campaigns for Product 1 (ACME Corp)
-IO.puts("Creating campaigns for ACME Corp...")
+Enum.each(challenges, fn challenge ->
+  case ChallengePublisher.publish_challenge(challenge) do
+    :ok ->
+      IO.puts("✓ Published challenge: #{challenge.external_id}")
 
-{:ok, campaign1} =
-  CampaignManagement.create_campaign(product1.id, %{
-    name: "Summer Sale 2024",
-    description: "Boost summer sales with exciting rewards",
-    status: :active,
-    start_time: DateTime.utc_now(),
-    end_time: DateTime.utc_now() |> DateTime.add(90, :day)
-  })
+    {:error, reason} ->
+      raise "Failed to publish challenge #{challenge.external_id}: #{inspect(reason)}"
+  end
+end)
 
-{:ok, campaign2} =
-  CampaignManagement.create_campaign(product1.id, %{
-    name: "Black Friday Bonanza",
-    description: "Massive rewards for Black Friday shoppers",
-    status: :paused,
-    start_time: DateTime.utc_now() |> DateTime.add(120, :day),
-    end_time: DateTime.utc_now() |> DateTime.add(125, :day)
-  })
+expected_count = length(challenges)
+wait_timeout_ms = 10_000
+poll_interval_ms = 200
+started_at = System.monotonic_time(:millisecond)
 
-{:ok, campaign3} =
-  CampaignManagement.create_campaign(product1.id, %{
-    name: "Loyalty Program Q4",
-    description: "Year-end loyalty rewards program",
-    status: :active,
-    start_time: DateTime.utc_now(),
-    end_time: DateTime.utc_now() |> DateTime.add(180, :day)
-  })
+wait_for_count = fn wait_for_count ->
+  current_count = Repo.aggregate(Challenge, :count)
+  elapsed_ms = System.monotonic_time(:millisecond) - started_at
 
-# Create Campaigns for Product 2 (Tech Startup)
-IO.puts("Creating campaigns for Tech Startup...")
+  cond do
+    current_count >= expected_count ->
+      :ok
 
-{:ok, campaign4} =
-  CampaignManagement.create_campaign(product2.id, %{
-    name: "Launch Week Special",
-    description: "Celebrate our product launch with rewards",
-    status: :active,
-    start_time: DateTime.utc_now(),
-    end_time: DateTime.utc_now() |> DateTime.add(7, :day)
-  })
+    elapsed_ms >= wait_timeout_ms ->
+      raise "Timed out waiting for challenge consumer to persist messages"
 
-{:ok, campaign5} =
-  CampaignManagement.create_campaign(product2.id, %{
-    name: "Early Adopter Program",
-    description: "Rewards for our first 1000 customers",
-    status: :active,
-    start_time: DateTime.utc_now(),
-    end_time: DateTime.utc_now() |> DateTime.add(365, :day)
-  })
+    true ->
+      Process.sleep(poll_interval_ms)
+      wait_for_count.(wait_for_count)
+  end
+end
 
-# Create Campaigns for Product 3 (Retail Chain)
-IO.puts("Creating campaigns for Retail Chain...")
+wait_for_count.(wait_for_count)
 
-{:ok, campaign6} =
-  CampaignManagement.create_campaign(product3.id, %{
-    name: "Store Anniversary Sale",
-    description: "Celebrating 10 years with amazing rewards",
-    status: :active,
-    start_time: DateTime.utc_now(),
-    end_time: DateTime.utc_now() |> DateTime.add(30, :day)
-  })
-
-{:ok, campaign7} =
-  CampaignManagement.create_campaign(product3.id, %{
-    name: "Holiday Shopping Rewards",
-    description: "Make holiday shopping more rewarding",
-    status: :paused,
-    start_time: DateTime.utc_now() |> DateTime.add(60, :day),
-    end_time: DateTime.utc_now() |> DateTime.add(90, :day)
-  })
-
-IO.puts("✓ Created #{Repo.aggregate(CampaignsApi.CampaignManagement.Campaign, :count)} campaigns")
-
-# Associate Challenges with Campaigns
-IO.puts("Creating campaign-challenge associations...")
-
-# ACME Corp - Summer Sale Campaign
-{:ok, _cc1} =
-  CampaignManagement.create_campaign_challenge(product1.id, campaign1.id, %{
-    challenge_id: challenge1.id,
-    display_name: "Shop More, Earn More",
-    display_description: "Make 5 purchases this month and earn bonus points",
-    evaluation_frequency: "daily",
-    reward_points: 100,
-    configuration: %{"min_purchases" => 5, "period_days" => 30}
-  })
-
-{:ok, _cc2} =
-  CampaignManagement.create_campaign_challenge(product1.id, campaign1.id, %{
-    challenge_id: challenge2.id,
-    display_name: "Big Spender Bonus",
-    display_description: "Spend over $500 and get 500 bonus points",
-    evaluation_frequency: "on_event",
-    reward_points: 500,
-    configuration: %{"min_amount" => 500}
-  })
-
-# ACME Corp - Loyalty Program
-{:ok, _cc3} =
-  CampaignManagement.create_campaign_challenge(product1.id, campaign3.id, %{
-    challenge_id: challenge3.id,
-    display_name: "Loyalty Champion",
-    display_description: "Reach 1 year as a customer",
-    evaluation_frequency: "monthly",
-    reward_points: 1000,
-    configuration: %{"milestone_days" => 365}
-  })
-
-{:ok, _cc4} =
-  CampaignManagement.create_campaign_challenge(product1.id, campaign3.id, %{
-    challenge_id: challenge4.id,
-    display_name: "Bring a Friend",
-    display_description: "Refer a friend and both get rewards",
-    evaluation_frequency: "on_event",
-    reward_points: 250,
-    configuration: %{"referral_bonus" => 250}
-  })
-
-# Tech Startup - Launch Week
-{:ok, _cc5} =
-  CampaignManagement.create_campaign_challenge(product2.id, campaign4.id, %{
-    challenge_id: challenge1.id,
-    display_name: "Launch Week Warrior",
-    display_description: "Make 3 purchases during launch week",
-    evaluation_frequency: "daily",
-    reward_points: 300,
-    configuration: %{"min_purchases" => 3, "period_days" => 7}
-  })
-
-{:ok, _cc6} =
-  CampaignManagement.create_campaign_challenge(product2.id, campaign4.id, %{
-    challenge_id: challenge5.id,
-    display_name: "Social Sharer",
-    display_description: "Share our launch on social media",
-    evaluation_frequency: "on_event",
-    reward_points: 50,
-    configuration: %{"platforms" => ["twitter", "facebook", "instagram"]}
-  })
-
-# Tech Startup - Early Adopter
-{:ok, _cc7} =
-  CampaignManagement.create_campaign_challenge(product2.id, campaign5.id, %{
-    challenge_id: challenge3.id,
-    display_name: "Early Adopter Badge",
-    display_description: "Be among our first 1000 customers",
-    evaluation_frequency: "on_event",
-    reward_points: 500,
-    configuration: %{"max_customers" => 1000}
-  })
-
-# Retail Chain - Anniversary Sale
-{:ok, _cc8} =
-  CampaignManagement.create_campaign_challenge(product3.id, campaign6.id, %{
-    challenge_id: challenge1.id,
-    display_name: "Anniversary Shopper",
-    display_description: "Shop 3 times during our anniversary month",
-    evaluation_frequency: "weekly",
-    reward_points: 200,
-    configuration: %{"min_purchases" => 3, "period_days" => 30}
-  })
-
-{:ok, _cc9} =
-  CampaignManagement.create_campaign_challenge(product3.id, campaign6.id, %{
-    challenge_id: challenge2.id,
-    display_name: "Anniversary VIP",
-    display_description: "Spend $1000+ during anniversary sale",
-    evaluation_frequency: "on_event",
-    reward_points: 1000,
-    configuration: %{"min_amount" => 1000}
-  })
-
-{:ok, _cc10} =
-  CampaignManagement.create_campaign_challenge(product3.id, campaign6.id, %{
-    challenge_id: challenge4.id,
-    display_name: "Anniversary Ambassador",
-    display_description: "Refer 3 friends during anniversary month",
-    evaluation_frequency: "weekly",
-    reward_points: 750,
-    configuration: %{"min_referrals" => 3}
-  })
-
-IO.puts(
-  "✓ Created #{Repo.aggregate(CampaignsApi.CampaignManagement.CampaignChallenge, :count)} campaign-challenge associations"
-)
-
-IO.puts("\n✅ Database seeded successfully!")
+IO.puts("\n✅ Challenge seed completed via RabbitMQ queue")
 IO.puts("\nSummary:")
-IO.puts("  - #{Repo.aggregate(CampaignsApi.Products.Product, :count)} products")
-IO.puts("  - #{Repo.aggregate(CampaignsApi.Challenges.Challenge, :count)} challenges")
-IO.puts("  - #{Repo.aggregate(CampaignsApi.CampaignManagement.Campaign, :count)} campaigns")
-
-IO.puts(
-  "  - #{Repo.aggregate(CampaignsApi.CampaignManagement.CampaignChallenge, :count)} campaign-challenge associations"
-)
-
-IO.puts("\nProduct IDs for testing:")
-IO.puts("  - ACME Corp: #{product1.id}")
-IO.puts("  - Tech Startup: #{product2.id}")
-IO.puts("  - Retail Chain: #{product3.id}")
+IO.puts("  - #{length(challenges)} messages published")
+IO.puts("  - #{Repo.aggregate(Challenge, :count)} challenges persisted")
+IO.puts("\nPublished external IDs:")
+Enum.each(challenges, fn challenge -> IO.puts("  - #{challenge.external_id}") end)

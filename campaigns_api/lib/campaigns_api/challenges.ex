@@ -81,9 +81,36 @@ defmodule CampaignsApi.Challenges do
   """
   @spec create_challenge(map()) :: {:ok, Challenge.t()} | {:error, Ecto.Changeset.t()}
   def create_challenge(attrs) do
+    attrs = ensure_external_id(attrs)
+
     %Challenge{}
     |> Challenge.changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Creates or updates a challenge using `external_id` as idempotency key.
+  """
+  @spec upsert_challenge(map()) ::
+          {:ok, Challenge.t()} | {:error, Ecto.Changeset.t() | :missing_external_id}
+  def upsert_challenge(attrs) do
+    attrs = normalize_attrs(attrs)
+
+    case attrs[:external_id] do
+      nil ->
+        {:error, :missing_external_id}
+
+      external_id ->
+        case get_challenge_by_external_id(external_id) do
+          nil ->
+            create_challenge(attrs)
+
+          challenge ->
+            challenge
+            |> Challenge.changeset(attrs)
+            |> Repo.update()
+        end
+    end
   end
 
   @doc """
@@ -156,5 +183,36 @@ defmodule CampaignsApi.Challenges do
   @spec has_campaign_associations?(Ecto.UUID.t()) :: boolean()
   defp has_campaign_associations?(challenge_id) do
     Repo.exists?(from cc in CampaignChallenge, where: cc.challenge_id == ^challenge_id)
+  end
+
+  @spec get_challenge_by_external_id(String.t()) :: Challenge.t() | nil
+  defp get_challenge_by_external_id(external_id) do
+    Repo.get_by(Challenge, external_id: external_id)
+  end
+
+  @spec ensure_external_id(map()) :: map()
+  defp ensure_external_id(attrs) do
+    external_id = get_field(attrs, :external_id) || Ecto.UUID.generate()
+
+    attrs
+    |> Map.new()
+    |> Map.put(:external_id, external_id)
+  end
+
+  @spec normalize_attrs(map()) :: map()
+  defp normalize_attrs(attrs) do
+    %{
+      external_id: get_field(attrs, :external_id),
+      name: get_field(attrs, :name),
+      description: get_field(attrs, :description),
+      metadata: get_field(attrs, :metadata)
+    }
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+    |> Map.new()
+  end
+
+  @spec get_field(map(), atom()) :: term()
+  defp get_field(attrs, key) do
+    Map.get(attrs, key) || Map.get(attrs, Atom.to_string(key))
   end
 end

@@ -43,6 +43,16 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
+  config :campaigns_api, CampaignsApi.Messaging,
+    enabled: System.get_env("RABBITMQ_ENABLED", "true") in ["true", "1"],
+    rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@localhost:5672",
+    exchange: System.get_env("RABBITMQ_EXCHANGE") || "campaigns_api.challenges",
+    queue: System.get_env("RABBITMQ_QUEUE") || "campaigns_api.challenges.ingest",
+    queue_dlq: System.get_env("RABBITMQ_QUEUE_DLQ") || "campaigns_api.challenges.dlq",
+    routing_key: System.get_env("RABBITMQ_ROUTING_KEY") || "challenge.upsert",
+    dlq_routing_key: System.get_env("RABBITMQ_DLQ_ROUTING_KEY") || "challenge.dlq",
+    max_retries: String.to_integer(System.get_env("RABBITMQ_MAX_RETRIES") || "5")
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key

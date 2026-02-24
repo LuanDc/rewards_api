@@ -31,6 +31,10 @@ config :campaigns_api, CampaignsApiWeb.Endpoint,
 
 config :campaigns_api, dev_routes: true
 
+config :campaigns_api, CampaignsApi.Messaging,
+  enabled: true,
+  rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@rabbitmq:5672"
+
 config :logger, :console, format: "[$level] $message\n"
 
 config :phoenix, :stacktrace_depth, 20
