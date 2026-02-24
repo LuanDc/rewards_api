@@ -1,5 +1,5 @@
 defmodule CampaignsApi.ParticipantManagement.CampaignParticipantTest do
-  use CampaignsApi.DataCase
+  use CampaignsApi.DataCase, async: true
 
   import CampaignsApi.Factory
 

@@ -1,5 +1,5 @@
 defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
-  use CampaignsApi.DataCase
+  use CampaignsApi.DataCase, async: true
   use ExUnitProperties
 
   import CampaignsApi.Factory

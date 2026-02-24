@@ -1,5 +1,5 @@
 defmodule CampaignsApi.ChallengesTest do
-  use CampaignsApi.DataCase
+  use CampaignsApi.DataCase, async: true
 
   alias CampaignsApi.CampaignManagement
   alias CampaignsApi.Challenges

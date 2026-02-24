@@ -1,5 +1,5 @@
 defmodule CampaignsApi.Tenants.TenantTest do
-  use CampaignsApi.DataCase
+  use CampaignsApi.DataCase, async: true
   use ExUnitProperties
 
   alias CampaignsApi.Repo

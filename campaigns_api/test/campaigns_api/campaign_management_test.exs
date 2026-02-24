@@ -1,5 +1,5 @@
 defmodule CampaignsApi.CampaignManagementTest do
-  use CampaignsApi.DataCase
+  use CampaignsApi.DataCase, async: true
   use ExUnitProperties
 
   alias CampaignsApi.CampaignManagement
@@ -749,7 +749,7 @@ defmodule CampaignsApi.CampaignManagementTest do
   end
 end
 defmodule CampaignsApi.ParticipantManagementTest do
-  use CampaignsApi.DataCase
+  use CampaignsApi.DataCase, async: true
   use ExUnitProperties
 
   import CampaignsApi.Factory

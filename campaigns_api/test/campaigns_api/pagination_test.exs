@@ -1,5 +1,5 @@
 defmodule CampaignsApi.PaginationTest do
-  use CampaignsApi.DataCase
+  use CampaignsApi.DataCase, async: true
   use ExUnitProperties
 
   alias CampaignsApi.CampaignManagement.Campaign
