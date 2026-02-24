@@ -4,7 +4,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
   import CampaignsApi.Factory
 
-  alias CampaignsApi.ParticipantManagement.Participant
+  alias CampaignsApi.CampaignManagement.Participant
 
   describe "changeset/2 - valid participant creation" do
     test "creates valid participant with all fields" do

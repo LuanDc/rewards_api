@@ -1,4 +1,4 @@
-defmodule CampaignsApi.ParticipantManagement.ParticipantChallenge do
+defmodule CampaignsApi.CampaignManagement.ParticipantChallenge do
   @moduledoc """
   Schema for participant-challenge associations with campaign context.
 
@@ -15,7 +15,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallenge do
           participant_id: Ecto.UUID.t(),
           challenge_id: Ecto.UUID.t(),
           campaign_id: Ecto.UUID.t(),
-          participant: CampaignsApi.ParticipantManagement.Participant.t()
+          participant: CampaignsApi.CampaignManagement.Participant.t()
                        | Ecto.Association.NotLoaded.t(),
           challenge: CampaignsApi.Challenges.Challenge.t()
                      | Ecto.Association.NotLoaded.t(),
@@ -38,7 +38,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallenge do
            ]}
 
   schema "participant_challenges" do
-    belongs_to :participant, CampaignsApi.ParticipantManagement.Participant
+    belongs_to :participant, CampaignsApi.CampaignManagement.Participant
     belongs_to :challenge, CampaignsApi.Challenges.Challenge
     belongs_to :campaign, CampaignsApi.CampaignManagement.Campaign
 

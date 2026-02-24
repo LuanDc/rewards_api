@@ -36,7 +36,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   use CampaignsApiWeb, :controller
   use PhoenixSwagger
 
-  alias CampaignsApi.ParticipantManagement
+  alias CampaignsApi.CampaignManagement
 
   swagger_path :index do
     get("/participants")
@@ -66,7 +66,7 @@ defmodule CampaignsApiWeb.ParticipantController do
       nickname: params["nickname"]
     ]
 
-    result = ParticipantManagement.list_participants(tenant_id, opts)
+    result = CampaignManagement.list_participants(tenant_id, opts)
     json(conn, result)
   end
 
@@ -92,7 +92,7 @@ defmodule CampaignsApiWeb.ParticipantController do
     tenant_id = conn.assigns.tenant_id
     attrs = atomize_keys(params)
 
-    case ParticipantManagement.create_participant(tenant_id, attrs) do
+    case CampaignManagement.create_participant(tenant_id, attrs) do
       {:ok, participant} ->
         conn
         |> put_status(:created)
@@ -126,7 +126,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   def show(conn, %{"id" => id}) do
     tenant_id = conn.assigns.tenant_id
 
-    case ParticipantManagement.get_participant(tenant_id, id) do
+    case CampaignManagement.get_participant(tenant_id, id) do
       nil ->
         conn
         |> put_status(:not_found)
@@ -161,7 +161,7 @@ defmodule CampaignsApiWeb.ParticipantController do
     tenant_id = conn.assigns.tenant_id
     attrs = atomize_keys(params)
 
-    case ParticipantManagement.update_participant(tenant_id, id, attrs) do
+    case CampaignManagement.update_participant(tenant_id, id, attrs) do
       {:ok, participant} ->
         json(conn, participant)
 
@@ -198,7 +198,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   def delete(conn, %{"id" => id}) do
     tenant_id = conn.assigns.tenant_id
 
-    case ParticipantManagement.delete_participant(tenant_id, id) do
+    case CampaignManagement.delete_participant(tenant_id, id) do
       {:ok, participant} ->
         json(conn, participant)
 
@@ -231,7 +231,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   def associate_campaign(conn, %{"participant_id" => participant_id, "campaign_id" => campaign_id}) do
     tenant_id = conn.assigns.tenant_id
 
-    case ParticipantManagement.associate_participant_with_campaign(tenant_id, participant_id, campaign_id) do
+    case CampaignManagement.associate_participant_with_campaign(tenant_id, participant_id, campaign_id) do
       {:ok, association} ->
         conn
         |> put_status(:created)
@@ -271,7 +271,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   def disassociate_campaign(conn, %{"participant_id" => participant_id, "campaign_id" => campaign_id}) do
     tenant_id = conn.assigns.tenant_id
 
-    case ParticipantManagement.disassociate_participant_from_campaign(tenant_id, participant_id, campaign_id) do
+    case CampaignManagement.disassociate_participant_from_campaign(tenant_id, participant_id, campaign_id) do
       {:ok, association} ->
         json(conn, association)
 
@@ -309,7 +309,7 @@ defmodule CampaignsApiWeb.ParticipantController do
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = ParticipantManagement.list_campaigns_for_participant(tenant_id, participant_id, opts)
+    result = CampaignManagement.list_campaigns_for_participant(tenant_id, participant_id, opts)
     json(conn, result)
   end
 
@@ -340,7 +340,7 @@ defmodule CampaignsApiWeb.ParticipantController do
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = ParticipantManagement.list_participants_for_campaign(tenant_id, campaign_id, opts)
+    result = CampaignManagement.list_participants_for_campaign(tenant_id, campaign_id, opts)
     json(conn, result)
   end
 
@@ -366,7 +366,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   def associate_challenge(conn, %{"participant_id" => participant_id, "challenge_id" => challenge_id}) do
     tenant_id = conn.assigns.tenant_id
 
-    case ParticipantManagement.associate_participant_with_challenge(tenant_id, participant_id, challenge_id) do
+    case CampaignManagement.associate_participant_with_challenge(tenant_id, participant_id, challenge_id) do
       {:ok, association} ->
         conn
         |> put_status(:created)
@@ -411,7 +411,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   def disassociate_challenge(conn, %{"participant_id" => participant_id, "challenge_id" => challenge_id}) do
     tenant_id = conn.assigns.tenant_id
 
-    case ParticipantManagement.disassociate_participant_from_challenge(tenant_id, participant_id, challenge_id) do
+    case CampaignManagement.disassociate_participant_from_challenge(tenant_id, participant_id, challenge_id) do
       {:ok, association} ->
         json(conn, association)
 
@@ -451,7 +451,7 @@ defmodule CampaignsApiWeb.ParticipantController do
       campaign_id: params["campaign_id"]
     ]
 
-    result = ParticipantManagement.list_challenges_for_participant(tenant_id, participant_id, opts)
+    result = CampaignManagement.list_challenges_for_participant(tenant_id, participant_id, opts)
     json(conn, result)
   end
 
@@ -482,7 +482,7 @@ defmodule CampaignsApiWeb.ParticipantController do
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = ParticipantManagement.list_participants_for_challenge(tenant_id, challenge_id, opts)
+    result = CampaignManagement.list_participants_for_challenge(tenant_id, challenge_id, opts)
     json(conn, result)
   end
 

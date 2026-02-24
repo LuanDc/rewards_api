@@ -1,4 +1,4 @@
-defmodule CampaignsApi.ParticipantManagement.Participant do
+defmodule CampaignsApi.CampaignManagement.Participant do
   @moduledoc """
   Participant schema representing an individual who can participate in campaigns and challenges.
 
@@ -22,10 +22,10 @@ defmodule CampaignsApi.ParticipantManagement.Participant do
           status: :active | :inactive | :ineligible,
           tenant: CampaignsApi.Tenants.Tenant.t() | Ecto.Association.NotLoaded.t(),
           campaign_participants:
-            [CampaignsApi.ParticipantManagement.CampaignParticipant.t()]
+            [CampaignsApi.CampaignManagement.CampaignParticipant.t()]
             | Ecto.Association.NotLoaded.t(),
           participant_challenges:
-            [CampaignsApi.ParticipantManagement.ParticipantChallenge.t()]
+            [CampaignsApi.CampaignManagement.ParticipantChallenge.t()]
             | Ecto.Association.NotLoaded.t(),
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
@@ -43,8 +43,8 @@ defmodule CampaignsApi.ParticipantManagement.Participant do
 
     belongs_to :tenant, CampaignsApi.Tenants.Tenant, type: :string
 
-    has_many :campaign_participants, CampaignsApi.ParticipantManagement.CampaignParticipant
-    has_many :participant_challenges, CampaignsApi.ParticipantManagement.ParticipantChallenge
+    has_many :campaign_participants, CampaignsApi.CampaignManagement.CampaignParticipant
+    has_many :participant_challenges, CampaignsApi.CampaignManagement.ParticipantChallenge
 
     timestamps(type: :utc_datetime)
   end

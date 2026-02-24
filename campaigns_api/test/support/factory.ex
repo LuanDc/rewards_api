@@ -8,10 +8,10 @@ defmodule CampaignsApi.Factory do
 
   alias CampaignsApi.CampaignManagement.Campaign
   alias CampaignsApi.CampaignManagement.CampaignChallenge
+  alias CampaignsApi.CampaignManagement.CampaignParticipant
+  alias CampaignsApi.CampaignManagement.Participant
+  alias CampaignsApi.CampaignManagement.ParticipantChallenge
   alias CampaignsApi.Challenges.Challenge
-  alias CampaignsApi.ParticipantManagement.CampaignParticipant
-  alias CampaignsApi.ParticipantManagement.Participant
-  alias CampaignsApi.ParticipantManagement.ParticipantChallenge
   alias CampaignsApi.Tenants.Tenant
 
   def tenant_factory do

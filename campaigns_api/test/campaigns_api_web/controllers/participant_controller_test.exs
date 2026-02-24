@@ -1,7 +1,7 @@
 defmodule CampaignsApiWeb.ParticipantControllerTest do
   use CampaignsApiWeb.ConnCase, async: true
 
-  alias CampaignsApi.ParticipantManagement
+  alias CampaignsApi.CampaignManagement
 
   setup %{conn: conn} do
     tenant = insert(:tenant)
@@ -197,7 +197,7 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
 
       assert %{"id" => id} = json_response(conn, 200)
       assert id == participant.id
-      assert ParticipantManagement.get_participant(tenant.id, participant.id) == nil
+      assert CampaignManagement.get_participant(tenant.id, participant.id) == nil
     end
 
     test "returns 404 when participant does not exist", %{conn: conn} do

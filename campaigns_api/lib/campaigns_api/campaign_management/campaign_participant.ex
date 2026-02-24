@@ -1,4 +1,4 @@
-defmodule CampaignsApi.ParticipantManagement.CampaignParticipant do
+defmodule CampaignsApi.CampaignManagement.CampaignParticipant do
   @moduledoc """
   Schema for participant-campaign associations.
 
@@ -14,7 +14,7 @@ defmodule CampaignsApi.ParticipantManagement.CampaignParticipant do
           id: Ecto.UUID.t(),
           participant_id: Ecto.UUID.t(),
           campaign_id: Ecto.UUID.t(),
-          participant: CampaignsApi.ParticipantManagement.Participant.t()
+          participant: CampaignsApi.CampaignManagement.Participant.t()
                        | Ecto.Association.NotLoaded.t(),
           campaign: CampaignsApi.CampaignManagement.Campaign.t()
                     | Ecto.Association.NotLoaded.t(),
@@ -34,7 +34,7 @@ defmodule CampaignsApi.ParticipantManagement.CampaignParticipant do
            ]}
 
   schema "campaign_participants" do
-    belongs_to :participant, CampaignsApi.ParticipantManagement.Participant
+    belongs_to :participant, CampaignsApi.CampaignManagement.Participant
     belongs_to :campaign, CampaignsApi.CampaignManagement.Campaign
 
     timestamps(type: :utc_datetime)

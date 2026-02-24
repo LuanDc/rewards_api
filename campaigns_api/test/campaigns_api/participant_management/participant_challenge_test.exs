@@ -3,8 +3,8 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallengeTest do
 
   import CampaignsApi.Factory
 
-  alias CampaignsApi.ParticipantManagement.Participant
-  alias CampaignsApi.ParticipantManagement.ParticipantChallenge
+  alias CampaignsApi.CampaignManagement.Participant
+  alias CampaignsApi.CampaignManagement.ParticipantChallenge
 
   describe "changeset/2 - valid association creation" do
     setup do
