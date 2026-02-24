@@ -1,4 +1,4 @@
-defmodule CampaignsApi.Messaging.ChallengeConsumer do
+defmodule CampaignsApiMessaging.ChallengeConsumer do
   @moduledoc """
   Broadway consumer for challenge ingestion events.
   """
@@ -7,12 +7,12 @@ defmodule CampaignsApi.Messaging.ChallengeConsumer do
 
   alias Broadway.Message
   alias CampaignsApi.Challenges
-  alias CampaignsApi.Messaging.ChallengeMessage
-  alias CampaignsApi.Messaging.ChallengePublisher
+  alias CampaignsApiMessaging.ChallengeMessage
+  alias CampaignsApiMessaging.ChallengePublisher
 
   def start_link(_opts) do
-    broadway_config = Application.fetch_env!(:campaigns_api, CampaignsApi.Messaging.Broadway)
-    messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApi.Messaging)
+    broadway_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging.Broadway)
+    messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)
 
     Broadway.start_link(__MODULE__,
       name: __MODULE__,
@@ -101,7 +101,7 @@ defmodule CampaignsApi.Messaging.ChallengeConsumer do
   @spec republish_with_retry(Message.t()) :: :ok | {:error, term()}
   defp republish_with_retry(message) do
     current_retry_count = retry_count(message)
-    max_retries = Application.fetch_env!(:campaigns_api, CampaignsApi.Messaging)[:max_retries]
+    max_retries = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[:max_retries]
 
     if current_retry_count < max_retries do
       ChallengePublisher.publish_raw(raw_payload(message),
@@ -114,7 +114,7 @@ defmodule CampaignsApi.Messaging.ChallengeConsumer do
 
   @spec publish_to_dlq(Message.t()) :: :ok | {:error, term()}
   defp publish_to_dlq(message) do
-    messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApi.Messaging)
+    messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)
 
     ChallengePublisher.publish_raw(raw_payload(message),
       routing_key: messaging_config[:dlq_routing_key],

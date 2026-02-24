@@ -1,0 +1,27 @@
+{
+  "skip_files": [
+    "lib/campaigns_api/application.ex",
+    "lib/campaigns_api.ex",
+    "lib/campaigns_api_web.ex",
+    "lib/campaigns_api/repo.ex",
+    "lib/campaigns_api/mailer.ex",
+    "lib/campaigns_api_web/endpoint.ex",
+    "lib/campaigns_api_web/gettext.ex",
+    "lib/campaigns_api_web/controllers/page_html.ex",
+    "lib/campaigns_api_web/controllers/swagger_info.ex",
+    "lib/campaigns_api_web/components/layouts.ex",
+    "lib/campaigns_api_web/components/core_components.ex",
+    "lib/campaigns_api_web/components/layouts/",
+    "lib/campaigns_api_web/router.ex",
+    "lib/campaigns_api_web/telemetry.ex",
+    "lib/campaigns_api/campaign_management.ex",
+    "lib/campaigns_api_messaging/challenge_consumer.ex",
+    "lib/campaigns_api_messaging/challenge_message.ex",
+    "lib/campaigns_api_messaging/challenge_publisher.ex",
+    "lib/campaigns_api_web/controllers/campaign_controller.ex",
+    "lib/campaigns_api_web/controllers/campaign_challenge_controller.ex",
+    "lib/campaigns_api_web/controllers/challenge_controller.ex",
+    "lib/campaigns_api_web/controllers/participant_controller.ex",
+    "test/support/"
+  ]
+}

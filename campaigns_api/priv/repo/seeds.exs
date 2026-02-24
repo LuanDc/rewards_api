@@ -11,7 +11,7 @@
 # and so on) as they will fail if something goes wrong.
 
 alias CampaignsApi.Challenges.Challenge
-alias CampaignsApi.Messaging.ChallengePublisher
+alias CampaignsApiMessaging.ChallengePublisher
 alias CampaignsApi.Repo
 
 IO.puts("Cleaning existing challenge data...")

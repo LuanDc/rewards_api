@@ -27,6 +27,20 @@ The seed script publishes challenge messages to RabbitMQ and waits for Broadway 
 mix run priv/repo/seeds.exs
 ```
 
+## Test coverage
+
+Generate coverage report:
+
+```bash
+mix coveralls
+```
+
+Generate HTML coverage report:
+
+```bash
+mix coveralls.html
+```
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies

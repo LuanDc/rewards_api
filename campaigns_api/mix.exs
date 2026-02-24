@@ -10,7 +10,14 @@ defmodule CampaignsApi.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      dialyzer: dialyzer()
+      dialyzer: dialyzer(),
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -79,6 +86,7 @@ defmodule CampaignsApi.MixProject do
       {:broadway_rabbitmq, "~> 0.8"},
       {:amqp, "~> 4.1"},
       {:ex_machina, "~> 2.7", only: :test},
+      {:excoveralls, "~> 0.18", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:phoenix_swagger, "~> 0.8"},

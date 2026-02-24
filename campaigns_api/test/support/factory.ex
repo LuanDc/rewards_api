@@ -80,6 +80,7 @@ defmodule CampaignsApi.Factory do
     id = System.unique_integer([:positive])
 
     %Challenge{
+      external_id: "challenge-#{id}",
       name: "Challenge #{id}",
       description: "Description for challenge #{id}",
       metadata: %{"type" => "evaluation"}

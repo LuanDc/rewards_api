@@ -606,7 +606,8 @@ defmodule CampaignsApi.ChallengesTest do
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      {:ok, deleted} = CampaignManagement.delete_campaign_challenge(product.id, campaign.id, cc.id)
+      {:ok, deleted} =
+        CampaignManagement.delete_campaign_challenge(product.id, campaign.id, cc.id)
 
       assert deleted.id == cc.id
       assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id) == nil

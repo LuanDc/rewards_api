@@ -16,7 +16,7 @@ config :campaigns_api, CampaignsApiWeb.Endpoint,
 
 config :campaigns_api, CampaignsApi.Mailer, adapter: Swoosh.Adapters.Local
 
-config :campaigns_api, CampaignsApi.Messaging,
+config :campaigns_api, CampaignsApiMessaging,
   enabled: true,
   rabbitmq_url: "amqp://guest:guest@rabbitmq:5672",
   exchange: "campaigns_api.challenges",
@@ -26,7 +26,7 @@ config :campaigns_api, CampaignsApi.Messaging,
   dlq_routing_key: "challenge.dlq",
   max_retries: 5
 
-config :campaigns_api, CampaignsApi.Messaging.Broadway,
+config :campaigns_api, CampaignsApiMessaging.Broadway,
   producers: 1,
   processors: 4,
   batchers: 2,

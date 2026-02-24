@@ -43,7 +43,7 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
-  config :campaigns_api, CampaignsApi.Messaging,
+  config :campaigns_api, CampaignsApiMessaging,
     enabled: System.get_env("RABBITMQ_ENABLED", "true") in ["true", "1"],
     rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@localhost:5672",
     exchange: System.get_env("RABBITMQ_EXCHANGE") || "campaigns_api.challenges",

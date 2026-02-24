@@ -5,11 +5,12 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
 
   describe "changeset/2" do
     test "creates valid challenge with all fields" do
-      attrs = %{
-        name: "Valid Challenge",
-        description: "A valid challenge description",
-        metadata: %{"type" => "evaluation", "version" => 1}
-      }
+      attrs =
+        with_external_id(%{
+          name: "Valid Challenge",
+          description: "A valid challenge description",
+          metadata: %{"type" => "evaluation", "version" => 1}
+        })
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -20,7 +21,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "creates valid challenge with only required fields" do
-      attrs = %{name: "Minimal Challenge"}
+      attrs = with_external_id(%{name: "Minimal Challenge"})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -31,7 +32,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "rejects challenge with name less than 3 characters" do
-      attrs = %{name: "ab"}
+      attrs = with_external_id(%{name: "ab"})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -40,7 +41,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with name exactly 3 characters" do
-      attrs = %{name: "abc"}
+      attrs = with_external_id(%{name: "abc"})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -48,7 +49,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with name more than 3 characters" do
-      attrs = %{name: "Valid Challenge Name"}
+      attrs = with_external_id(%{name: "Valid Challenge Name"})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -56,7 +57,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "rejects challenge without name" do
-      attrs = %{description: "Description without name"}
+      attrs = with_external_id(%{description: "Description without name"})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -65,7 +66,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with nil description" do
-      attrs = %{name: "Challenge", description: nil}
+      attrs = with_external_id(%{name: "Challenge", description: nil})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -73,7 +74,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with empty string description" do
-      attrs = %{name: "Challenge", description: ""}
+      attrs = with_external_id(%{name: "Challenge", description: ""})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -81,7 +82,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with nil metadata" do
-      attrs = %{name: "Challenge", metadata: nil}
+      attrs = with_external_id(%{name: "Challenge", metadata: nil})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -89,7 +90,7 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with empty map metadata" do
-      attrs = %{name: "Challenge", metadata: %{}}
+      attrs = with_external_id(%{name: "Challenge", metadata: %{}})
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -97,16 +98,17 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with nested JSON metadata" do
-      attrs = %{
-        name: "Challenge",
-        metadata: %{
-          "config" => %{
-            "threshold" => 100,
-            "enabled" => true
-          },
-          "tags" => ["important", "active"]
-        }
-      }
+      attrs =
+        with_external_id(%{
+          name: "Challenge",
+          metadata: %{
+            "config" => %{
+              "threshold" => 100,
+              "enabled" => true
+            },
+            "tags" => ["important", "active"]
+          }
+        })
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -118,18 +120,19 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
     end
 
     test "accepts challenge with various JSON data types in metadata" do
-      attrs = %{
-        name: "Challenge",
-        metadata: %{
-          "string" => "value",
-          "integer" => 42,
-          "float" => 3.14,
-          "boolean" => true,
-          "null" => nil,
-          "array" => [1, 2, 3],
-          "object" => %{"nested" => "data"}
-        }
-      }
+      attrs =
+        with_external_id(%{
+          name: "Challenge",
+          metadata: %{
+            "string" => "value",
+            "integer" => 42,
+            "float" => 3.14,
+            "boolean" => true,
+            "null" => nil,
+            "array" => [1, 2, 3],
+            "object" => %{"nested" => "data"}
+          }
+        })
 
       changeset = Challenge.changeset(%Challenge{}, attrs)
 
@@ -143,5 +146,9 @@ defmodule CampaignsApi.Challenges.ChallengeTest do
       assert metadata["array"] == [1, 2, 3]
       assert metadata["object"] == %{"nested" => "data"}
     end
+  end
+
+  defp with_external_id(attrs) do
+    Map.put(attrs, :external_id, "challenge-#{System.unique_integer([:positive])}")
   end
 end

@@ -21,8 +21,8 @@ defmodule CampaignsApi.Application do
 
   @spec messaging_children() :: [Supervisor.child_spec()]
   defp messaging_children do
-    if Application.fetch_env!(:campaigns_api, CampaignsApi.Messaging)[:enabled] do
-      [CampaignsApi.Messaging.ChallengeConsumer]
+    if Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[:enabled] do
+      [CampaignsApiMessaging.ChallengeConsumer]
     else
       []
     end

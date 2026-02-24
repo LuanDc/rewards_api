@@ -31,7 +31,7 @@ config :campaigns_api, CampaignsApiWeb.Endpoint,
 
 config :campaigns_api, dev_routes: true
 
-config :campaigns_api, CampaignsApi.Messaging,
+config :campaigns_api, CampaignsApiMessaging,
   enabled: true,
   rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@rabbitmq:5672"
 

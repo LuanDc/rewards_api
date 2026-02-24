@@ -1,9 +1,9 @@
-defmodule CampaignsApi.Messaging.ChallengePublisher do
+defmodule CampaignsApiMessaging.ChallengePublisher do
   @moduledoc """
   Publisher for challenge ingestion messages.
   """
 
-  alias CampaignsApi.Messaging.ChallengeMessage
+  alias CampaignsApiMessaging.ChallengeMessage
 
   @spec publish_challenge(map()) :: :ok | {:error, term()}
   def publish_challenge(challenge_attrs) do
@@ -62,7 +62,7 @@ defmodule CampaignsApi.Messaging.ChallengePublisher do
   end
 
   @spec config(atom()) :: term()
-  defp config(key), do: Application.fetch_env!(:campaigns_api, CampaignsApi.Messaging)[key]
+  defp config(key), do: Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[key]
 
   @spec get_field(map(), atom()) :: term()
   defp get_field(map, key) when is_map(map) do

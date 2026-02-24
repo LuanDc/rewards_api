@@ -1,4 +1,4 @@
-defmodule CampaignsApi.Messaging.ChallengeMessage do
+defmodule CampaignsApiMessaging.ChallengeMessage do
   @moduledoc """
   Challenge message contract and decoding helpers.
   """

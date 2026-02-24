@@ -15,7 +15,7 @@ config :campaigns_api, CampaignsApiWeb.Endpoint,
 
 config :campaigns_api, CampaignsApi.Mailer, adapter: Swoosh.Adapters.Test
 
-config :campaigns_api, CampaignsApi.Messaging,
+config :campaigns_api, CampaignsApiMessaging,
   enabled: false,
   rabbitmq_url: "amqp://guest:guest@localhost:5672"
 
