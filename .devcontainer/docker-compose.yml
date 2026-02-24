@@ -1,0 +1,44 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - hex-cache:/root/.hex
+      - mix-cache:/root/.mix
+      - build-cache:/workspace/campaigns_api/_build
+      - deps-cache:/workspace/campaigns_api/deps
+    command: sleep infinity
+    environment:
+      - PGHOST=postgres_db
+      - MIX_ENV=dev
+    ports:
+      - "4000:4000"
+    networks:
+      - bsystem_network
+    depends_on:
+      - postgres_db
+
+  postgres_db:
+    image: postgres:18.1
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - bsystem_network
+
+volumes:
+  hex-cache:
+  mix-cache:
+  build-cache:
+  deps-cache:
+  pgdata:
+
+networks:
+  bsystem_network:

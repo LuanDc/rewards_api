@@ -3,7 +3,7 @@ import Config
 config :campaigns_api, CampaignsApi.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "localhost",
+  hostname: "postgres_db",
   database: "campaigns_api_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,

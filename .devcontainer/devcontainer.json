@@ -1,0 +1,21 @@
+{
+  "name": "Campaigns API",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/workspace/campaigns_api",
+  "forwardPorts": [4000],
+  "postCreateCommand": "mix deps.get && mix ecto.setup",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "JakeBecker.elixir-ls"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "[elixir]": {
+          "editor.defaultFormatter": "JakeBecker.elixir-ls"
+        }
+      }
+    }
+  }
+}
