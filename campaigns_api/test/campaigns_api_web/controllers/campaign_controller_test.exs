@@ -5,15 +5,15 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
   alias CampaignsApi.CampaignManagement
 
   setup %{conn: conn} do
-    tenant = insert(:tenant)
-    token = jwt_token(tenant.id)
+    product = insert(:product)
+    token = jwt_token(product.id)
     conn = put_req_header(conn, "authorization", "Bearer #{token}")
 
-    {:ok, conn: conn, tenant: tenant}
+    {:ok, conn: conn, product: product}
   end
 
   describe "POST /api/campaigns (create)" do
-    test "creates campaign with valid data", %{conn: conn, tenant: tenant} do
+    test "creates campaign with valid data", %{conn: conn, product: product} do
       params = %{
         "name" => "Summer Sale Campaign",
         "description" => "A great summer promotion",
@@ -24,7 +24,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
 
       assert %{
                "id" => _id,
-               "tenant_id" => tenant_id,
+               "product_id" => product_id,
                "name" => "Summer Sale Campaign",
                "description" => "A great summer promotion",
                "status" => "active",
@@ -32,7 +32,7 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
                "end_time" => nil
              } = json_response(conn, 201)
 
-      assert tenant_id == tenant.id
+      assert product_id == product.id
     end
 
     test "creates campaign with all date combinations", %{conn: conn} do
@@ -99,8 +99,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert %{"data" => [], "has_more" => false, "next_cursor" => nil} = json_response(conn, 200)
     end
 
-    test "returns campaigns for the tenant", %{conn: conn, tenant: tenant} do
-      insert_list(2, :campaign, tenant: tenant)
+    test "returns campaigns for the product", %{conn: conn, product: product} do
+      insert_list(2, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns")
 
@@ -108,8 +108,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(campaigns) == 2
     end
 
-    test "supports pagination with limit parameter", %{conn: conn, tenant: tenant} do
-      insert_list(3, :campaign, tenant: tenant)
+    test "supports pagination with limit parameter", %{conn: conn, product: product} do
+      insert_list(3, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns?limit=2")
 
@@ -120,8 +120,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert cursor != nil
     end
 
-    test "supports pagination with cursor parameter", %{conn: conn, tenant: tenant} do
-      insert_list(3, :campaign, tenant: tenant)
+    test "supports pagination with cursor parameter", %{conn: conn, product: product} do
+      insert_list(3, :campaign, product: product)
 
       conn1 = get(conn, ~p"/api/campaigns?limit=2")
       response1 = json_response(conn1, 200)
@@ -136,10 +136,10 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert %{"data" => _page2} = response2
     end
 
-    test "does not return campaigns from other tenants", %{conn: conn, tenant: tenant} do
-      my_campaign = insert(:campaign, tenant: tenant)
-      other_tenant = insert(:tenant)
-      insert(:campaign, tenant: other_tenant)
+    test "does not return campaigns from other products", %{conn: conn, product: product} do
+      my_campaign = insert(:campaign, product: product)
+      other_product = insert(:product)
+      insert(:campaign, product: other_product)
 
       conn = get(conn, ~p"/api/campaigns")
 
@@ -148,8 +148,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert hd(campaigns)["name"] == my_campaign.name
     end
 
-    test "handles missing limit parameter gracefully", %{conn: conn, tenant: tenant} do
-      insert_list(2, :campaign, tenant: tenant)
+    test "handles missing limit parameter gracefully", %{conn: conn, product: product} do
+      insert_list(2, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns")
 
@@ -157,8 +157,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(campaigns) == 2
     end
 
-    test "handles empty limit parameter gracefully", %{conn: conn, tenant: tenant} do
-      insert_list(2, :campaign, tenant: tenant)
+    test "handles empty limit parameter gracefully", %{conn: conn, product: product} do
+      insert_list(2, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns?limit=")
 
@@ -166,8 +166,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(campaigns) == 2
     end
 
-    test "handles invalid limit parameter gracefully", %{conn: conn, tenant: tenant} do
-      insert_list(2, :campaign, tenant: tenant)
+    test "handles invalid limit parameter gracefully", %{conn: conn, product: product} do
+      insert_list(2, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns?limit=invalid")
 
@@ -175,8 +175,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(campaigns) == 2
     end
 
-    test "handles missing cursor parameter gracefully", %{conn: conn, tenant: tenant} do
-      insert_list(2, :campaign, tenant: tenant)
+    test "handles missing cursor parameter gracefully", %{conn: conn, product: product} do
+      insert_list(2, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns")
 
@@ -184,8 +184,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(campaigns) == 2
     end
 
-    test "handles empty cursor parameter gracefully", %{conn: conn, tenant: tenant} do
-      insert_list(2, :campaign, tenant: tenant)
+    test "handles empty cursor parameter gracefully", %{conn: conn, product: product} do
+      insert_list(2, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns?cursor=")
 
@@ -193,8 +193,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert length(campaigns) == 2
     end
 
-    test "handles invalid cursor parameter gracefully", %{conn: conn, tenant: tenant} do
-      insert_list(2, :campaign, tenant: tenant)
+    test "handles invalid cursor parameter gracefully", %{conn: conn, product: product} do
+      insert_list(2, :campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns?cursor=invalid")
 
@@ -204,20 +204,20 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
   end
 
   describe "GET /api/campaigns/:id (show)" do
-    test "returns campaign when it exists and belongs to tenant", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns campaign when it exists and belongs to product", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns/#{campaign.id}")
 
       assert %{
                "id" => id,
                "name" => name,
-               "tenant_id" => tenant_id
+               "product_id" => product_id
              } = json_response(conn, 200)
 
       assert id == campaign.id
       assert name == campaign.name
-      assert tenant_id == tenant.id
+      assert product_id == product.id
     end
 
     test "returns 404 when campaign does not exist", %{conn: conn} do
@@ -227,9 +227,9 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert %{"error" => "Campaign not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+    test "returns 404 when campaign belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
 
       conn = get(conn, ~p"/api/campaigns/#{other_campaign.id}")
 
@@ -238,8 +238,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
   end
 
   describe "PUT /api/campaigns/:id (update)" do
-    test "updates campaign with valid data", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "updates campaign with valid data", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
 
       update_params = %{
         "name" => "Updated Name",
@@ -259,8 +259,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert id == campaign.id
     end
 
-    test "returns 422 with validation errors for invalid data", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns 422 with validation errors for invalid data", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
 
       conn = put(conn, ~p"/api/campaigns/#{campaign.id}", %{name: "ab"})
 
@@ -275,9 +275,9 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert %{"error" => "Campaign not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+    test "returns 404 when campaign belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
 
       conn = put(conn, ~p"/api/campaigns/#{other_campaign.id}", %{name: "Hacked"})
 
@@ -286,13 +286,13 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
   end
 
   describe "DELETE /api/campaigns/:id (delete)" do
-    test "deletes campaign successfully", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "deletes campaign successfully", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
 
       conn = delete(conn, ~p"/api/campaigns/#{campaign.id}")
 
       assert response(conn, 204) == ""
-      assert CampaignManagement.get_campaign(tenant.id, campaign.id) == nil
+      assert CampaignManagement.get_campaign(product.id, campaign.id) == nil
     end
 
     test "returns 404 when campaign does not exist", %{conn: conn} do
@@ -302,9 +302,9 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
       assert %{"error" => "Campaign not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+    test "returns 404 when campaign belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
 
       conn = delete(conn, ~p"/api/campaigns/#{other_campaign.id}")
 
@@ -316,22 +316,22 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     @tag :property
     property "successful campaign deletion returns HTTP 204 No Content" do
       check all(name <- string(:alphanumeric, min_length: 3, max_length: 50)) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
 
-        campaign = insert(:campaign, tenant: tenant, name: name)
+        campaign = insert(:campaign, product: product, name: name)
         conn = delete(conn, ~p"/api/campaigns/#{campaign.id}")
         assert response(conn, 204) == ""
-        assert CampaignManagement.get_campaign(tenant.id, campaign.id) == nil
+        assert CampaignManagement.get_campaign(product.id, campaign.id) == nil
       end
     end
 
     @tag :property
     property "validation errors return structured JSON with 422 status" do
       check all(name <- string(:alphanumeric, min_length: 0, max_length: 2)) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
 
         conn = post(conn, ~p"/api/campaigns", %{"name" => name})
@@ -347,8 +347,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
               start_offset <- integer(1..100),
               end_offset <- integer(-100..-1)
             ) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
 
         now = DateTime.utc_now()
@@ -371,8 +371,8 @@ defmodule CampaignsApiWeb.CampaignControllerTest do
     @tag :property
     property "404 errors return structured JSON" do
       check all(_iteration <- integer(1..10)) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
 
         fake_id = Ecto.UUID.generate()

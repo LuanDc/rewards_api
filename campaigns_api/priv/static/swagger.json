@@ -1,7 +1,7 @@
 {
   "info": {
     "version": "1.0.0",
-    "description": "Multi-tenant Campaign Management API with JWT authentication",
+    "description": "Multi-product Campaign Management API with JWT authentication",
     "title": "Campaign Management API",
     "contact": {
       "name": "API Support",
@@ -17,7 +17,7 @@
         "id": "770e8400-e29b-41d4-a716-446655440002",
         "inserted_at": "2024-05-01T10:00:00Z",
         "name": "Summer Campaign",
-        "tenant_id": "tenant-123",
+        "product_id": "product-123",
         "updated_at": "2024-05-01T10:00:00Z"
       },
       "properties": {
@@ -39,8 +39,8 @@
           "description": "Campaign name",
           "type": "string"
         },
-        "tenant_id": {
-          "description": "Tenant ID",
+        "product_id": {
+          "description": "product ID",
           "type": "string"
         },
         "updated_at": {
@@ -50,7 +50,7 @@
         }
       },
       "required": [
-        "tenant_id",
+        "product_id",
         "name",
         "id"
       ],
@@ -65,7 +65,7 @@
             "description": "Summer rewards campaign",
             "id": "770e8400-e29b-41d4-a716-446655440002",
             "name": "Summer Campaign",
-            "tenant_id": "tenant-123"
+            "product_id": "product-123"
           }
         ],
         "has_more": true,
@@ -464,8 +464,8 @@
         "inserted_at": "2024-05-01T10:00:00Z",
         "name": "John Doe",
         "nickname": "johndoe",
+        "product_id": "product-123",
         "status": "active",
-        "tenant_id": "tenant-123",
         "updated_at": "2024-05-01T10:00:00Z"
       },
       "properties": {
@@ -489,6 +489,10 @@
           "minLength": 3,
           "type": "string"
         },
+        "product_id": {
+          "description": "product ID",
+          "type": "string"
+        },
         "status": {
           "default": "active",
           "description": "Participant status",
@@ -499,10 +503,6 @@
           ],
           "type": "string"
         },
-        "tenant_id": {
-          "description": "Tenant ID",
-          "type": "string"
-        },
         "updated_at": {
           "description": "Last update timestamp",
           "format": "date-time",
@@ -510,7 +510,7 @@
         }
       },
       "required": [
-        "tenant_id",
+        "product_id",
         "nickname",
         "name",
         "id"
@@ -621,8 +621,8 @@
             "id": "550e8400-e29b-41d4-a716-446655440000",
             "name": "John Doe",
             "nickname": "johndoe",
-            "status": "active",
-            "tenant_id": "tenant-123"
+            "product_id": "product-123",
+            "status": "active"
           }
         ],
         "has_more": true,
@@ -689,7 +689,7 @@
   "paths": {
     "/campaigns": {
       "get": {
-        "description": "Returns a paginated list of campaigns for the authenticated tenant",
+        "description": "Returns a paginated list of campaigns for the authenticated product",
         "operationId": "CampaignsApiWeb.CampaignController.index",
         "parameters": [
           {
@@ -738,7 +738,7 @@
         ]
       },
       "post": {
-        "description": "Creates a new campaign for the authenticated tenant",
+        "description": "Creates a new campaign for the authenticated product",
         "operationId": "CampaignsApiWeb.CampaignController.create",
         "parameters": [
           {
@@ -1157,7 +1157,7 @@
     },
     "/campaigns/{id}": {
       "delete": {
-        "description": "Permanently deletes a campaign for the authenticated tenant",
+        "description": "Permanently deletes a campaign for the authenticated product",
         "operationId": "CampaignsApiWeb.CampaignController.delete",
         "parameters": [
           {
@@ -1203,7 +1203,7 @@
         ]
       },
       "get": {
-        "description": "Returns a single campaign by ID for the authenticated tenant",
+        "description": "Returns a single campaign by ID for the authenticated product",
         "operationId": "CampaignsApiWeb.CampaignController.show",
         "parameters": [
           {
@@ -1252,7 +1252,7 @@
         ]
       },
       "put": {
-        "description": "Updates an existing campaign for the authenticated tenant",
+        "description": "Updates an existing campaign for the authenticated product",
         "operationId": "CampaignsApiWeb.CampaignController.update",
         "parameters": [
           {
@@ -1479,7 +1479,7 @@
     },
     "/participants": {
       "get": {
-        "description": "Returns a paginated list of participants for the authenticated tenant",
+        "description": "Returns a paginated list of participants for the authenticated product",
         "operationId": "CampaignsApiWeb.ParticipantController.index",
         "parameters": [
           {
@@ -1535,7 +1535,7 @@
         ]
       },
       "post": {
-        "description": "Creates a new participant for the authenticated tenant",
+        "description": "Creates a new participant for the authenticated product",
         "operationId": "CampaignsApiWeb.ParticipantController.create",
         "parameters": [
           {
@@ -1587,7 +1587,7 @@
     },
     "/participants/{id}": {
       "delete": {
-        "description": "Permanently deletes a participant for the authenticated tenant",
+        "description": "Permanently deletes a participant for the authenticated product",
         "operationId": "CampaignsApiWeb.ParticipantController.delete",
         "parameters": [
           {
@@ -1636,7 +1636,7 @@
         ]
       },
       "get": {
-        "description": "Returns a single participant by ID for the authenticated tenant",
+        "description": "Returns a single participant by ID for the authenticated product",
         "operationId": "CampaignsApiWeb.ParticipantController.show",
         "parameters": [
           {
@@ -1685,7 +1685,7 @@
         ]
       },
       "put": {
-        "description": "Updates an existing participant for the authenticated tenant",
+        "description": "Updates an existing participant for the authenticated product",
         "operationId": "CampaignsApiWeb.ParticipantController.update",
         "parameters": [
           {
@@ -1810,7 +1810,7 @@
     },
     "/participants/{participant_id}/campaigns/{campaign_id}": {
       "delete": {
-        "description": "Removes the association between a participant and a campaign within the authenticated tenant. All participant-challenge associations for this campaign will also be removed.",
+        "description": "Removes the association between a participant and a campaign within the authenticated product. All participant-challenge associations for this campaign will also be removed.",
         "operationId": "CampaignsApiWeb.ParticipantController.disassociate_campaign",
         "parameters": [
           {
@@ -1867,7 +1867,7 @@
         ]
       },
       "post": {
-        "description": "Creates an association between a participant and a campaign within the authenticated tenant",
+        "description": "Creates an association between a participant and a campaign within the authenticated product",
         "operationId": "CampaignsApiWeb.ParticipantController.associate_campaign",
         "parameters": [
           {
@@ -1901,7 +1901,7 @@
             }
           },
           "403": {
-            "description": "Forbidden - Tenant mismatch",
+            "description": "Forbidden - product mismatch",
             "schema": {
               "$ref": "#/definitions/ErrorResponse"
             }
@@ -1993,7 +1993,7 @@
     },
     "/participants/{participant_id}/challenges/{challenge_id}": {
       "delete": {
-        "description": "Removes the association between a participant and a challenge within the authenticated tenant",
+        "description": "Removes the association between a participant and a challenge within the authenticated product",
         "operationId": "CampaignsApiWeb.ParticipantController.disassociate_challenge",
         "parameters": [
           {
@@ -2050,7 +2050,7 @@
         ]
       },
       "post": {
-        "description": "Creates an association between a participant and a challenge within the authenticated tenant. The participant must already be associated with the challenge's campaign.",
+        "description": "Creates an association between a participant and a challenge within the authenticated product. The participant must already be associated with the challenge's campaign.",
         "operationId": "CampaignsApiWeb.ParticipantController.associate_challenge",
         "parameters": [
           {
@@ -2084,7 +2084,7 @@
             }
           },
           "403": {
-            "description": "Forbidden - Tenant mismatch",
+            "description": "Forbidden - product mismatch",
             "schema": {
               "$ref": "#/definitions/ErrorResponse"
             }

@@ -616,8 +616,8 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
               points2 <- reward_points_generator(),
               max_runs: 50
             ) do
-        tenant = insert(:tenant)
-        campaign = insert(:campaign, tenant: tenant)
+        product = insert(:product)
+        campaign = insert(:campaign, product: product)
         challenge = insert(:challenge)
 
         attrs1 = %{
@@ -628,7 +628,7 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
         }
 
         {:ok, _cc1} =
-          CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs1)
+          CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs1)
 
         attrs2 = %{
           challenge_id: challenge.id,
@@ -637,7 +637,7 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
           reward_points: points2
         }
 
-        result = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs2)
+        result = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs2)
 
         assert {:error, changeset} = result
         assert %{campaign_id: ["has already been taken"]} = errors_on(changeset)
@@ -650,8 +650,8 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
               num_challenges <- integer(1..5),
               max_runs: 50
             ) do
-        tenant = insert(:tenant)
-        campaign = insert(:campaign, tenant: tenant)
+        product = insert(:product)
+        campaign = insert(:campaign, product: product)
 
         campaign_challenge_ids =
           Enum.map(1..num_challenges, fn _ ->
@@ -665,34 +665,34 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
             }
 
             {:ok, cc} =
-              CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+              CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
             cc.id
           end)
 
         Enum.each(campaign_challenge_ids, fn cc_id ->
-          assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc_id) != nil
+          assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc_id) != nil
         end)
 
-        {:ok, _deleted_campaign} = CampaignManagement.delete_campaign(tenant.id, campaign.id)
+        {:ok, _deleted_campaign} = CampaignManagement.delete_campaign(product.id, campaign.id)
 
         Enum.each(campaign_challenge_ids, fn cc_id ->
-          assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc_id) == nil
+          assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc_id) == nil
         end)
       end
     end
 
     @tag :property
-    property "tenant validation - cross-tenant access always fails" do
+    property "product validation - cross-product access always fails" do
       check all(
               display_name <- string(:alphanumeric, min_length: 3, max_length: 50),
               frequency <- evaluation_frequency_generator(),
               points <- reward_points_generator(),
               max_runs: 50
             ) do
-        tenant1 = insert(:tenant)
-        tenant2 = insert(:tenant)
-        campaign = insert(:campaign, tenant: tenant1)
+        product1 = insert(:product)
+        product2 = insert(:product)
+        campaign = insert(:campaign, product: product1)
         challenge = insert(:challenge)
 
         attrs = %{
@@ -702,33 +702,33 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallengeTest do
           reward_points: points
         }
 
-        # Tenant2 cannot create association with tenant1's campaign
-        result = CampaignManagement.create_campaign_challenge(tenant2.id, campaign.id, attrs)
+        # Product2 cannot create association with product1's campaign
+        result = CampaignManagement.create_campaign_challenge(product2.id, campaign.id, attrs)
         assert {:error, :campaign_not_found} = result
 
-        # Tenant1 can create the association
-        {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant1.id, campaign.id, attrs)
+        # Product1 can create the association
+        {:ok, cc} = CampaignManagement.create_campaign_challenge(product1.id, campaign.id, attrs)
 
-        # Tenant2 cannot get tenant1's campaign challenge
-        assert CampaignManagement.get_campaign_challenge(tenant2.id, campaign.id, cc.id) == nil
+        # Product2 cannot get product1's campaign challenge
+        assert CampaignManagement.get_campaign_challenge(product2.id, campaign.id, cc.id) == nil
 
-        # Tenant2 cannot update tenant1's campaign challenge
+        # Product2 cannot update product1's campaign challenge
         update_attrs = %{reward_points: points + 100}
 
         assert {:error, :not_found} =
                  CampaignManagement.update_campaign_challenge(
-                   tenant2.id,
+                   product2.id,
                    campaign.id,
                    cc.id,
                    update_attrs
                  )
 
-        # Tenant2 cannot delete tenant1's campaign challenge
+        # Product2 cannot delete product1's campaign challenge
         assert {:error, :not_found} =
-                 CampaignManagement.delete_campaign_challenge(tenant2.id, campaign.id, cc.id)
+                 CampaignManagement.delete_campaign_challenge(product2.id, campaign.id, cc.id)
 
-        # Verify tenant1 can still access
-        assert CampaignManagement.get_campaign_challenge(tenant1.id, campaign.id, cc.id) != nil
+        # Verify product1 can still access
+        assert CampaignManagement.get_campaign_challenge(product1.id, campaign.id, cc.id) != nil
       end
     end
   end

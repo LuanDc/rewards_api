@@ -4,15 +4,15 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   alias CampaignsApi.CampaignManagement
 
   setup %{conn: conn} do
-    tenant = insert(:tenant)
-    token = jwt_token(tenant.id)
+    product = insert(:product)
+    token = jwt_token(product.id)
     conn = put_req_header(conn, "authorization", "Bearer #{token}")
 
-    {:ok, conn: conn, tenant: tenant}
+    {:ok, conn: conn, product: product}
   end
 
   describe "POST /api/participants (create)" do
-    test "creates participant with valid data", %{conn: conn, tenant: tenant} do
+    test "creates participant with valid data", %{conn: conn, product: product} do
       params = %{
         "name" => "John Doe",
         "nickname" => "johndoe",
@@ -23,13 +23,13 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
 
       assert %{
                "id" => _id,
-               "tenant_id" => tenant_id,
+               "product_id" => product_id,
                "name" => "John Doe",
                "nickname" => "johndoe",
                "status" => "active"
              } = json_response(conn, 201)
 
-      assert tenant_id == tenant.id
+      assert product_id == product.id
     end
 
     test "returns 422 with validation errors for invalid data", %{conn: conn} do
@@ -47,8 +47,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"data" => [], "has_more" => false, "next_cursor" => nil} = json_response(conn, 200)
     end
 
-    test "returns participants for the tenant", %{conn: conn, tenant: tenant} do
-      insert_list(2, :participant, tenant: tenant)
+    test "returns participants for the product", %{conn: conn, product: product} do
+      insert_list(2, :participant, product: product)
 
       conn = get(conn, ~p"/api/participants")
 
@@ -56,8 +56,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert length(participants) == 2
     end
 
-    test "supports pagination with limit parameter", %{conn: conn, tenant: tenant} do
-      insert_list(3, :participant, tenant: tenant)
+    test "supports pagination with limit parameter", %{conn: conn, product: product} do
+      insert_list(3, :participant, product: product)
 
       conn = get(conn, ~p"/api/participants?limit=2")
 
@@ -68,8 +68,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert cursor != nil
     end
 
-    test "supports pagination with cursor parameter", %{conn: conn, tenant: tenant} do
-      insert_list(3, :participant, tenant: tenant)
+    test "supports pagination with cursor parameter", %{conn: conn, product: product} do
+      insert_list(3, :participant, product: product)
 
       conn1 = get(conn, ~p"/api/participants?limit=2")
       response1 = json_response(conn1, 200)
@@ -83,10 +83,10 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"data" => _page2} = response2
     end
 
-    test "does not return participants from other tenants", %{conn: conn, tenant: tenant} do
-      my_participant = insert(:participant, tenant: tenant)
-      other_tenant = insert(:tenant)
-      insert(:participant, tenant: other_tenant)
+    test "does not return participants from other products", %{conn: conn, product: product} do
+      my_participant = insert(:participant, product: product)
+      other_product = insert(:product)
+      insert(:participant, product: other_product)
 
       conn = get(conn, ~p"/api/participants")
 
@@ -95,10 +95,10 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert hd(participants)["name"] == my_participant.name
     end
 
-    test "filters by nickname parameter", %{conn: conn, tenant: tenant} do
-      insert(:participant, tenant: tenant, nickname: "johndoe")
-      insert(:participant, tenant: tenant, nickname: "janedoe")
-      insert(:participant, tenant: tenant, nickname: "alice")
+    test "filters by nickname parameter", %{conn: conn, product: product} do
+      insert(:participant, product: product, nickname: "johndoe")
+      insert(:participant, product: product, nickname: "janedoe")
+      insert(:participant, product: product, nickname: "alice")
 
       conn = get(conn, ~p"/api/participants?nickname=doe")
 
@@ -108,20 +108,20 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "GET /api/participants/:id (show)" do
-    test "returns participant when it exists and belongs to tenant", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "returns participant when it exists and belongs to product", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
 
       conn = get(conn, ~p"/api/participants/#{participant.id}")
 
       assert %{
                "id" => id,
                "name" => name,
-               "tenant_id" => tenant_id
+               "product_id" => product_id
              } = json_response(conn, 200)
 
       assert id == participant.id
       assert name == participant.name
-      assert tenant_id == tenant.id
+      assert product_id == product.id
     end
 
     test "returns 404 when participant does not exist", %{conn: conn} do
@@ -131,9 +131,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"error" => "Participant not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when participant belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      other_participant = insert(:participant, tenant: other_tenant)
+    test "returns 404 when participant belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      other_participant = insert(:participant, product: other_product)
 
       conn = get(conn, ~p"/api/participants/#{other_participant.id}")
 
@@ -142,8 +142,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "PUT /api/participants/:id (update)" do
-    test "updates participant with valid data", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "updates participant with valid data", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
 
       update_params = %{
         "name" => "Updated Name",
@@ -163,8 +163,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert id == participant.id
     end
 
-    test "returns 422 with validation errors for invalid data", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "returns 422 with validation errors for invalid data", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
 
       conn = put(conn, ~p"/api/participants/#{participant.id}", %{"name" => ""})
 
@@ -179,9 +179,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"error" => "Participant not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when participant belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      other_participant = insert(:participant, tenant: other_tenant)
+    test "returns 404 when participant belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      other_participant = insert(:participant, product: other_product)
 
       conn = put(conn, ~p"/api/participants/#{other_participant.id}", %{"name" => "Hacked"})
 
@@ -190,14 +190,14 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "DELETE /api/participants/:id (delete)" do
-    test "deletes participant successfully", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "deletes participant successfully", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
 
       conn = delete(conn, ~p"/api/participants/#{participant.id}")
 
       assert %{"id" => id} = json_response(conn, 200)
       assert id == participant.id
-      assert CampaignManagement.get_participant(tenant.id, participant.id) == nil
+      assert CampaignManagement.get_participant(product.id, participant.id) == nil
     end
 
     test "returns 404 when participant does not exist", %{conn: conn} do
@@ -207,9 +207,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"error" => "Participant not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when participant belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      other_participant = insert(:participant, tenant: other_tenant)
+    test "returns 404 when participant belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      other_participant = insert(:participant, product: other_product)
 
       conn = delete(conn, ~p"/api/participants/#{other_participant.id}")
 
@@ -218,9 +218,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "POST /api/participants/:participant_id/campaigns/:campaign_id (associate_campaign)" do
-    test "associates participant with campaign successfully", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "associates participant with campaign successfully", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
 
@@ -234,31 +234,31 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert campaign_id == campaign.id
     end
 
-    test "returns 403 when participant belongs to different tenant", %{conn: conn, tenant: tenant} do
-      other_tenant = insert(:tenant)
-      participant = insert(:participant, tenant: other_tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns 403 when participant belongs to different product", %{conn: conn, product: product} do
+      other_product = insert(:product)
+      participant = insert(:participant, product: other_product)
+      campaign = insert(:campaign, product: product)
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
 
-      assert %{"error" => "Participant or campaign not found in tenant"} =
+      assert %{"error" => "Participant or campaign not found in product"} =
                json_response(conn, 403)
     end
 
-    test "returns 403 when campaign belongs to different tenant", %{conn: conn, tenant: tenant} do
-      other_tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: other_tenant)
+    test "returns 403 when campaign belongs to different product", %{conn: conn, product: product} do
+      other_product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: other_product)
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
 
-      assert %{"error" => "Participant or campaign not found in tenant"} =
+      assert %{"error" => "Participant or campaign not found in product"} =
                json_response(conn, 403)
     end
 
-    test "returns 422 when association already exists", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns 422 when association already exists", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       insert(:campaign_participant, participant: participant, campaign: campaign)
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
@@ -268,9 +268,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "DELETE /api/participants/:participant_id/campaigns/:campaign_id (disassociate_campaign)" do
-    test "disassociates participant from campaign successfully", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "disassociates participant from campaign successfully", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       association = insert(:campaign_participant, participant: participant, campaign: campaign)
 
       conn = delete(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
@@ -279,19 +279,19 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert id == association.id
     end
 
-    test "returns 404 when association does not exist", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns 404 when association does not exist", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
 
       conn = delete(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
 
       assert %{"error" => "Association not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when participant belongs to different tenant", %{conn: conn, tenant: tenant} do
-      other_tenant = insert(:tenant)
-      participant = insert(:participant, tenant: other_tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns 404 when participant belongs to different product", %{conn: conn, product: product} do
+      other_product = insert(:product)
+      participant = insert(:participant, product: other_product)
+      campaign = insert(:campaign, product: product)
 
       conn = delete(conn, ~p"/api/participants/#{participant.id}/campaigns/#{campaign.id}")
 
@@ -300,18 +300,18 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "GET /api/participants/:participant_id/campaigns (list_campaigns)" do
-    test "returns empty list when participant has no campaigns", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "returns empty list when participant has no campaigns", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
 
       conn = get(conn, ~p"/api/participants/#{participant.id}/campaigns")
 
       assert %{"data" => [], "has_more" => false, "next_cursor" => nil} = json_response(conn, 200)
     end
 
-    test "returns campaigns for participant", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign1 = insert(:campaign, tenant: tenant)
-      campaign2 = insert(:campaign, tenant: tenant)
+    test "returns campaigns for participant", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign1 = insert(:campaign, product: product)
+      campaign2 = insert(:campaign, product: product)
       insert(:campaign_participant, participant: participant, campaign: campaign1)
       insert(:campaign_participant, participant: participant, campaign: campaign2)
 
@@ -321,11 +321,11 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert length(campaigns) == 2
     end
 
-    test "supports pagination with limit parameter", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "supports pagination with limit parameter", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
 
       Enum.each(1..3, fn _ ->
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
         insert(:campaign_participant, participant: participant, campaign: campaign)
       end)
 
@@ -340,18 +340,18 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "GET /api/campaigns/:campaign_id/participants (list_participants)" do
-    test "returns empty list when campaign has no participants", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns empty list when campaign has no participants", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
 
       conn = get(conn, ~p"/api/campaigns/#{campaign.id}/participants")
 
       assert %{"data" => [], "has_more" => false, "next_cursor" => nil} = json_response(conn, 200)
     end
 
-    test "returns participants for campaign", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
-      participant1 = insert(:participant, tenant: tenant)
-      participant2 = insert(:participant, tenant: tenant)
+    test "returns participants for campaign", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
+      participant1 = insert(:participant, product: product)
+      participant2 = insert(:participant, product: product)
       insert(:campaign_participant, participant: participant1, campaign: campaign)
       insert(:campaign_participant, participant: participant2, campaign: campaign)
 
@@ -361,11 +361,11 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert length(participants) == 2
     end
 
-    test "supports pagination with limit parameter", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "supports pagination with limit parameter", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
 
       Enum.each(1..3, fn _ ->
-        participant = insert(:participant, tenant: tenant)
+        participant = insert(:participant, product: product)
         insert(:campaign_participant, participant: participant, campaign: campaign)
       end)
 
@@ -380,9 +380,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "POST /api/participants/:participant_id/challenges/:challenge_id (associate_challenge)" do
-    test "associates participant with challenge successfully", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "associates participant with challenge successfully", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
       insert(:campaign_participant, participant: participant, campaign: campaign)
@@ -401,20 +401,20 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert campaign_id == campaign.id
     end
 
-    test "returns 403 when participant belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      participant = insert(:participant, tenant: other_tenant)
+    test "returns 403 when participant belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      participant = insert(:participant, product: other_product)
       challenge = insert(:challenge)
 
       conn = post(conn, ~p"/api/participants/#{participant.id}/challenges/#{challenge.id}")
 
-      assert %{"error" => "Participant or challenge not found in tenant"} =
+      assert %{"error" => "Participant or challenge not found in product"} =
                json_response(conn, 403)
     end
 
-    test "returns 422 when participant not in campaign", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns 422 when participant not in campaign", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
@@ -424,9 +424,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
                json_response(conn, 422)
     end
 
-    test "returns 422 when association already exists", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns 422 when association already exists", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
       insert(:campaign_participant, participant: participant, campaign: campaign)
@@ -444,9 +444,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "DELETE /api/participants/:participant_id/challenges/:challenge_id (disassociate_challenge)" do
-    test "disassociates participant from challenge successfully", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "disassociates participant from challenge successfully", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
       insert(:campaign_participant, participant: participant, campaign: campaign)
@@ -464,8 +464,8 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert id == association.id
     end
 
-    test "returns 404 when association does not exist", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "returns 404 when association does not exist", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
       challenge = insert(:challenge)
 
       conn = delete(conn, ~p"/api/participants/#{participant.id}/challenges/#{challenge.id}")
@@ -473,9 +473,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"error" => "Association not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when participant belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      participant = insert(:participant, tenant: other_tenant)
+    test "returns 404 when participant belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      participant = insert(:participant, product: other_product)
       challenge = insert(:challenge)
 
       conn = delete(conn, ~p"/api/participants/#{participant.id}/challenges/#{challenge.id}")
@@ -485,17 +485,17 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "GET /api/participants/:participant_id/challenges (list_challenges)" do
-    test "returns empty list when participant has no challenges", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
+    test "returns empty list when participant has no challenges", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
 
       conn = get(conn, ~p"/api/participants/#{participant.id}/challenges")
 
       assert %{"data" => [], "has_more" => false, "next_cursor" => nil} = json_response(conn, 200)
     end
 
-    test "returns challenges for participant", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns challenges for participant", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
@@ -520,9 +520,9 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert length(challenges) == 2
     end
 
-    test "supports pagination with limit parameter", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "supports pagination with limit parameter", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       insert(:campaign_participant, participant: participant, campaign: campaign)
 
       Enum.each(1..3, fn _ ->
@@ -545,10 +545,10 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert cursor != nil
     end
 
-    test "filters by campaign_id parameter", %{conn: conn, tenant: tenant} do
-      participant = insert(:participant, tenant: tenant)
-      campaign1 = insert(:campaign, tenant: tenant)
-      campaign2 = insert(:campaign, tenant: tenant)
+    test "filters by campaign_id parameter", %{conn: conn, product: product} do
+      participant = insert(:participant, product: product)
+      campaign1 = insert(:campaign, product: product)
+      campaign2 = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign1, challenge: challenge1)
@@ -586,11 +586,11 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"data" => [], "has_more" => false, "next_cursor" => nil} = json_response(conn, 200)
     end
 
-    test "returns participants for challenge", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns participants for challenge", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
-      participant1 = insert(:participant, tenant: tenant)
-      participant2 = insert(:participant, tenant: tenant)
+      participant1 = insert(:participant, product: product)
+      participant2 = insert(:participant, product: product)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
       insert(:campaign_participant, participant: participant1, campaign: campaign)
       insert(:campaign_participant, participant: participant2, campaign: campaign)
@@ -613,13 +613,13 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert length(participants) == 2
     end
 
-    test "supports pagination with limit parameter", %{conn: conn, tenant: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "supports pagination with limit parameter", %{conn: conn, product: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       Enum.each(1..3, fn _ ->
-        participant = insert(:participant, tenant: tenant)
+        participant = insert(:participant, product: product)
         insert(:campaign_participant, participant: participant, campaign: campaign)
 
         insert(:participant_challenge,

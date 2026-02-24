@@ -8,8 +8,8 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallengeTest do
 
   describe "changeset/2 - valid association creation" do
     setup do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       # Create campaign-challenge association
@@ -18,14 +18,14 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallengeTest do
       participant =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "John Doe",
           nickname: "johndoe"
         })
         |> Repo.insert!()
 
       %{
-        tenant: tenant,
+        product: product,
         campaign: campaign,
         challenge: challenge,
         campaign_challenge: campaign_challenge,
@@ -139,8 +139,8 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallengeTest do
 
   describe "changeset/2 - uniqueness constraint violation" do
     setup do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       # Create campaign-challenge association
@@ -149,14 +149,14 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallengeTest do
       participant =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "John Doe",
           nickname: "johndoe_unique"
         })
         |> Repo.insert!()
 
       %{
-        tenant: tenant,
+        product: product,
         campaign: campaign,
         challenge: challenge,
         campaign_challenge: campaign_challenge,
@@ -220,14 +220,14 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallengeTest do
     end
 
     test "allows different participants in same challenge", %{
-      tenant: tenant,
+      product: product,
       campaign: campaign,
       challenge: challenge
     } do
       participant1 =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "John Doe",
           nickname: "johndoe_diff1"
         })
@@ -236,7 +236,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantChallengeTest do
       participant2 =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "Jane Doe",
           nickname: "janedoe_diff2"
         })

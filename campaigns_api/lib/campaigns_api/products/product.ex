@@ -1,11 +1,11 @@
-defmodule CampaignsApi.Tenants.Tenant do
+defmodule CampaignsApi.Products.Product do
   @moduledoc """
-  Tenant schema representing a client organization in the multi-tenant system.
+  product schema representing a client organization in the multi-product system.
 
-  Tenants can have three statuses:
-  - `:active` - Tenant can access the API
-  - `:suspended` - Tenant access is temporarily disabled
-  - `:deleted` - Tenant is soft-deleted
+  products can have three statuses:
+  - `:active` - product can access the API
+  - `:suspended` - product access is temporarily disabled
+  - `:deleted` - product is soft-deleted
   """
 
   use Ecto.Schema
@@ -25,22 +25,22 @@ defmodule CampaignsApi.Tenants.Tenant do
   @primary_key {:id, :string, autogenerate: false}
   @derive {Jason.Encoder, only: [:id, :name, :status, :inserted_at, :updated_at]}
 
-  schema "tenants" do
-    field :name, :string
-    field :status, Ecto.Enum, values: [:active, :suspended, :deleted], default: :active
-    field :deleted_at, :utc_datetime
+  schema "products" do
+    field(:name, :string)
+    field(:status, Ecto.Enum, values: [:active, :suspended, :deleted], default: :active)
+    field(:deleted_at, :utc_datetime)
 
-    has_many :campaigns, CampaignsApi.CampaignManagement.Campaign
+    has_many(:campaigns, CampaignsApi.CampaignManagement.Campaign)
 
     timestamps(type: :utc_datetime)
   end
 
   @spec changeset(t() | Ecto.Changeset.t() | %__MODULE__{}, map()) :: Ecto.Changeset.t()
-  def changeset(tenant, attrs) do
-    tenant
+  def changeset(product, attrs) do
+    product
     |> cast(attrs, [:id, :name, :status, :deleted_at])
     |> validate_required([:id, :name])
     |> validate_length(:name, min: 1)
-    |> unique_constraint(:id, name: :tenants_pkey)
+    |> unique_constraint(:id, name: :products_pkey)
   end
 end

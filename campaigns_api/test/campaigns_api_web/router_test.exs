@@ -123,13 +123,13 @@ defmodule CampaignsApiWeb.RouterTest do
       assert json_response(conn, 401) == %{"error" => "Unauthorized"}
     end
 
-    test "authenticated pipeline includes AssignTenant plug after RequireAuth" do
-      # Create a valid JWT with tenant_id
-      tenant_id = "test-tenant-#{System.unique_integer([:positive])}"
-      claims = %{"tenant_id" => tenant_id}
+    test "authenticated pipeline includes AssignProduct plug after RequireAuth" do
+      # Create a valid JWT with product_id
+      product_id = "test-product-#{System.unique_integer([:positive])}"
+      claims = %{"product_id" => product_id}
       token = create_test_jwt(claims)
 
-      # Make request with valid auth - should reach AssignTenant which creates tenant
+      # Make request with valid auth - should reach AssignProduct which creates product
       conn =
         build_conn()
         |> put_req_header("accept", "application/json")
@@ -146,14 +146,14 @@ defmodule CampaignsApiWeb.RouterTest do
              }
     end
 
-    test "plugs are executed in correct order: RequireAuth then AssignTenant" do
-      # Test that missing auth is caught by RequireAuth before AssignTenant
+    test "plugs are executed in correct order: RequireAuth then AssignProduct" do
+      # Test that missing auth is caught by RequireAuth before AssignProduct
       conn =
         build_conn()
         |> put_req_header("accept", "application/json")
         |> get("/api/campaigns")
 
-      # Should fail at RequireAuth with 401, not reach AssignTenant
+      # Should fail at RequireAuth with 401, not reach AssignProduct
       assert conn.status == 401
       assert json_response(conn, 401) == %{"error" => "Unauthorized"}
     end

@@ -5,14 +5,14 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
   alias CampaignsApi.CampaignManagement
 
   setup %{conn: conn} do
-    tenant = insert(:tenant)
-    token = jwt_token(tenant.id)
+    product = insert(:product)
+    token = jwt_token(product.id)
     conn = put_req_header(conn, "authorization", "Bearer #{token}")
 
-    campaign = insert(:campaign, tenant: tenant)
+    campaign = insert(:campaign, product: product)
     challenge = insert(:challenge)
 
-    {:ok, conn: conn, tenant: tenant, campaign: campaign, challenge: challenge}
+    {:ok, conn: conn, product: product, campaign: campaign, challenge: challenge}
   end
 
   describe "POST /api/campaigns/:campaign_id/challenges (create)" do
@@ -151,12 +151,12 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{
+    test "returns 404 when campaign belongs to different product", %{
       conn: conn,
       challenge: challenge
     } do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
 
       conn =
         post(conn, ~p"/api/campaigns/#{other_campaign.id}/challenges", %{
@@ -169,7 +169,7 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign not found"} = json_response(conn, 404)
     end
 
-    test "allows any tenant to use any challenge", %{conn: conn, campaign: campaign} do
+    test "allows any product to use any challenge", %{conn: conn, campaign: campaign} do
       # Create a challenge (challenges are global)
       global_challenge = insert(:challenge, name: "Global Challenge")
 
@@ -230,13 +230,13 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
     test "does not return campaign challenges from other campaigns", %{
       conn: conn,
-      tenant: tenant,
+      product: product,
       campaign: campaign
     } do
       my_challenge = insert(:challenge)
       my_cc = insert(:campaign_challenge, campaign: campaign, challenge: my_challenge)
 
-      other_campaign = insert(:campaign, tenant: tenant)
+      other_campaign = insert(:campaign, product: product)
       other_challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: other_campaign, challenge: other_challenge)
 
@@ -247,13 +247,13 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert hd(challenges)["display_name"] == my_cc.display_name
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{conn: conn} do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+    test "returns 404 when campaign belongs to different product", %{conn: conn} do
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
 
       conn = get(conn, ~p"/api/campaigns/#{other_campaign.id}/challenges")
 
-      # The list will be empty because tenant isolation prevents access
+      # The list will be empty because product isolation prevents access
       assert %{"data" => []} = json_response(conn, 200)
     end
 
@@ -360,12 +360,12 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign challenge not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{
+    test "returns 404 when campaign belongs to different product", %{
       conn: conn,
       challenge: challenge
     } do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
       other_cc = insert(:campaign_challenge, campaign: other_campaign, challenge: challenge)
 
       conn = get(conn, ~p"/api/campaigns/#{other_campaign.id}/challenges/#{other_cc.id}")
@@ -429,12 +429,12 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign challenge not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{
+    test "returns 404 when campaign belongs to different product", %{
       conn: conn,
       challenge: challenge
     } do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
       other_cc = insert(:campaign_challenge, campaign: other_campaign, challenge: challenge)
 
       conn =
@@ -449,7 +449,7 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
   describe "DELETE /api/campaigns/:campaign_id/challenges/:id (delete)" do
     test "deletes campaign challenge successfully", %{
       conn: conn,
-      tenant: tenant,
+      product: product,
       campaign: campaign,
       challenge: challenge
     } do
@@ -458,7 +458,7 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       conn = delete(conn, ~p"/api/campaigns/#{campaign.id}/challenges/#{cc.id}")
 
       assert response(conn, 204) == ""
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id) == nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id) == nil
     end
 
     test "returns 404 when campaign challenge does not exist", %{conn: conn, campaign: campaign} do
@@ -468,12 +468,12 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
       assert %{"error" => "Campaign challenge not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when campaign belongs to different tenant", %{
+    test "returns 404 when campaign belongs to different product", %{
       conn: conn,
       challenge: challenge
     } do
-      other_tenant = insert(:tenant)
-      other_campaign = insert(:campaign, tenant: other_tenant)
+      other_product = insert(:product)
+      other_campaign = insert(:campaign, product: other_product)
       other_cc = insert(:campaign_challenge, campaign: other_campaign, challenge: challenge)
 
       conn = delete(conn, ~p"/api/campaigns/#{other_campaign.id}/challenges/#{other_cc.id}")
@@ -490,10 +490,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
               reward_points <- integer(-1000..1000),
               frequency <- member_of(["daily", "weekly", "monthly", "on_event"])
             ) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
 
         # Create a new challenge for each iteration to avoid unique constraint violations
         challenge = insert(:challenge)
@@ -532,10 +532,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
     @tag :property
     property "successful campaign challenge deletion returns HTTP 204 No Content" do
       check all(display_name <- string(:alphanumeric, min_length: 3, max_length: 50)) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
         challenge = insert(:challenge)
 
         cc =
@@ -547,17 +547,17 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
 
         conn = delete(conn, ~p"/api/campaigns/#{campaign.id}/challenges/#{cc.id}")
         assert response(conn, 204) == ""
-        assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id) == nil
+        assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id) == nil
       end
     end
 
     @tag :property
     property "validation errors return structured JSON with 422 status" do
       check all(display_name <- string(:alphanumeric, min_length: 0, max_length: 2)) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
         challenge = insert(:challenge)
 
         conn =
@@ -580,10 +580,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
               invalid_frequency <- string(:alphanumeric, min_length: 1, max_length: 20),
               invalid_frequency not in ["daily", "weekly", "monthly", "on_event"]
             ) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
         challenge = insert(:challenge)
 
         # Skip valid cron expressions (5 parts separated by spaces)
@@ -608,10 +608,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
     @tag :property
     property "404 errors return structured JSON" do
       check all(_iteration <- integer(1..10)) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
 
         fake_id = Ecto.UUID.generate()
         conn = get(conn, ~p"/api/campaigns/#{campaign.id}/challenges/#{fake_id}")
@@ -624,10 +624,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
     @tag :property
     property "reward points can be positive, negative, or zero" do
       check all(reward_points <- integer(-10_000..10_000)) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
 
         # Create a new challenge for each iteration to avoid unique constraint violations
         challenge = insert(:challenge)
@@ -655,10 +655,10 @@ defmodule CampaignsApiWeb.CampaignChallengeControllerTest do
               part4 <- string(:alphanumeric, min_length: 1, max_length: 2),
               part5 <- string(:alphanumeric, min_length: 1, max_length: 2)
             ) do
-        tenant = insert(:tenant)
-        token = jwt_token(tenant.id)
+        product = insert(:product)
+        token = jwt_token(product.id)
         conn = build_conn() |> put_req_header("authorization", "Bearer #{token}")
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
 
         # Create a new challenge for each iteration to avoid unique constraint violations
         challenge = insert(:challenge)

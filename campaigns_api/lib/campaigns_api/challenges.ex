@@ -26,7 +26,7 @@ defmodule CampaignsApi.Challenges do
   @doc """
   Lists all challenges with pagination support.
 
-  Challenges are globally available to all tenants, so no tenant filtering is applied.
+  Challenges are globally available to all products, so no product filtering is applied.
 
   ## Options
 

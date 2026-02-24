@@ -4,7 +4,7 @@ defmodule CampaignsApiWeb.Plugs.RequireAuth do
 
   Extracts and validates JWT tokens from the Authorization header,
   decodes the token without signature verification (mock implementation),
-  and assigns the tenant_id to the connection.
+  and assigns the product_id to the connection.
 
   Returns 401 Unauthorized if authentication fails.
   """
@@ -20,8 +20,8 @@ defmodule CampaignsApiWeb.Plugs.RequireAuth do
     case get_req_header(conn, "authorization") do
       ["Bearer " <> token] ->
         case decode_jwt(token) do
-          {:ok, %{"tenant_id" => tenant_id}} ->
-            assign(conn, :tenant_id, tenant_id)
+          {:ok, %{"product_id" => product_id}} ->
+            assign(conn, :product_id, product_id)
 
           _ ->
             unauthorized(conn)

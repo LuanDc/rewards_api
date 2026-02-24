@@ -5,65 +5,65 @@ defmodule CampaignsApi.CampaignManagementTest do
   alias CampaignsApi.CampaignManagement
 
   setup do
-    tenant1 = insert(:tenant)
-    tenant2 = insert(:tenant)
+    product1 = insert(:product)
+    product2 = insert(:product)
 
-    {:ok, tenant1: tenant1, tenant2: tenant2}
+    {:ok, product1: product1, product2: product2}
   end
 
   describe "get_campaign/2" do
-    test "returns nil when accessing campaign from different tenant (cross-tenant access)", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "returns nil when accessing campaign from different product (cross-product access)", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
 
-      assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil
-      assert CampaignManagement.get_campaign(tenant2.id, campaign.id) == nil
+      assert CampaignManagement.get_campaign(product1.id, campaign.id) != nil
+      assert CampaignManagement.get_campaign(product2.id, campaign.id) == nil
     end
 
-    test "returns nil when campaign does not exist", %{tenant1: tenant} do
+    test "returns nil when campaign does not exist", %{product1: product} do
       non_existent_id = Ecto.UUID.generate()
-      assert CampaignManagement.get_campaign(tenant.id, non_existent_id) == nil
+      assert CampaignManagement.get_campaign(product.id, non_existent_id) == nil
     end
   end
 
   describe "create_campaign/2" do
-    test "returns error with foreign key violation when tenant does not exist" do
-      non_existent_tenant_id = "non-existent-tenant-#{System.unique_integer([:positive])}"
+    test "returns error with foreign key violation when product does not exist" do
+      non_existent_product_id = "non-existent-product-#{System.unique_integer([:positive])}"
 
       assert {:error, changeset} =
-               CampaignManagement.create_campaign(non_existent_tenant_id, %{
+               CampaignManagement.create_campaign(non_existent_product_id, %{
                  name: "Test Campaign"
                })
 
-      assert %{tenant_id: ["does not exist"]} = errors_on(changeset)
+      assert %{product_id: ["does not exist"]} = errors_on(changeset)
     end
 
-    test "successfully creates campaign for existing tenant", %{tenant1: tenant} do
+    test "successfully creates campaign for existing product", %{product1: product} do
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
+        CampaignManagement.create_campaign(product.id, %{
           name: "Valid Campaign"
         })
 
-      assert campaign.tenant_id == tenant.id
+      assert campaign.product_id == product.id
       assert campaign.name == "Valid Campaign"
     end
   end
 
   describe "list_campaigns/2 pagination" do
-    test "returns empty list when tenant has no campaigns", %{tenant1: tenant} do
-      result = CampaignManagement.list_campaigns(tenant.id)
+    test "returns empty list when product has no campaigns", %{product1: product} do
+      result = CampaignManagement.list_campaigns(product.id)
 
       assert result.data == []
       assert result.next_cursor == nil
       assert result.has_more == false
     end
 
-    test "returns all campaigns when count is less than default limit", %{tenant1: tenant} do
-      campaigns = insert_list(5, :campaign, tenant: tenant)
+    test "returns all campaigns when count is less than default limit", %{product1: product} do
+      campaigns = insert_list(5, :campaign, product: product)
 
-      result = CampaignManagement.list_campaigns(tenant.id)
+      result = CampaignManagement.list_campaigns(product.id)
 
       assert length(result.data) == 5
       assert result.has_more == false
@@ -74,27 +74,27 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert Enum.all?(campaign_ids, &(&1 in returned_ids))
     end
 
-    test "respects custom limit parameter", %{tenant1: tenant} do
-      insert_list(10, :campaign, tenant: tenant)
+    test "respects custom limit parameter", %{product1: product} do
+      insert_list(10, :campaign, product: product)
 
-      result = CampaignManagement.list_campaigns(tenant.id, limit: 3)
+      result = CampaignManagement.list_campaigns(product.id, limit: 3)
 
       assert length(result.data) == 3
       assert result.has_more == true
       assert result.next_cursor != nil
     end
 
-    test "handles pagination with cursor", %{tenant1: tenant} do
-      insert_list(12, :campaign, tenant: tenant)
+    test "handles pagination with cursor", %{product1: product} do
+      insert_list(12, :campaign, product: product)
 
-      first_page = CampaignManagement.list_campaigns(tenant.id, limit: 5)
+      first_page = CampaignManagement.list_campaigns(product.id, limit: 5)
       assert length(first_page.data) == 5
 
       if first_page.has_more do
         assert first_page.next_cursor != nil
 
         second_page =
-          CampaignManagement.list_campaigns(tenant.id, limit: 5, cursor: first_page.next_cursor)
+          CampaignManagement.list_campaigns(product.id, limit: 5, cursor: first_page.next_cursor)
 
         first_page_ids = Enum.map(first_page.data, & &1.id)
         second_page_ids = Enum.map(second_page.data, & &1.id)
@@ -104,50 +104,50 @@ defmodule CampaignsApi.CampaignManagementTest do
       end
     end
 
-    test "enforces maximum limit of 100", %{tenant1: tenant} do
-      insert_list(150, :campaign, tenant: tenant)
+    test "enforces maximum limit of 100", %{product1: product} do
+      insert_list(150, :campaign, product: product)
 
-      result = CampaignManagement.list_campaigns(tenant.id, limit: 200)
+      result = CampaignManagement.list_campaigns(product.id, limit: 200)
 
       assert length(result.data) <= 100
       assert result.has_more == true
     end
 
-    test "returns campaigns only for specified tenant", %{tenant1: tenant1, tenant2: tenant2} do
-      tenant1_campaign = insert(:campaign, tenant: tenant1)
-      tenant2_campaign = insert(:campaign, tenant: tenant2)
+    test "returns campaigns only for specified product", %{product1: product1, product2: product2} do
+      product1_campaign = insert(:campaign, product: product1)
+      product2_campaign = insert(:campaign, product: product2)
 
-      tenant1_result = CampaignManagement.list_campaigns(tenant1.id)
-      tenant1_ids = Enum.map(tenant1_result.data, & &1.id)
+      product1_result = CampaignManagement.list_campaigns(product1.id)
+      product1_ids = Enum.map(product1_result.data, & &1.id)
 
-      tenant2_result = CampaignManagement.list_campaigns(tenant2.id)
-      tenant2_ids = Enum.map(tenant2_result.data, & &1.id)
+      product2_result = CampaignManagement.list_campaigns(product2.id)
+      product2_ids = Enum.map(product2_result.data, & &1.id)
 
-      assert tenant1_campaign.id in tenant1_ids
-      assert tenant1_campaign.id not in tenant2_ids
-      assert tenant2_campaign.id in tenant2_ids
-      assert tenant2_campaign.id not in tenant1_ids
+      assert product1_campaign.id in product1_ids
+      assert product1_campaign.id not in product2_ids
+      assert product2_campaign.id in product2_ids
+      assert product2_campaign.id not in product1_ids
     end
   end
 
   describe "update_campaign/3" do
-    test "returns changeset errors when updating with invalid data", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns changeset errors when updating with invalid data", %{product1: product} do
+      campaign = insert(:campaign, product: product)
 
       assert {:error, changeset} =
-               CampaignManagement.update_campaign(tenant.id, campaign.id, %{name: "ab"})
+               CampaignManagement.update_campaign(product.id, campaign.id, %{name: "ab"})
 
       assert %{name: ["should be at least 3 character(s)"]} = errors_on(changeset)
     end
 
-    test "returns changeset errors when updating with invalid date order", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns changeset errors when updating with invalid date order", %{product1: product} do
+      campaign = insert(:campaign, product: product)
 
       start_time = ~U[2024-02-01 00:00:00Z]
       end_time = ~U[2024-01-01 00:00:00Z]
 
       assert {:error, changeset} =
-               CampaignManagement.update_campaign(tenant.id, campaign.id, %{
+               CampaignManagement.update_campaign(product.id, campaign.id, %{
                  start_time: start_time,
                  end_time: end_time
                })
@@ -155,11 +155,11 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert %{start_time: ["must be before end_time"]} = errors_on(changeset)
     end
 
-    test "successfully updates campaign with valid data", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "successfully updates campaign with valid data", %{product1: product} do
+      campaign = insert(:campaign, product: product)
 
       {:ok, updated_campaign} =
-        CampaignManagement.update_campaign(tenant.id, campaign.id, %{
+        CampaignManagement.update_campaign(product.id, campaign.id, %{
           name: "Updated Campaign",
           description: "New description"
         })
@@ -168,35 +168,35 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert updated_campaign.description == "New description"
     end
 
-    test "returns not_found when updating campaign from different tenant", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "returns not_found when updating campaign from different product", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
 
       assert {:error, :not_found} =
-               CampaignManagement.update_campaign(tenant2.id, campaign.id, %{
+               CampaignManagement.update_campaign(product2.id, campaign.id, %{
                  name: "Updated Name"
                })
 
-      unchanged = CampaignManagement.get_campaign(tenant1.id, campaign.id)
+      unchanged = CampaignManagement.get_campaign(product1.id, campaign.id)
       assert unchanged.name == campaign.name
     end
 
-    test "returns not_found when updating non-existent campaign", %{tenant1: tenant} do
+    test "returns not_found when updating non-existent campaign", %{product1: product} do
       non_existent_id = Ecto.UUID.generate()
 
       assert {:error, :not_found} =
-               CampaignManagement.update_campaign(tenant.id, non_existent_id, %{
+               CampaignManagement.update_campaign(product.id, non_existent_id, %{
                  name: "New Name"
                })
     end
   end
 
   describe "flexible date management examples" do
-    test "creates campaign without start_time or end_time", %{tenant1: tenant} do
+    test "creates campaign without start_time or end_time", %{product1: product} do
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
+        CampaignManagement.create_campaign(product.id, %{
           name: "No Dates Campaign"
         })
 
@@ -205,11 +205,11 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign.name == "No Dates Campaign"
     end
 
-    test "creates campaign with start_time but no end_time", %{tenant1: tenant} do
+    test "creates campaign with start_time but no end_time", %{product1: product} do
       start_time = ~U[2024-01-01 00:00:00Z]
 
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
+        CampaignManagement.create_campaign(product.id, %{
           name: "Start Only Campaign",
           start_time: start_time
         })
@@ -219,11 +219,11 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign.name == "Start Only Campaign"
     end
 
-    test "creates campaign with end_time but no start_time", %{tenant1: tenant} do
+    test "creates campaign with end_time but no start_time", %{product1: product} do
       end_time = ~U[2024-12-31 23:59:59Z]
 
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
+        CampaignManagement.create_campaign(product.id, %{
           name: "End Only Campaign",
           end_time: end_time
         })
@@ -234,13 +234,13 @@ defmodule CampaignsApi.CampaignManagementTest do
     end
 
     test "creates campaign with both start_time and end_time when start is before end", %{
-      tenant1: tenant
+      product1: product
     } do
       start_time = ~U[2024-01-01 00:00:00Z]
       end_time = ~U[2024-12-31 23:59:59Z]
 
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
+        CampaignManagement.create_campaign(product.id, %{
           name: "Both Dates Campaign",
           start_time: start_time,
           end_time: end_time
@@ -254,37 +254,37 @@ defmodule CampaignsApi.CampaignManagementTest do
   end
 
   describe "delete_campaign/2" do
-    test "successfully deletes a campaign belonging to the tenant", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "successfully deletes a campaign belonging to the product", %{product1: product} do
+      campaign = insert(:campaign, product: product)
 
-      assert {:ok, deleted_campaign} = CampaignManagement.delete_campaign(tenant.id, campaign.id)
+      assert {:ok, deleted_campaign} = CampaignManagement.delete_campaign(product.id, campaign.id)
       assert deleted_campaign.id == campaign.id
-      assert CampaignManagement.get_campaign(tenant.id, campaign.id) == nil
+      assert CampaignManagement.get_campaign(product.id, campaign.id) == nil
     end
 
-    test "returns error when campaign does not exist", %{tenant1: tenant} do
+    test "returns error when campaign does not exist", %{product1: product} do
       non_existent_id = Ecto.UUID.generate()
 
-      assert {:error, :not_found} = CampaignManagement.delete_campaign(tenant.id, non_existent_id)
+      assert {:error, :not_found} = CampaignManagement.delete_campaign(product.id, non_existent_id)
     end
 
-    test "returns error when campaign belongs to different tenant", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "returns error when campaign belongs to different product", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
 
-      assert {:error, :not_found} = CampaignManagement.delete_campaign(tenant2.id, campaign.id)
-      assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil
+      assert {:error, :not_found} = CampaignManagement.delete_campaign(product2.id, campaign.id)
+      assert CampaignManagement.get_campaign(product1.id, campaign.id) != nil
     end
 
-    test "campaign does not appear in list after deletion", %{tenant1: tenant} do
-      campaign1 = insert(:campaign, tenant: tenant)
-      campaign2 = insert(:campaign, tenant: tenant)
+    test "campaign does not appear in list after deletion", %{product1: product} do
+      campaign1 = insert(:campaign, product: product)
+      campaign2 = insert(:campaign, product: product)
 
-      {:ok, _} = CampaignManagement.delete_campaign(tenant.id, campaign1.id)
+      {:ok, _} = CampaignManagement.delete_campaign(product.id, campaign1.id)
 
-      result = CampaignManagement.list_campaigns(tenant.id)
+      result = CampaignManagement.list_campaigns(product.id)
 
       assert length(result.data) == 1
       assert hd(result.data).id == campaign2.id
@@ -292,25 +292,25 @@ defmodule CampaignsApi.CampaignManagementTest do
   end
 
   describe "list_campaign_challenges/3" do
-    test "returns empty list when campaign has no challenges", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns empty list when campaign has no challenges", %{product1: product} do
+      campaign = insert(:campaign, product: product)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id)
 
       assert result.data == []
       assert result.next_cursor == nil
       assert result.has_more == false
     end
 
-    test "returns all campaign challenges with pagination", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns all campaign challenges with pagination", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
 
       cc1 = insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
       cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id)
 
       assert length(result.data) == 2
       returned_ids = Enum.map(result.data, & &1.id)
@@ -318,33 +318,33 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert cc2.id in returned_ids
     end
 
-    test "preloads challenge association", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "preloads challenge association", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge, name: "Test Challenge")
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id)
 
       assert length(result.data) == 1
       campaign_challenge = hd(result.data)
       assert campaign_challenge.challenge.name == "Test Challenge"
     end
 
-    test "enforces tenant isolation - cannot list challenges from different tenant's campaign", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "enforces product isolation - cannot list challenges from different product's campaign", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.list_campaign_challenges(tenant2.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product2.id, campaign.id)
 
       assert result.data == []
     end
 
-    test "respects pagination limit", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "respects pagination limit", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
       challenge3 = insert(:challenge)
@@ -353,7 +353,7 @@ defmodule CampaignsApi.CampaignManagementTest do
       insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge3)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id, limit: 2)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id, limit: 2)
 
       assert length(result.data) == 2
       assert result.has_more == true
@@ -361,43 +361,43 @@ defmodule CampaignsApi.CampaignManagementTest do
   end
 
   describe "get_campaign_challenge/3" do
-    test "returns campaign challenge with preloaded challenge", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns campaign challenge with preloaded challenge", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge, name: "Test Challenge")
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id)
+      result = CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id)
 
       assert result.id == cc.id
       assert result.challenge.name == "Test Challenge"
     end
 
-    test "returns nil when campaign challenge does not exist", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns nil when campaign challenge does not exist", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       non_existent_id = Ecto.UUID.generate()
 
-      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, non_existent_id)
+      result = CampaignManagement.get_campaign_challenge(product.id, campaign.id, non_existent_id)
 
       assert result == nil
     end
 
-    test "returns nil when accessing campaign challenge from different tenant", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "returns nil when accessing campaign challenge from different product", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.get_campaign_challenge(tenant2.id, campaign.id, cc.id)
+      result = CampaignManagement.get_campaign_challenge(product2.id, campaign.id, cc.id)
 
       assert result == nil
     end
   end
 
   describe "create_campaign_challenge/3" do
-    test "successfully creates campaign challenge with valid data", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "successfully creates campaign challenge with valid data", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -409,7 +409,7 @@ defmodule CampaignsApi.CampaignManagementTest do
         configuration: %{"threshold" => 10}
       }
 
-      {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      {:ok, cc} = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       assert cc.campaign_id == campaign.id
       assert cc.challenge_id == challenge.id
@@ -417,11 +417,11 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert cc.reward_points == 100
     end
 
-    test "returns error when campaign does not belong to tenant", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "returns error when campaign does not belong to product", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -431,13 +431,13 @@ defmodule CampaignsApi.CampaignManagementTest do
         reward_points: 50
       }
 
-      result = CampaignManagement.create_campaign_challenge(tenant2.id, campaign.id, attrs)
+      result = CampaignManagement.create_campaign_challenge(product2.id, campaign.id, attrs)
 
       assert {:error, :campaign_not_found} = result
     end
 
-    test "accepts any challenge (challenges are global)", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "accepts any challenge (challenges are global)", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -447,13 +447,13 @@ defmodule CampaignsApi.CampaignManagementTest do
         reward_points: 200
       }
 
-      {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      {:ok, cc} = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       assert cc.challenge_id == challenge.id
     end
 
-    test "returns error when creating duplicate association", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns error when creating duplicate association", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -463,7 +463,7 @@ defmodule CampaignsApi.CampaignManagementTest do
         reward_points: 100
       }
 
-      {:ok, _cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      {:ok, _cc} = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       duplicate_attrs = %{
         challenge_id: challenge.id,
@@ -473,13 +473,13 @@ defmodule CampaignsApi.CampaignManagementTest do
       }
 
       {:error, changeset} =
-        CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, duplicate_attrs)
+        CampaignManagement.create_campaign_challenge(product.id, campaign.id, duplicate_attrs)
 
       assert %{campaign_id: ["has already been taken"]} = errors_on(changeset)
     end
 
-    test "returns error with invalid data", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns error with invalid data", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -490,15 +490,15 @@ defmodule CampaignsApi.CampaignManagementTest do
       }
 
       {:error, changeset} =
-        CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+        CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       assert %{display_name: ["should be at least 3 character(s)"]} = errors_on(changeset)
     end
   end
 
   describe "update_campaign_challenge/4" do
-    test "successfully updates campaign challenge with valid data", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "successfully updates campaign challenge with valid data", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
@@ -508,47 +508,47 @@ defmodule CampaignsApi.CampaignManagementTest do
       }
 
       {:ok, updated_cc} =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, attrs)
+        CampaignManagement.update_campaign_challenge(product.id, campaign.id, cc.id, attrs)
 
       assert updated_cc.display_name == "Updated Challenge"
       assert updated_cc.reward_points == 500
     end
 
-    test "returns error when campaign challenge does not exist", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns error when campaign challenge does not exist", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       non_existent_id = Ecto.UUID.generate()
 
       result =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, non_existent_id, %{
+        CampaignManagement.update_campaign_challenge(product.id, campaign.id, non_existent_id, %{
           display_name: "Updated"
         })
 
       assert {:error, :not_found} = result
     end
 
-    test "returns error when updating campaign challenge from different tenant", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "returns error when updating campaign challenge from different product", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       result =
-        CampaignManagement.update_campaign_challenge(tenant2.id, campaign.id, cc.id, %{
+        CampaignManagement.update_campaign_challenge(product2.id, campaign.id, cc.id, %{
           display_name: "Updated"
         })
 
       assert {:error, :not_found} = result
     end
 
-    test "returns error with invalid data", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns error with invalid data", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       {:error, changeset} =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{
+        CampaignManagement.update_campaign_challenge(product.id, campaign.id, cc.id, %{
           display_name: "ab"
         })
 
@@ -557,37 +557,37 @@ defmodule CampaignsApi.CampaignManagementTest do
   end
 
   describe "delete_campaign_challenge/3" do
-    test "successfully deletes campaign challenge", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "successfully deletes campaign challenge", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       {:ok, deleted_cc} =
-        CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, cc.id)
+        CampaignManagement.delete_campaign_challenge(product.id, campaign.id, cc.id)
 
       assert deleted_cc.id == cc.id
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id) == nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id) == nil
     end
 
-    test "returns error when campaign challenge does not exist", %{tenant1: tenant} do
-      campaign = insert(:campaign, tenant: tenant)
+    test "returns error when campaign challenge does not exist", %{product1: product} do
+      campaign = insert(:campaign, product: product)
       non_existent_id = Ecto.UUID.generate()
 
       result =
-        CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, non_existent_id)
+        CampaignManagement.delete_campaign_challenge(product.id, campaign.id, non_existent_id)
 
       assert {:error, :not_found} = result
     end
 
-    test "returns error when deleting campaign challenge from different tenant", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    test "returns error when deleting campaign challenge from different product", %{
+      product1: product1,
+      product2: product2
     } do
-      campaign = insert(:campaign, tenant: tenant1)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.delete_campaign_challenge(tenant2.id, campaign.id, cc.id)
+      result = CampaignManagement.delete_campaign_challenge(product2.id, campaign.id, cc.id)
 
       assert {:error, :not_found} = result
     end
@@ -595,86 +595,86 @@ defmodule CampaignsApi.CampaignManagementTest do
 
   describe "campaign deletion cascade" do
     test "deleting campaign automatically deletes associated campaign challenges", %{
-      tenant1: tenant
+      product1: product
     } do
-      campaign = insert(:campaign, tenant: tenant)
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
 
       cc1 = insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
       cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
 
-      {:ok, _} = CampaignManagement.delete_campaign(tenant.id, campaign.id)
+      {:ok, _} = CampaignManagement.delete_campaign(product.id, campaign.id)
 
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc1.id) == nil
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc2.id) == nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc1.id) == nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc2.id) == nil
     end
   end
 
-  describe "Property: Tenant Isolation (Business Invariant)" do
+  describe "Property: Product Isolation (Business Invariant)" do
     @tag :property
-    property "tenant cannot access campaigns belonging to other tenants", %{
-      tenant1: tenant1,
-      tenant2: tenant2
+    property "product cannot access campaigns belonging to other products", %{
+      product1: product1,
+      product2: product2
     } do
       check all(
               name <- string(:alphanumeric, min_length: 3, max_length: 50),
               max_runs: 50
             ) do
-        {:ok, campaign} = CampaignManagement.create_campaign(tenant1.id, %{name: name})
+        {:ok, campaign} = CampaignManagement.create_campaign(product1.id, %{name: name})
 
-        # Tenant1 can access their own campaign
-        assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil,
-               "tenant1 should be able to retrieve their own campaign"
+        # Product1 can access their own campaign
+        assert CampaignManagement.get_campaign(product1.id, campaign.id) != nil,
+               "product1 should be able to retrieve their own campaign"
 
-        # Tenant2 cannot access tenant1's campaign
-        assert CampaignManagement.get_campaign(tenant2.id, campaign.id) == nil,
-               "tenant2 should not be able to retrieve tenant1's campaign"
+        # Product2 cannot access product1's campaign
+        assert CampaignManagement.get_campaign(product2.id, campaign.id) == nil,
+               "product2 should not be able to retrieve product1's campaign"
 
-        # Tenant2 cannot update tenant1's campaign
+        # Product2 cannot update product1's campaign
         assert {:error, :not_found} =
-                 CampaignManagement.update_campaign(tenant2.id, campaign.id, %{name: "Updated"}),
-               "tenant2 should not be able to update tenant1's campaign"
+                 CampaignManagement.update_campaign(product2.id, campaign.id, %{name: "Updated"}),
+               "product2 should not be able to update product1's campaign"
 
-        # Tenant2 cannot delete tenant1's campaign
-        assert {:error, :not_found} = CampaignManagement.delete_campaign(tenant2.id, campaign.id),
-               "tenant2 should not be able to delete tenant1's campaign"
+        # Product2 cannot delete product1's campaign
+        assert {:error, :not_found} = CampaignManagement.delete_campaign(product2.id, campaign.id),
+               "product2 should not be able to delete product1's campaign"
 
-        # Campaign still exists for tenant1
-        assert CampaignManagement.get_campaign(tenant1.id, campaign.id) != nil,
-               "campaign should still exist for tenant1 after cross-tenant access attempts"
+        # Campaign still exists for product1
+        assert CampaignManagement.get_campaign(product1.id, campaign.id) != nil,
+               "campaign should still exist for product1 after cross-product access attempts"
 
-        # Tenant2's list doesn't include tenant1's campaign
-        tenant2_campaigns = CampaignManagement.list_campaigns(tenant2.id)
-        campaign_ids = Enum.map(tenant2_campaigns.data, & &1.id)
+        # Product2's list doesn't include product1's campaign
+        product2_campaigns = CampaignManagement.list_campaigns(product2.id)
+        campaign_ids = Enum.map(product2_campaigns.data, & &1.id)
 
         assert campaign.id not in campaign_ids,
-               "tenant1's campaign should not appear in tenant2's campaign list"
+               "product1's campaign should not appear in product2's campaign list"
       end
     end
   end
 
   describe "Unit tests for properties converted from property tests" do
-    test "campaign created has UUID format", %{tenant1: tenant} do
-      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+    test "campaign created has UUID format", %{product1: product} do
+      {:ok, campaign} = CampaignManagement.create_campaign(product.id, %{name: "Test Campaign"})
 
       assert is_binary(campaign.id)
       assert String.length(campaign.id) == 36
       assert campaign.id =~ ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     end
 
-    test "campaign defaults to active status when not specified", %{tenant1: tenant} do
-      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+    test "campaign defaults to active status when not specified", %{product1: product} do
+      {:ok, campaign} = CampaignManagement.create_campaign(product.id, %{name: "Test Campaign"})
 
       assert campaign.status == :active
     end
 
-    test "campaign can be created with optional fields", %{tenant1: tenant} do
+    test "campaign can be created with optional fields", %{product1: product} do
       start_time = ~U[2024-01-01 00:00:00Z]
       end_time = ~U[2024-12-31 23:59:59Z]
 
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
+        CampaignManagement.create_campaign(product.id, %{
           name: "Full Campaign",
           description: "Test description",
           start_time: start_time,
@@ -686,12 +686,12 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign.end_time == end_time
     end
 
-    test "campaign timestamps are stored in UTC", %{tenant1: tenant} do
+    test "campaign timestamps are stored in UTC", %{product1: product} do
       start_time = ~U[2024-01-01 00:00:00Z]
       end_time = ~U[2024-12-31 23:59:59Z]
 
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{
+        CampaignManagement.create_campaign(product.id, %{
           name: "Test Campaign",
           start_time: start_time,
           end_time: end_time
@@ -703,10 +703,10 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign.updated_at.time_zone == "Etc/UTC"
     end
 
-    test "campaigns are ordered by inserted_at descending", %{tenant1: tenant} do
-      insert_list(5, :campaign, tenant: tenant)
+    test "campaigns are ordered by inserted_at descending", %{product1: product} do
+      insert_list(5, :campaign, product: product)
 
-      result = CampaignManagement.list_campaigns(tenant.id)
+      result = CampaignManagement.list_campaigns(product.id)
       campaigns = result.data
 
       assert length(campaigns) == 5
@@ -716,11 +716,11 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert timestamps == Enum.sort(timestamps, {:desc, DateTime})
     end
 
-    test "campaign includes all required fields", %{tenant1: tenant} do
-      {:ok, campaign} = CampaignManagement.create_campaign(tenant.id, %{name: "Test Campaign"})
+    test "campaign includes all required fields", %{product1: product} do
+      {:ok, campaign} = CampaignManagement.create_campaign(product.id, %{name: "Test Campaign"})
 
       assert Map.has_key?(campaign, :id)
-      assert Map.has_key?(campaign, :tenant_id)
+      assert Map.has_key?(campaign, :product_id)
       assert Map.has_key?(campaign, :name)
       assert Map.has_key?(campaign, :description)
       assert Map.has_key?(campaign, :start_time)
@@ -730,19 +730,19 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert Map.has_key?(campaign, :updated_at)
     end
 
-    test "campaign status can transition between active and paused", %{tenant1: tenant} do
+    test "campaign status can transition between active and paused", %{product1: product} do
       {:ok, campaign} =
-        CampaignManagement.create_campaign(tenant.id, %{name: "Test", status: :active})
+        CampaignManagement.create_campaign(product.id, %{name: "Test", status: :active})
 
       assert campaign.status == :active
 
       {:ok, updated} =
-        CampaignManagement.update_campaign(tenant.id, campaign.id, %{status: :paused})
+        CampaignManagement.update_campaign(product.id, campaign.id, %{status: :paused})
 
       assert updated.status == :paused
 
       {:ok, updated_again} =
-        CampaignManagement.update_campaign(tenant.id, campaign.id, %{status: :active})
+        CampaignManagement.update_campaign(product.id, campaign.id, %{status: :active})
 
       assert updated_again.status == :active
     end
@@ -761,167 +761,167 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "create_participant/2" do
     test "creates participant with valid attributes" do
-      tenant = insert(:tenant)
+      product = insert(:product)
       attrs = params_for(:participant, name: "John Doe", nickname: "johndoe")
 
-      assert {:ok, participant} = CampaignManagement.create_participant(tenant.id, attrs)
+      assert {:ok, participant} = CampaignManagement.create_participant(product.id, attrs)
       assert participant.name == "John Doe"
       assert participant.nickname == "johndoe"
-      assert participant.tenant_id == tenant.id
+      assert participant.product_id == product.id
       assert participant.status == :active
     end
 
     test "returns error with invalid attributes" do
-      tenant = insert(:tenant)
+      product = insert(:product)
       attrs = %{name: "", nickname: "ab"}
 
-      assert {:error, changeset} = CampaignManagement.create_participant(tenant.id, attrs)
+      assert {:error, changeset} = CampaignManagement.create_participant(product.id, attrs)
       assert %{name: ["can't be blank"]} = errors_on(changeset)
       assert %{nickname: ["should be at least 3 character(s)"]} = errors_on(changeset)
     end
 
     test "returns error when nickname is not unique" do
-      tenant = insert(:tenant)
-      _existing_participant = insert(:participant, tenant: tenant, nickname: "johndoe")
+      product = insert(:product)
+      _existing_participant = insert(:participant, product: product, nickname: "johndoe")
 
       attrs = params_for(:participant, nickname: "johndoe")
 
-      assert {:error, changeset} = CampaignManagement.create_participant(tenant.id, attrs)
+      assert {:error, changeset} = CampaignManagement.create_participant(product.id, attrs)
       assert %{nickname: ["has already been taken"]} = errors_on(changeset)
     end
   end
 
   describe "get_participant/2" do
-    test "returns participant when it exists and belongs to tenant" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
+    test "returns participant when it exists and belongs to product" do
+      product = insert(:product)
+      participant = insert(:participant, product: product)
 
-      assert found = CampaignManagement.get_participant(tenant.id, participant.id)
+      assert found = CampaignManagement.get_participant(product.id, participant.id)
       assert found.id == participant.id
-      assert found.tenant_id == tenant.id
+      assert found.product_id == product.id
     end
 
     test "returns nil when participant does not exist" do
-      tenant = insert(:tenant)
+      product = insert(:product)
       non_existent_id = Ecto.UUID.generate()
 
-      assert nil == CampaignManagement.get_participant(tenant.id, non_existent_id)
+      assert nil == CampaignManagement.get_participant(product.id, non_existent_id)
     end
 
-    test "returns nil when participant belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
+    test "returns nil when participant belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
 
-      assert nil == CampaignManagement.get_participant(tenant_b.id, participant.id)
+      assert nil == CampaignManagement.get_participant(product_b.id, participant.id)
     end
   end
 
   describe "update_participant/3" do
     test "updates participant with valid attributes" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant, name: "John Doe", nickname: "johndoe")
+      product = insert(:product)
+      participant = insert(:participant, product: product, name: "John Doe", nickname: "johndoe")
 
       attrs = %{name: "Jane Doe", nickname: "janedoe"}
 
       assert {:ok, updated} =
-               CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+               CampaignManagement.update_participant(product.id, participant.id, attrs)
 
       assert updated.id == participant.id
       assert updated.name == "Jane Doe"
       assert updated.nickname == "janedoe"
-      assert updated.tenant_id == tenant.id
+      assert updated.product_id == product.id
     end
 
     test "returns error with invalid attributes" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
 
       attrs = %{name: "", nickname: "ab"}
 
       assert {:error, changeset} =
-               CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+               CampaignManagement.update_participant(product.id, participant.id, attrs)
 
       assert %{name: ["can't be blank"]} = errors_on(changeset)
       assert %{nickname: ["should be at least 3 character(s)"]} = errors_on(changeset)
     end
 
     test "returns error when participant does not exist" do
-      tenant = insert(:tenant)
+      product = insert(:product)
       non_existent_id = Ecto.UUID.generate()
 
       attrs = %{name: "Jane Doe"}
 
       assert {:error, :not_found} =
-               CampaignManagement.update_participant(tenant.id, non_existent_id, attrs)
+               CampaignManagement.update_participant(product.id, non_existent_id, attrs)
     end
 
-    test "returns error when participant belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
+    test "returns error when participant belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
 
       attrs = %{name: "Jane Doe"}
 
       assert {:error, :not_found} =
-               CampaignManagement.update_participant(tenant_b.id, participant.id, attrs)
+               CampaignManagement.update_participant(product_b.id, participant.id, attrs)
     end
 
     test "returns error when nickname is not unique" do
-      tenant = insert(:tenant)
-      _existing_participant = insert(:participant, tenant: tenant, nickname: "johndoe")
-      participant = insert(:participant, tenant: tenant, nickname: "janedoe")
+      product = insert(:product)
+      _existing_participant = insert(:participant, product: product, nickname: "johndoe")
+      participant = insert(:participant, product: product, nickname: "janedoe")
 
       attrs = %{nickname: "johndoe"}
 
       assert {:error, changeset} =
-               CampaignManagement.update_participant(tenant.id, participant.id, attrs)
+               CampaignManagement.update_participant(product.id, participant.id, attrs)
 
       assert %{nickname: ["has already been taken"]} = errors_on(changeset)
     end
   end
 
   describe "delete_participant/2" do
-    test "deletes participant when it exists and belongs to tenant" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
+    test "deletes participant when it exists and belongs to product" do
+      product = insert(:product)
+      participant = insert(:participant, product: product)
 
-      assert {:ok, deleted} = CampaignManagement.delete_participant(tenant.id, participant.id)
+      assert {:ok, deleted} = CampaignManagement.delete_participant(product.id, participant.id)
       assert deleted.id == participant.id
 
       # Verify participant is actually deleted
-      assert nil == CampaignManagement.get_participant(tenant.id, participant.id)
+      assert nil == CampaignManagement.get_participant(product.id, participant.id)
     end
 
     test "returns error when participant does not exist" do
-      tenant = insert(:tenant)
+      product = insert(:product)
       non_existent_id = Ecto.UUID.generate()
 
       assert {:error, :not_found} =
-               CampaignManagement.delete_participant(tenant.id, non_existent_id)
+               CampaignManagement.delete_participant(product.id, non_existent_id)
     end
 
-    test "returns error when participant belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
+    test "returns error when participant belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
 
       assert {:error, :not_found} =
-               CampaignManagement.delete_participant(tenant_b.id, participant.id)
+               CampaignManagement.delete_participant(product_b.id, participant.id)
 
-      # Verify participant still exists for tenant_a
-      assert CampaignManagement.get_participant(tenant_a.id, participant.id)
+      # Verify participant still exists for product_a
+      assert CampaignManagement.get_participant(product_a.id, participant.id)
     end
   end
 
   describe "list_participants/2" do
     test "lists participants without cursor" do
-      tenant = insert(:tenant)
-      participant1 = insert(:participant, tenant: tenant, name: "Alice", nickname: "alice")
-      participant2 = insert(:participant, tenant: tenant, name: "Bob", nickname: "bob")
-      participant3 = insert(:participant, tenant: tenant, name: "Charlie", nickname: "charlie")
+      product = insert(:product)
+      participant1 = insert(:participant, product: product, name: "Alice", nickname: "alice")
+      participant2 = insert(:participant, product: product, name: "Bob", nickname: "bob")
+      participant3 = insert(:participant, product: product, name: "Charlie", nickname: "charlie")
 
-      result = CampaignManagement.list_participants(tenant.id, [])
+      result = CampaignManagement.list_participants(product.id, [])
 
       assert %{data: data, next_cursor: _, has_more: _} = result
       assert length(data) == 3
@@ -934,13 +934,13 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "lists participants with cursor" do
-      tenant = insert(:tenant)
+      product = insert(:product)
 
       # Insert multiple participants
-      insert_list(12, :participant, tenant: tenant)
+      insert_list(12, :participant, product: product)
 
       # Get first page
-      first_page = CampaignManagement.list_participants(tenant.id, limit: 5)
+      first_page = CampaignManagement.list_participants(product.id, limit: 5)
       assert length(first_page.data) == 5
 
       # If there are more results, test cursor pagination
@@ -949,7 +949,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
         # Get second page using cursor
         second_page =
-          CampaignManagement.list_participants(tenant.id,
+          CampaignManagement.list_participants(product.id,
             limit: 5,
             cursor: first_page.next_cursor
           )
@@ -964,15 +964,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "enforces maximum limit of 100" do
-      tenant = insert(:tenant)
+      product = insert(:product)
 
       # Insert 10 participants
       for i <- 1..10 do
-        insert(:participant, tenant: tenant, nickname: "user#{i}")
+        insert(:participant, product: product, nickname: "user#{i}")
       end
 
       # Request with limit > 100
-      result = CampaignManagement.list_participants(tenant.id, limit: 150)
+      result = CampaignManagement.list_participants(product.id, limit: 150)
 
       # Should return at most 100 (but we only have 10)
       assert %{data: data} = result
@@ -980,13 +980,13 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "filters by nickname (case-insensitive)" do
-      tenant = insert(:tenant)
-      insert(:participant, tenant: tenant, nickname: "alice123")
-      insert(:participant, tenant: tenant, nickname: "bob456")
-      insert(:participant, tenant: tenant, nickname: "ALICE789")
-      insert(:participant, tenant: tenant, nickname: "charlie")
+      product = insert(:product)
+      insert(:participant, product: product, nickname: "alice123")
+      insert(:participant, product: product, nickname: "bob456")
+      insert(:participant, product: product, nickname: "ALICE789")
+      insert(:participant, product: product, nickname: "charlie")
 
-      result = CampaignManagement.list_participants(tenant.id, nickname: "alice")
+      result = CampaignManagement.list_participants(product.id, nickname: "alice")
 
       assert %{data: data} = result
       assert length(data) == 2
@@ -994,10 +994,10 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "returns correct pagination response structure" do
-      tenant = insert(:tenant)
-      insert(:participant, tenant: tenant)
+      product = insert(:product)
+      insert(:participant, product: product)
 
-      result = CampaignManagement.list_participants(tenant.id, [])
+      result = CampaignManagement.list_participants(product.id, [])
 
       assert %{data: data, next_cursor: next_cursor, has_more: has_more} = result
       assert is_list(data)
@@ -1005,44 +1005,44 @@ defmodule CampaignsApi.ParticipantManagementTest do
       assert next_cursor == nil or match?(%DateTime{}, next_cursor)
     end
 
-    test "returns empty results for tenant with no participants" do
-      tenant = insert(:tenant)
+    test "returns empty results for product with no participants" do
+      product = insert(:product)
 
-      result = CampaignManagement.list_participants(tenant.id, [])
+      result = CampaignManagement.list_participants(product.id, [])
 
       assert %{data: [], next_cursor: nil, has_more: false} = result
     end
 
-    test "only returns participants for requesting tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
+    test "only returns participants for requesting product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
 
-      participant_a = insert(:participant, tenant: tenant_a, nickname: "tenant_a_user")
-      _participant_b = insert(:participant, tenant: tenant_b, nickname: "tenant_b_user")
+      participant_a = insert(:participant, product: product_a, nickname: "product_a_user")
+      _participant_b = insert(:participant, product: product_b, nickname: "product_b_user")
 
-      result = CampaignManagement.list_participants(tenant_a.id, [])
+      result = CampaignManagement.list_participants(product_a.id, [])
 
       assert %{data: data} = result
       assert length(data) == 1
       assert hd(data).id == participant_a.id
-      assert hd(data).tenant_id == tenant_a.id
+      assert hd(data).product_id == product_a.id
     end
   end
 
   describe "CRUD round trip" do
     test "create → read → update → read → delete maintains data integrity" do
-      tenant = insert(:tenant)
+      product = insert(:product)
 
       # Create
       create_attrs = params_for(:participant, name: "John Doe", nickname: "johndoe")
-      assert {:ok, participant} = CampaignManagement.create_participant(tenant.id, create_attrs)
+      assert {:ok, participant} = CampaignManagement.create_participant(product.id, create_attrs)
       assert participant.name == "John Doe"
       assert participant.nickname == "johndoe"
       assert participant.status == :active
       participant_id = participant.id
 
       # Read
-      assert found = CampaignManagement.get_participant(tenant.id, participant_id)
+      assert found = CampaignManagement.get_participant(product.id, participant_id)
       assert found.id == participant_id
       assert found.name == "John Doe"
       assert found.nickname == "johndoe"
@@ -1051,36 +1051,36 @@ defmodule CampaignsApi.ParticipantManagementTest do
       update_attrs = %{name: "Jane Doe", nickname: "janedoe"}
 
       assert {:ok, updated} =
-               CampaignManagement.update_participant(tenant.id, participant_id, update_attrs)
+               CampaignManagement.update_participant(product.id, participant_id, update_attrs)
 
       assert updated.id == participant_id
       assert updated.name == "Jane Doe"
       assert updated.nickname == "janedoe"
 
       # Read again
-      assert found_updated = CampaignManagement.get_participant(tenant.id, participant_id)
+      assert found_updated = CampaignManagement.get_participant(product.id, participant_id)
       assert found_updated.id == participant_id
       assert found_updated.name == "Jane Doe"
       assert found_updated.nickname == "janedoe"
 
       # Delete
-      assert {:ok, deleted} = CampaignManagement.delete_participant(tenant.id, participant_id)
+      assert {:ok, deleted} = CampaignManagement.delete_participant(product.id, participant_id)
       assert deleted.id == participant_id
 
       # Verify deletion
-      assert nil == CampaignManagement.get_participant(tenant.id, participant_id)
+      assert nil == CampaignManagement.get_participant(product.id, participant_id)
     end
   end
 
   describe "associate_participant_with_campaign/3" do
-    test "associates participant with campaign in same tenant" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+    test "associates participant with campaign in same product" do
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
 
       assert {:ok, campaign_participant} =
                CampaignManagement.associate_participant_with_campaign(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  campaign.id
                )
@@ -1089,59 +1089,59 @@ defmodule CampaignsApi.ParticipantManagementTest do
       assert campaign_participant.campaign_id == campaign.id
     end
 
-    test "returns error when associating cross-tenant resources" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_b)
+    test "returns error when associating cross-product resources" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_b)
 
-      assert {:error, :tenant_mismatch} =
+      assert {:error, :product_mismatch} =
                CampaignManagement.associate_participant_with_campaign(
-                 tenant_a.id,
+                 product_a.id,
                  participant.id,
                  campaign.id
                )
     end
 
-    test "returns error when participant belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_b)
+    test "returns error when participant belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_b)
 
-      # Try to associate using tenant_b (campaign's tenant)
-      assert {:error, :tenant_mismatch} =
+      # Try to associate using product_b (campaign's product)
+      assert {:error, :product_mismatch} =
                CampaignManagement.associate_participant_with_campaign(
-                 tenant_b.id,
+                 product_b.id,
                  participant.id,
                  campaign.id
                )
     end
 
-    test "returns error when campaign belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_b)
+    test "returns error when campaign belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_b)
 
-      # Try to associate using tenant_a (participant's tenant)
-      assert {:error, :tenant_mismatch} =
+      # Try to associate using product_a (participant's product)
+      assert {:error, :product_mismatch} =
                CampaignManagement.associate_participant_with_campaign(
-                 tenant_a.id,
+                 product_a.id,
                  participant.id,
                  campaign.id
                )
     end
 
     test "returns error for duplicate association" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
 
       # Create first association
       assert {:ok, _} =
                CampaignManagement.associate_participant_with_campaign(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  campaign.id
                )
@@ -1149,7 +1149,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Try to create duplicate association
       assert {:error, changeset} =
                CampaignManagement.associate_participant_with_campaign(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  campaign.id
                )
@@ -1160,14 +1160,14 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "disassociate_participant_from_campaign/3" do
     test "disassociates participant from campaign" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
 
       # Create association
       {:ok, campaign_participant} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant.id,
           campaign.id
         )
@@ -1175,7 +1175,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Disassociate
       assert {:ok, deleted} =
                CampaignManagement.disassociate_participant_from_campaign(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  campaign.id
                )
@@ -1185,44 +1185,44 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Verify association is removed by trying to create it again (should succeed)
       assert {:ok, _new_association} =
                CampaignManagement.associate_participant_with_campaign(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  campaign.id
                )
     end
 
     test "returns error when association does not exist" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
 
       # Try to disassociate without creating association first
       assert {:error, :not_found} =
                CampaignManagement.disassociate_participant_from_campaign(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  campaign.id
                )
     end
 
-    test "returns error when trying to disassociate cross-tenant resources" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_a)
+    test "returns error when trying to disassociate cross-product resources" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_a)
 
-      # Create association in tenant_a
+      # Create association in product_a
       {:ok, _} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           campaign.id
         )
 
-      # Try to disassociate using tenant_b
+      # Try to disassociate using product_b
       assert {:error, :not_found} =
                CampaignManagement.disassociate_participant_from_campaign(
-                 tenant_b.id,
+                 product_b.id,
                  participant.id,
                  campaign.id
                )
@@ -1231,32 +1231,32 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "list_campaigns_for_participant/3" do
     test "lists campaigns for participant" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign1 = insert(:campaign, tenant: tenant, name: "Campaign 1")
-      campaign2 = insert(:campaign, tenant: tenant, name: "Campaign 2")
-      campaign3 = insert(:campaign, tenant: tenant, name: "Campaign 3")
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign1 = insert(:campaign, product: product, name: "Campaign 1")
+      campaign2 = insert(:campaign, product: product, name: "Campaign 2")
+      campaign3 = insert(:campaign, product: product, name: "Campaign 3")
 
       # Associate participant with campaigns
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant.id,
         campaign1.id
       )
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant.id,
         campaign2.id
       )
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant.id,
         campaign3.id
       )
 
-      result = CampaignManagement.list_campaigns_for_participant(tenant.id, participant.id, [])
+      result = CampaignManagement.list_campaigns_for_participant(product.id, participant.id, [])
 
       assert %{data: data, next_cursor: _, has_more: _} = result
       assert length(data) == 3
@@ -1268,42 +1268,42 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "returns empty list when participant has no campaigns" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
 
-      result = CampaignManagement.list_campaigns_for_participant(tenant.id, participant.id, [])
+      result = CampaignManagement.list_campaigns_for_participant(product.id, participant.id, [])
 
       assert %{data: [], next_cursor: nil, has_more: false} = result
     end
 
-    test "returns empty list for cross-tenant participant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_a)
+    test "returns empty list for cross-product participant" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_a)
 
-      # Associate in tenant_a
+      # Associate in product_a
       CampaignManagement.associate_participant_with_campaign(
-        tenant_a.id,
+        product_a.id,
         participant.id,
         campaign.id
       )
 
-      # Try to list using tenant_b
-      result = CampaignManagement.list_campaigns_for_participant(tenant_b.id, participant.id, [])
+      # Try to list using product_b
+      result = CampaignManagement.list_campaigns_for_participant(product_b.id, participant.id, [])
 
       assert %{data: [], next_cursor: nil, has_more: false} = result
     end
 
     test "supports pagination" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
 
       # Create and associate 3 campaigns with delays to ensure different timestamps
-      campaign1 = insert(:campaign, tenant: tenant, name: "Campaign 1")
+      campaign1 = insert(:campaign, product: product, name: "Campaign 1")
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant.id,
         campaign1.id
       )
@@ -1311,27 +1311,27 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Sleep 1 second to ensure different timestamp
       Process.sleep(1100)
 
-      campaign2 = insert(:campaign, tenant: tenant, name: "Campaign 2")
+      campaign2 = insert(:campaign, product: product, name: "Campaign 2")
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant.id,
         campaign2.id
       )
 
       Process.sleep(1100)
 
-      campaign3 = insert(:campaign, tenant: tenant, name: "Campaign 3")
+      campaign3 = insert(:campaign, product: product, name: "Campaign 3")
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant.id,
         campaign3.id
       )
 
       # Get first page with limit 2
       first_page =
-        CampaignManagement.list_campaigns_for_participant(tenant.id, participant.id, limit: 2)
+        CampaignManagement.list_campaigns_for_participant(product.id, participant.id, limit: 2)
 
       assert length(first_page.data) == 2
       assert first_page.has_more == true
@@ -1340,7 +1340,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Get second page
       second_page =
         CampaignManagement.list_campaigns_for_participant(
-          tenant.id,
+          product.id,
           participant.id,
           limit: 2,
           cursor: first_page.next_cursor
@@ -1358,32 +1358,32 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "list_participants_for_campaign/3" do
     test "lists participants for campaign" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
-      participant1 = insert(:participant, tenant: tenant, nickname: "user1")
-      participant2 = insert(:participant, tenant: tenant, nickname: "user2")
-      participant3 = insert(:participant, tenant: tenant, nickname: "user3")
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
+      participant1 = insert(:participant, product: product, nickname: "user1")
+      participant2 = insert(:participant, product: product, nickname: "user2")
+      participant3 = insert(:participant, product: product, nickname: "user3")
 
       # Associate participants with campaign
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant1.id,
         campaign.id
       )
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant2.id,
         campaign.id
       )
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant3.id,
         campaign.id
       )
 
-      result = CampaignManagement.list_participants_for_campaign(tenant.id, campaign.id, [])
+      result = CampaignManagement.list_participants_for_campaign(product.id, campaign.id, [])
 
       assert %{data: data, next_cursor: _, has_more: _} = result
       assert length(data) == 3
@@ -1395,42 +1395,42 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "returns empty list when campaign has no participants" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
 
-      result = CampaignManagement.list_participants_for_campaign(tenant.id, campaign.id, [])
+      result = CampaignManagement.list_participants_for_campaign(product.id, campaign.id, [])
 
       assert %{data: [], next_cursor: nil, has_more: false} = result
     end
 
-    test "returns empty list for cross-tenant campaign" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_a)
+    test "returns empty list for cross-product campaign" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_a)
 
-      # Associate in tenant_a
+      # Associate in product_a
       CampaignManagement.associate_participant_with_campaign(
-        tenant_a.id,
+        product_a.id,
         participant.id,
         campaign.id
       )
 
-      # Try to list using tenant_b
-      result = CampaignManagement.list_participants_for_campaign(tenant_b.id, campaign.id, [])
+      # Try to list using product_b
+      result = CampaignManagement.list_participants_for_campaign(product_b.id, campaign.id, [])
 
       assert %{data: [], next_cursor: nil, has_more: false} = result
     end
 
     test "supports pagination" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
 
       # Create and associate 3 participants with delays to ensure different timestamps
-      participant1 = insert(:participant, tenant: tenant, nickname: "user1")
+      participant1 = insert(:participant, product: product, nickname: "user1")
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant1.id,
         campaign.id
       )
@@ -1438,27 +1438,27 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Sleep 1 second to ensure different timestamp
       Process.sleep(1100)
 
-      participant2 = insert(:participant, tenant: tenant, nickname: "user2")
+      participant2 = insert(:participant, product: product, nickname: "user2")
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant2.id,
         campaign.id
       )
 
       Process.sleep(1100)
 
-      participant3 = insert(:participant, tenant: tenant, nickname: "user3")
+      participant3 = insert(:participant, product: product, nickname: "user3")
 
       CampaignManagement.associate_participant_with_campaign(
-        tenant.id,
+        product.id,
         participant3.id,
         campaign.id
       )
 
       # Get first page with limit 2
       first_page =
-        CampaignManagement.list_participants_for_campaign(tenant.id, campaign.id, limit: 2)
+        CampaignManagement.list_participants_for_campaign(product.id, campaign.id, limit: 2)
 
       assert length(first_page.data) == 2
       assert first_page.has_more == true
@@ -1467,7 +1467,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Get second page
       second_page =
         CampaignManagement.list_participants_for_campaign(
-          tenant.id,
+          product.id,
           campaign.id,
           limit: 2,
           cursor: first_page.next_cursor
@@ -1485,35 +1485,35 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "property-based tests" do
     # **Validates: Requirements 3.4, 11.1-11.8**
-    property "tenant isolation: cross-tenant access always fails" do
+    property "product isolation: cross-product access always fails" do
       check all(
               participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
               nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15)
             ) do
-        # Create two different tenants with unique IDs
-        tenant_a = insert(:tenant)
-        tenant_b = insert(:tenant)
+        # Create two different products with unique IDs
+        product_a = insert(:product)
+        product_b = insert(:product)
 
-        # Create participant for tenant A with unique nickname
+        # Create participant for product A with unique nickname
         nickname = "#{nickname_base}-#{System.unique_integer([:positive])}"
         attrs = params_for(:participant, name: participant_name, nickname: nickname)
-        {:ok, participant} = CampaignManagement.create_participant(tenant_a.id, attrs)
+        {:ok, participant} = CampaignManagement.create_participant(product_a.id, attrs)
 
-        # Tenant B should never see Tenant A's participant
-        assert nil == CampaignManagement.get_participant(tenant_b.id, participant.id)
+        # Product B should never see Product A's participant
+        assert nil == CampaignManagement.get_participant(product_b.id, participant.id)
 
-        # Tenant B should not be able to update Tenant A's participant
+        # Product B should not be able to update Product A's participant
         update_attrs = %{name: "Updated Name"}
 
         assert {:error, :not_found} ==
-                 CampaignManagement.update_participant(tenant_b.id, participant.id, update_attrs)
+                 CampaignManagement.update_participant(product_b.id, participant.id, update_attrs)
 
-        # Tenant B should not be able to delete Tenant A's participant
+        # Product B should not be able to delete Product A's participant
         assert {:error, :not_found} ==
-                 CampaignManagement.delete_participant(tenant_b.id, participant.id)
+                 CampaignManagement.delete_participant(product_b.id, participant.id)
 
-        # Verify participant still exists for Tenant A
-        assert CampaignManagement.get_participant(tenant_a.id, participant.id)
+        # Verify participant still exists for Product A
+        assert CampaignManagement.get_participant(product_a.id, participant.id)
       end
     end
 
@@ -1525,16 +1525,16 @@ defmodule CampaignsApi.ParticipantManagementTest do
               num_campaigns <- integer(1..3),
               num_challenges_per_campaign <- integer(1..2)
             ) do
-        # Create tenant and participant with unique nickname
-        tenant = insert(:tenant)
+        # Create product and participant with unique nickname
+        product = insert(:product)
         nickname = "#{nickname_base}-#{System.unique_integer([:positive])}"
         attrs = params_for(:participant, name: participant_name, nickname: nickname)
-        {:ok, participant} = CampaignManagement.create_participant(tenant.id, attrs)
+        {:ok, participant} = CampaignManagement.create_participant(product.id, attrs)
 
         # Create campaigns and manually insert campaign_participants associations
         campaigns =
           for _ <- 1..num_campaigns do
-            campaign = insert(:campaign, tenant: tenant)
+            campaign = insert(:campaign, product: product)
 
             # Manually insert campaign_participant association
             %CampaignsApi.CampaignManagement.CampaignParticipant{}
@@ -1581,10 +1581,10 @@ defmodule CampaignsApi.ParticipantManagementTest do
         assert length(challenge_associations) == num_campaigns * num_challenges_per_campaign
 
         # Delete participant
-        assert {:ok, _deleted} = CampaignManagement.delete_participant(tenant.id, participant.id)
+        assert {:ok, _deleted} = CampaignManagement.delete_participant(product.id, participant.id)
 
         # Verify participant is deleted
-        assert nil == CampaignManagement.get_participant(tenant.id, participant.id)
+        assert nil == CampaignManagement.get_participant(product.id, participant.id)
 
         # Verify all campaign associations are deleted (cascade)
         remaining_campaign_associations =
@@ -1607,36 +1607,36 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     # **Validates: Requirements 2.6, 5.1, 5.2, 9.6, 11.5**
-    property "campaign-participant tenant validation: only same-tenant associations succeed" do
+    property "campaign-participant product validation: only same-product associations succeed" do
       check all(
               participant_name <- string(:alphanumeric, min_length: 1, max_length: 20),
               nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
               campaign_name <- string(:alphanumeric, min_length: 1, max_length: 20),
-              same_tenant <- boolean()
+              same_product <- boolean()
             ) do
-        # Create two tenants
-        tenant_a = insert(:tenant)
-        tenant_b = insert(:tenant)
+        # Create two products
+        product_a = insert(:product)
+        product_b = insert(:product)
 
-        # Create participant in tenant_a with unique nickname
+        # Create participant in product_a with unique nickname
         nickname = "#{nickname_base}-#{System.unique_integer([:positive])}"
         participant_attrs = params_for(:participant, name: participant_name, nickname: nickname)
-        {:ok, participant} = CampaignManagement.create_participant(tenant_a.id, participant_attrs)
+        {:ok, participant} = CampaignManagement.create_participant(product_a.id, participant_attrs)
 
-        # Create campaign in either same tenant or different tenant
-        campaign_tenant = if same_tenant, do: tenant_a, else: tenant_b
-        campaign = insert(:campaign, tenant: campaign_tenant, name: campaign_name)
+        # Create campaign in either same product or different product
+        campaign_product = if same_product, do: product_a, else: product_b
+        campaign = insert(:campaign, product: campaign_product, name: campaign_name)
 
         # Attempt to associate
         result =
           CampaignManagement.associate_participant_with_campaign(
-            tenant_a.id,
+            product_a.id,
             participant.id,
             campaign.id
           )
 
-        if same_tenant do
-          # Same tenant: association should succeed
+        if same_product do
+          # Same product: association should succeed
           assert {:ok, campaign_participant} = result
           assert campaign_participant.participant_id == participant.id
           assert campaign_participant.campaign_id == campaign.id
@@ -1647,8 +1647,8 @@ defmodule CampaignsApi.ParticipantManagementTest do
                    campaign_id: campaign.id
                  )
         else
-          # Different tenants: association should fail
-          assert {:error, :tenant_mismatch} = result
+          # Different products: association should fail
+          assert {:error, :product_mismatch} = result
 
           # Verify no association was created
           refute Repo.get_by(CampaignsApi.CampaignManagement.CampaignParticipant,
@@ -1662,15 +1662,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "associate_participant_with_challenge/3" do
     test "associates participant with challenge when participant is in campaign" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       # Associate participant with campaign first
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant.id,
           campaign.id
         )
@@ -1681,7 +1681,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Now associate participant with challenge
       assert {:ok, participant_challenge} =
                CampaignManagement.associate_participant_with_challenge(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  challenge.id
                )
@@ -1692,9 +1692,9 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "returns error when participant is not in campaign" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       # Associate challenge with campaign but NOT participant with campaign
@@ -1703,70 +1703,70 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Attempt to associate participant with challenge
       assert {:error, :participant_not_in_campaign} =
                CampaignManagement.associate_participant_with_challenge(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  challenge.id
                )
     end
 
-    test "returns error when challenge belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign_a = insert(:campaign, tenant: tenant_a)
-      campaign_b = insert(:campaign, tenant: tenant_b)
+    test "returns error when challenge belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign_a = insert(:campaign, product: product_a)
+      campaign_b = insert(:campaign, product: product_b)
       challenge = insert(:challenge)
 
       # Associate participant with campaign_a
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           campaign_a.id
         )
 
-      # Associate challenge with campaign_b (different tenant)
+      # Associate challenge with campaign_b (different product)
       _campaign_challenge =
         insert(:campaign_challenge, campaign: campaign_b, challenge: challenge)
 
       # Attempt to associate participant with challenge
-      assert {:error, :tenant_mismatch} =
+      assert {:error, :product_mismatch} =
                CampaignManagement.associate_participant_with_challenge(
-                 tenant_a.id,
+                 product_a.id,
                  participant.id,
                  challenge.id
                )
     end
 
-    test "returns error when participant belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_b)
-      campaign = insert(:campaign, tenant: tenant_a)
+    test "returns error when participant belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_b)
+      campaign = insert(:campaign, product: product_a)
       challenge = insert(:challenge)
 
       # Associate challenge with campaign
       _campaign_challenge = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      # Attempt to associate participant with challenge using tenant_a
-      assert {:error, :tenant_mismatch} =
+      # Attempt to associate participant with challenge using product_a
+      assert {:error, :product_mismatch} =
                CampaignManagement.associate_participant_with_challenge(
-                 tenant_a.id,
+                 product_a.id,
                  participant.id,
                  challenge.id
                )
     end
 
     test "returns error on duplicate association" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       # Associate participant with campaign
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant.id,
           campaign.id
         )
@@ -1777,7 +1777,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # First association should succeed
       assert {:ok, _pc} =
                CampaignManagement.associate_participant_with_challenge(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  challenge.id
                )
@@ -1785,7 +1785,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Second association should fail
       assert {:error, changeset} =
                CampaignManagement.associate_participant_with_challenge(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  challenge.id
                )
@@ -1796,15 +1796,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "disassociate_participant_from_challenge/3" do
     test "disassociates participant from challenge" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       # Set up associations
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant.id,
           campaign.id
         )
@@ -1813,7 +1813,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       {:ok, participant_challenge} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant.id,
+          product.id,
           participant.id,
           challenge.id
         )
@@ -1821,7 +1821,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Disassociate
       assert {:ok, deleted} =
                CampaignManagement.disassociate_participant_from_challenge(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  challenge.id
                )
@@ -1836,29 +1836,29 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "returns error when association does not exist" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
       challenge = insert(:challenge)
 
       assert {:error, :not_found} =
                CampaignManagement.disassociate_participant_from_challenge(
-                 tenant.id,
+                 product.id,
                  participant.id,
                  challenge.id
                )
     end
 
-    test "returns error when association belongs to different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_a)
+    test "returns error when association belongs to different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_a)
       challenge = insert(:challenge)
 
-      # Set up associations in tenant_a
+      # Set up associations in product_a
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           campaign.id
         )
@@ -1867,15 +1867,15 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       {:ok, _pc} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           challenge.id
         )
 
-      # Attempt to disassociate using tenant_b
+      # Attempt to disassociate using product_b
       assert {:error, :not_found} =
                CampaignManagement.disassociate_participant_from_challenge(
-                 tenant_b.id,
+                 product_b.id,
                  participant.id,
                  challenge.id
                )
@@ -1884,16 +1884,16 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "list_challenges_for_participant/3" do
     test "lists challenges for participant" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge, name: "Challenge 1")
       challenge2 = insert(:challenge, name: "Challenge 2")
 
       # Set up associations
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant.id,
           campaign.id
         )
@@ -1903,20 +1903,20 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       {:ok, _pc1} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant.id,
+          product.id,
           participant.id,
           challenge1.id
         )
 
       {:ok, _pc2} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant.id,
+          product.id,
           participant.id,
           challenge2.id
         )
 
       # List challenges
-      result = CampaignManagement.list_challenges_for_participant(tenant.id, participant.id)
+      result = CampaignManagement.list_challenges_for_participant(product.id, participant.id)
 
       assert %{data: challenges, has_more: false} = result
       assert length(challenges) == 2
@@ -1926,24 +1926,24 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "filters challenges by campaign_id" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
-      campaign1 = insert(:campaign, tenant: tenant, name: "Campaign 1")
-      campaign2 = insert(:campaign, tenant: tenant, name: "Campaign 2")
+      product = insert(:product)
+      participant = insert(:participant, product: product)
+      campaign1 = insert(:campaign, product: product, name: "Campaign 1")
+      campaign2 = insert(:campaign, product: product, name: "Campaign 2")
       challenge1 = insert(:challenge, name: "Challenge 1")
       challenge2 = insert(:challenge, name: "Challenge 2")
 
       # Associate participant with both campaigns
       {:ok, _cp1} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant.id,
           campaign1.id
         )
 
       {:ok, _cp2} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant.id,
           campaign2.id
         )
@@ -1955,14 +1955,14 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # Associate participant with both challenges
       {:ok, _pc1} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant.id,
+          product.id,
           participant.id,
           challenge1.id
         )
 
       {:ok, _pc2} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant.id,
+          product.id,
           participant.id,
           challenge2.id
         )
@@ -1970,7 +1970,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
       # List challenges filtered by campaign1
       result =
         CampaignManagement.list_challenges_for_participant(
-          tenant.id,
+          product.id,
           participant.id,
           campaign_id: campaign1.id
         )
@@ -1981,25 +1981,25 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "returns empty list for participant with no challenges" do
-      tenant = insert(:tenant)
-      participant = insert(:participant, tenant: tenant)
+      product = insert(:product)
+      participant = insert(:participant, product: product)
 
-      result = CampaignManagement.list_challenges_for_participant(tenant.id, participant.id)
+      result = CampaignManagement.list_challenges_for_participant(product.id, participant.id)
 
       assert %{data: [], has_more: false} = result
     end
 
-    test "returns empty list for different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_a)
+    test "returns empty list for different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_a)
       challenge = insert(:challenge)
 
-      # Set up associations in tenant_a
+      # Set up associations in product_a
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           campaign.id
         )
@@ -2008,13 +2008,13 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       {:ok, _pc} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           challenge.id
         )
 
-      # Query with tenant_b
-      result = CampaignManagement.list_challenges_for_participant(tenant_b.id, participant.id)
+      # Query with product_b
+      result = CampaignManagement.list_challenges_for_participant(product_b.id, participant.id)
 
       assert %{data: [], has_more: false} = result
     end
@@ -2022,23 +2022,23 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
   describe "list_participants_for_challenge/3" do
     test "lists participants for challenge" do
-      tenant = insert(:tenant)
-      participant1 = insert(:participant, tenant: tenant, nickname: "user1")
-      participant2 = insert(:participant, tenant: tenant, nickname: "user2")
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      participant1 = insert(:participant, product: product, nickname: "user1")
+      participant2 = insert(:participant, product: product, nickname: "user2")
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       # Set up associations
       {:ok, _cp1} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant1.id,
           campaign.id
         )
 
       {:ok, _cp2} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant.id,
+          product.id,
           participant2.id,
           campaign.id
         )
@@ -2047,20 +2047,20 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       {:ok, _pc1} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant.id,
+          product.id,
           participant1.id,
           challenge.id
         )
 
       {:ok, _pc2} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant.id,
+          product.id,
           participant2.id,
           challenge.id
         )
 
       # List participants
-      result = CampaignManagement.list_participants_for_challenge(tenant.id, challenge.id)
+      result = CampaignManagement.list_participants_for_challenge(product.id, challenge.id)
 
       assert %{data: participants, has_more: false} = result
       assert length(participants) == 2
@@ -2070,25 +2070,25 @@ defmodule CampaignsApi.ParticipantManagementTest do
     end
 
     test "returns empty list for challenge with no participants" do
-      tenant = insert(:tenant)
+      product = insert(:product)
       challenge = insert(:challenge)
 
-      result = CampaignManagement.list_participants_for_challenge(tenant.id, challenge.id)
+      result = CampaignManagement.list_participants_for_challenge(product.id, challenge.id)
 
       assert %{data: [], has_more: false} = result
     end
 
-    test "returns empty list for different tenant" do
-      tenant_a = insert(:tenant)
-      tenant_b = insert(:tenant)
-      participant = insert(:participant, tenant: tenant_a)
-      campaign = insert(:campaign, tenant: tenant_a)
+    test "returns empty list for different product" do
+      product_a = insert(:product)
+      product_b = insert(:product)
+      participant = insert(:participant, product: product_a)
+      campaign = insert(:campaign, product: product_a)
       challenge = insert(:challenge)
 
-      # Set up associations in tenant_a
+      # Set up associations in product_a
       {:ok, _cp} =
         CampaignManagement.associate_participant_with_campaign(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           campaign.id
         )
@@ -2097,13 +2097,13 @@ defmodule CampaignsApi.ParticipantManagementTest do
 
       {:ok, _pc} =
         CampaignManagement.associate_participant_with_challenge(
-          tenant_a.id,
+          product_a.id,
           participant.id,
           challenge.id
         )
 
-      # Query with tenant_b
-      result = CampaignManagement.list_participants_for_challenge(tenant_b.id, challenge.id)
+      # Query with product_b
+      result = CampaignManagement.list_participants_for_challenge(product_b.id, challenge.id)
 
       assert %{data: [], has_more: false} = result
     end
@@ -2117,13 +2117,13 @@ defmodule CampaignsApi.ParticipantManagementTest do
               nickname_base <- string(:alphanumeric, min_length: 3, max_length: 15),
               is_campaign_member <- boolean()
             ) do
-        # Create tenant, participant, campaign, and challenge
-        tenant = insert(:tenant)
+        # Create product, participant, campaign, and challenge
+        product = insert(:product)
         nickname = "#{nickname_base}-#{System.unique_integer([:positive])}"
         participant_attrs = params_for(:participant, name: participant_name, nickname: nickname)
-        {:ok, participant} = CampaignManagement.create_participant(tenant.id, participant_attrs)
+        {:ok, participant} = CampaignManagement.create_participant(product.id, participant_attrs)
 
-        campaign = insert(:campaign, tenant: tenant)
+        campaign = insert(:campaign, product: product)
         challenge = insert(:challenge)
 
         _campaign_challenge =
@@ -2133,7 +2133,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
         if is_campaign_member do
           {:ok, _cp} =
             CampaignManagement.associate_participant_with_campaign(
-              tenant.id,
+              product.id,
               participant.id,
               campaign.id
             )
@@ -2142,7 +2142,7 @@ defmodule CampaignsApi.ParticipantManagementTest do
         # Attempt to associate participant with challenge
         result =
           CampaignManagement.associate_participant_with_challenge(
-            tenant.id,
+            product.id,
             participant.id,
             challenge.id
           )

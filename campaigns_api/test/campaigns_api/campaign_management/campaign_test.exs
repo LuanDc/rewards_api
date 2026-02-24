@@ -3,19 +3,19 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
   use ExUnitProperties
 
   alias CampaignsApi.CampaignManagement.Campaign
-  alias CampaignsApi.Tenants
+  alias CampaignsApi.Products
 
   setup do
-    # Create a test tenant for campaign tests
-    {:ok, tenant} = Tenants.create_tenant("test-tenant-#{System.unique_integer([:positive])}")
-    {:ok, tenant: tenant}
+    # Create a test product for campaign tests
+    {:ok, product} = Products.create_product("test-product-#{System.unique_integer([:positive])}")
+    {:ok, product: product}
   end
 
   describe "campaign changeset validations" do
-    test "accepts campaign without start_time and without end_time", %{tenant: tenant} do
+    test "accepts campaign without start_time and without end_time", %{product: product} do
       # Validates: Requirements 9.1
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Campaign Without Dates"
       }
 
@@ -26,12 +26,12 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert get_field(changeset, :end_time) == nil
     end
 
-    test "accepts campaign with start_time only", %{tenant: tenant} do
+    test "accepts campaign with start_time only", %{product: product} do
       # Validates: Requirements 9.2
       start_time = DateTime.utc_now() |> DateTime.truncate(:second)
 
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Campaign With Start Only",
         start_time: start_time
       }
@@ -43,12 +43,12 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert get_field(changeset, :end_time) == nil
     end
 
-    test "accepts campaign with end_time only", %{tenant: tenant} do
+    test "accepts campaign with end_time only", %{product: product} do
       # Validates: Requirements 9.3
       end_time = DateTime.utc_now() |> DateTime.truncate(:second)
 
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Campaign With End Only",
         end_time: end_time
       }
@@ -61,14 +61,14 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
     end
 
     test "accepts campaign with both start_time and end_time when start is before end", %{
-      tenant: tenant
+      product: product
     } do
       # Validates: Requirements 9.4
       start_time = DateTime.utc_now() |> DateTime.truncate(:second)
       end_time = DateTime.add(start_time, 3600, :second)
 
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Campaign With Both Dates",
         start_time: start_time,
         end_time: end_time
@@ -81,13 +81,13 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert get_field(changeset, :end_time) == end_time
     end
 
-    test "rejects campaign when start_time is after end_time", %{tenant: tenant} do
+    test "rejects campaign when start_time is after end_time", %{product: product} do
       # Validates: Requirements 4.9
       end_time = DateTime.utc_now()
       start_time = DateTime.add(end_time, 3600, :second)
 
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Invalid Date Order",
         start_time: start_time,
         end_time: end_time
@@ -101,12 +101,12 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert msg == "must be before end_time"
     end
 
-    test "rejects campaign when start_time equals end_time", %{tenant: tenant} do
+    test "rejects campaign when start_time equals end_time", %{product: product} do
       # Validates: Requirements 4.9
       same_time = DateTime.utc_now()
 
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Same Date Times",
         start_time: same_time,
         end_time: same_time
@@ -120,10 +120,10 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert msg == "must be before end_time"
     end
 
-    test "rejects campaign with name less than 3 characters", %{tenant: tenant} do
+    test "rejects campaign with name less than 3 characters", %{product: product} do
       # Validates: Requirements 4.5
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "ab"
       }
 
@@ -135,10 +135,10 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert opts[:count] == 3
     end
 
-    test "accepts campaign with name of exactly 3 characters", %{tenant: tenant} do
+    test "accepts campaign with name of exactly 3 characters", %{product: product} do
       # Validates: Requirements 4.5
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "abc"
       }
 
@@ -147,10 +147,10 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert changeset.valid?
     end
 
-    test "accepts campaign with name longer than 3 characters", %{tenant: tenant} do
+    test "accepts campaign with name longer than 3 characters", %{product: product} do
       # Validates: Requirements 4.5
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Valid Campaign Name"
       }
 
@@ -159,10 +159,10 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert changeset.valid?
     end
 
-    test "accepts campaign without description field", %{tenant: tenant} do
+    test "accepts campaign without description field", %{product: product} do
       # Validates: Requirements 4.6
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Campaign Without Description"
       }
 
@@ -172,10 +172,10 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
       assert get_field(changeset, :description) == nil
     end
 
-    test "accepts campaign with description field", %{tenant: tenant} do
+    test "accepts campaign with description field", %{product: product} do
       # Validates: Requirements 4.6
       attrs = %{
-        tenant_id: tenant.id,
+        product_id: product.id,
         name: "Campaign With Description",
         description: "This is a test campaign description"
       }
@@ -194,11 +194,11 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
               name_length <- integer(1..10),
               max_runs: 50
             ) do
-        tenant = insert(:tenant)
+        product = insert(:product)
         name = String.duplicate("a", name_length)
 
         attrs = %{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: name
         }
 
@@ -224,7 +224,7 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
               swap <- boolean(),
               max_runs: 50
             ) do
-        tenant = insert(:tenant)
+        product = insert(:product)
         earlier = base_datetime
         later = DateTime.add(base_datetime, offset_seconds, :second)
 
@@ -236,7 +236,7 @@ defmodule CampaignsApi.CampaignManagement.CampaignTest do
           end
 
         attrs = %{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "Test Campaign",
           start_time: start_time,
           end_time: end_time

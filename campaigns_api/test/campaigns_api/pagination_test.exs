@@ -9,14 +9,14 @@ defmodule CampaignsApi.PaginationTest do
   import Ecto.Query
 
   setup do
-    tenant = insert(:tenant)
+    product = insert(:product)
 
     campaigns =
       for i <- 1..15 do
         {:ok, campaign} =
           %Campaign{}
           |> Campaign.changeset(%{
-            tenant_id: tenant.id,
+            product_id: product.id,
             name: "Campaign #{i}",
             description: "Test campaign #{i}"
           })
@@ -32,12 +32,12 @@ defmodule CampaignsApi.PaginationTest do
         |> Repo.update!()
       end
 
-    {:ok, tenant: tenant, campaigns: Enum.reverse(campaigns)}
+    {:ok, product: product, campaigns: Enum.reverse(campaigns)}
   end
 
   describe "paginate/3" do
-    test "returns first page with default limit of 50", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "returns first page with default limit of 50", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query)
 
@@ -46,8 +46,8 @@ defmodule CampaignsApi.PaginationTest do
       assert result.next_cursor == nil
     end
 
-    test "respects custom limit parameter", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "respects custom limit parameter", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 5)
 
@@ -56,16 +56,16 @@ defmodule CampaignsApi.PaginationTest do
       assert result.next_cursor != nil
     end
 
-    test "enforces maximum limit of 100", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "enforces maximum limit of 100", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 150)
 
       assert length(result.data) <= 15
     end
 
-    test "orders by inserted_at descending by default", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "orders by inserted_at descending by default", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 5)
 
@@ -75,8 +75,8 @@ defmodule CampaignsApi.PaginationTest do
       assert DateTime.compare(first_campaign.inserted_at, last_campaign.inserted_at) == :gt
     end
 
-    test "supports ascending order", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "supports ascending order", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 5, order: :asc)
 
@@ -86,8 +86,8 @@ defmodule CampaignsApi.PaginationTest do
       assert DateTime.compare(first_campaign.inserted_at, last_campaign.inserted_at) == :lt
     end
 
-    test "applies cursor filtering for descending order", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "applies cursor filtering for descending order", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       first_page = Pagination.paginate(Repo, query, limit: 5)
       assert length(first_page.data) == 5
@@ -112,8 +112,8 @@ defmodule CampaignsApi.PaginationTest do
              ) == :gt
     end
 
-    test "applies cursor filtering for ascending order", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "applies cursor filtering for ascending order", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       first_page = Pagination.paginate(Repo, query, limit: 5, order: :asc)
       assert length(first_page.data) == 5
@@ -136,8 +136,8 @@ defmodule CampaignsApi.PaginationTest do
              ) == :lt
     end
 
-    test "returns has_more true when more records exist", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "returns has_more true when more records exist", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 5)
 
@@ -145,8 +145,8 @@ defmodule CampaignsApi.PaginationTest do
       assert result.next_cursor != nil
     end
 
-    test "returns has_more false when no more records exist", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "returns has_more false when no more records exist", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 20)
 
@@ -154,8 +154,8 @@ defmodule CampaignsApi.PaginationTest do
       assert result.next_cursor == nil
     end
 
-    test "returns next_cursor as last record's cursor_field value", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "returns next_cursor as last record's cursor_field value", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 5)
 
@@ -163,8 +163,8 @@ defmodule CampaignsApi.PaginationTest do
       assert result.next_cursor == last_campaign.inserted_at
     end
 
-    test "supports custom cursor_field", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "supports custom cursor_field", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 5, cursor_field: :updated_at)
 
@@ -173,8 +173,8 @@ defmodule CampaignsApi.PaginationTest do
       assert result.next_cursor == last_campaign.updated_at
     end
 
-    test "handles empty result set", %{tenant: _tenant} do
-      query = from c in Campaign, where: c.tenant_id == "non-existent"
+    test "handles empty result set", %{product: _product} do
+      query = from c in Campaign, where: c.product_id == "non-existent"
 
       result = Pagination.paginate(Repo, query)
 
@@ -183,8 +183,8 @@ defmodule CampaignsApi.PaginationTest do
       assert result.next_cursor == nil
     end
 
-    test "handles exact limit match", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "handles exact limit match", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 15)
 
@@ -202,7 +202,7 @@ defmodule CampaignsApi.PaginationTest do
               limit <- integer(3..10),
               max_runs: 50
             ) do
-        tenant = insert(:tenant)
+        product = insert(:product)
 
         # Create campaigns with distinct timestamps
         campaigns =
@@ -210,7 +210,7 @@ defmodule CampaignsApi.PaginationTest do
             {:ok, campaign} =
               %Campaign{}
               |> Campaign.changeset(%{
-                tenant_id: tenant.id,
+                product_id: product.id,
                 name: "Campaign #{i} #{System.unique_integer([:positive])}",
                 description: "Test campaign #{i}"
               })
@@ -226,7 +226,7 @@ defmodule CampaignsApi.PaginationTest do
             |> Repo.update!()
           end
 
-        query = from c in Campaign, where: c.tenant_id == ^tenant.id
+        query = from c in Campaign, where: c.product_id == ^product.id
 
         # Paginate through all records
         all_pages = collect_all_pages(query, limit)
@@ -273,8 +273,8 @@ defmodule CampaignsApi.PaginationTest do
   end
 
   describe "Unit tests for properties converted from property tests" do
-    test "pagination returns consistent structure", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "pagination returns consistent structure", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query)
 
@@ -286,16 +286,16 @@ defmodule CampaignsApi.PaginationTest do
       assert is_boolean(result.has_more)
     end
 
-    test "limit enforcement with maximum of 100", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "limit enforcement with maximum of 100", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 200)
 
       assert length(result.data) <= 100
     end
 
-    test "next_cursor presence when more records exist", %{tenant: tenant} do
-      query = from c in Campaign, where: c.tenant_id == ^tenant.id
+    test "next_cursor presence when more records exist", %{product: product} do
+      query = from c in Campaign, where: c.product_id == ^product.id
 
       result = Pagination.paginate(Repo, query, limit: 5)
 

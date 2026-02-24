@@ -7,7 +7,7 @@ defmodule CampaignsApiWeb.Router do
       info: %{
         version: "1.0.0",
         title: "Campaign Management API",
-        description: "Multi-tenant Campaign Management API with JWT authentication",
+        description: "Multi-product Campaign Management API with JWT authentication",
         contact: %{
           name: "API Support",
           email: "support@example.com"
@@ -43,7 +43,7 @@ defmodule CampaignsApiWeb.Router do
 
   pipeline :authenticated do
     plug CampaignsApiWeb.Plugs.RequireAuth
-    plug CampaignsApiWeb.Plugs.AssignTenant
+    plug CampaignsApiWeb.Plugs.AssignProduct
   end
 
   scope "/", CampaignsApiWeb do

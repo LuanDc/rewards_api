@@ -4,12 +4,12 @@ defmodule CampaignsApi.GeneratorsTest do
 
   import CampaignsApi.Generators
 
-  describe "tenant_id_generator/0" do
+  describe "product_id_generator/0" do
     property "generates non-empty strings" do
-      check all(tenant_id <- tenant_id_generator()) do
-        assert is_binary(tenant_id)
-        assert String.length(tenant_id) > 0
-        assert String.starts_with?(tenant_id, "tenant-")
+      check all(product_id <- product_id_generator()) do
+        assert is_binary(product_id)
+        assert String.length(product_id) > 0
+        assert String.starts_with?(product_id, "product-")
       end
     end
   end
@@ -43,9 +43,9 @@ defmodule CampaignsApi.GeneratorsTest do
     end
   end
 
-  describe "tenant_status_generator/0" do
-    property "generates valid tenant status values" do
-      check all(status <- tenant_status_generator()) do
+  describe "product_status_generator/0" do
+    property "generates valid product status values" do
+      check all(status <- product_status_generator()) do
         assert status in [:active, :suspended, :deleted]
       end
     end
@@ -53,8 +53,8 @@ defmodule CampaignsApi.GeneratorsTest do
 
   describe "jwt_generator/1" do
     property "generates valid JWT tokens with claims" do
-      check all(tenant_id <- tenant_id_generator()) do
-        claims = %{"tenant_id" => tenant_id}
+      check all(product_id <- product_id_generator()) do
+        claims = %{"product_id" => product_id}
         token = jwt_generator(claims) |> Enum.take(1) |> List.first()
 
         assert is_binary(token)
@@ -62,7 +62,7 @@ defmodule CampaignsApi.GeneratorsTest do
 
         # Verify we can decode it
         {:ok, decoded_claims} = Joken.peek_claims(token)
-        assert decoded_claims["tenant_id"] == tenant_id
+        assert decoded_claims["product_id"] == product_id
       end
     end
   end

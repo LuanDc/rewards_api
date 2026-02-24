@@ -13,25 +13,25 @@
 alias CampaignsApi.CampaignManagement
 alias CampaignsApi.Challenges
 alias CampaignsApi.Repo
-alias CampaignsApi.Tenants
+alias CampaignsApi.Products
 
 # Clear existing data (optional - comment out if you want to keep existing data)
 IO.puts("Cleaning existing data...")
 Repo.delete_all(CampaignsApi.CampaignManagement.CampaignChallenge)
 Repo.delete_all(CampaignsApi.CampaignManagement.Campaign)
 Repo.delete_all(CampaignsApi.Challenges.Challenge)
-Repo.delete_all(CampaignsApi.Tenants.Tenant)
+Repo.delete_all(CampaignsApi.Products.Product)
 
-# Create Tenants
-IO.puts("Creating tenants...")
+# Create Products
+IO.puts("Creating products...")
 
-{:ok, tenant1} = Tenants.create_tenant("acme-corp")
-{:ok, tenant2} = Tenants.create_tenant("tech-startup")
-{:ok, tenant3} = Tenants.create_tenant("retail-chain")
+{:ok, product1} = Products.create_product("acme-corp")
+{:ok, product2} = Products.create_product("tech-startup")
+{:ok, product3} = Products.create_product("retail-chain")
 
-IO.puts("✓ Created #{Repo.aggregate(CampaignsApi.Tenants.Tenant, :count)} tenants")
+IO.puts("✓ Created #{Repo.aggregate(CampaignsApi.Products.Product, :count)} products")
 
-# Create Challenges (global, available to all tenants)
+# Create Challenges (global, available to all products)
 IO.puts("Creating challenges...")
 
 {:ok, challenge1} =
@@ -91,11 +91,11 @@ IO.puts("Creating challenges...")
 
 IO.puts("✓ Created #{Repo.aggregate(CampaignsApi.Challenges.Challenge, :count)} challenges")
 
-# Create Campaigns for Tenant 1 (ACME Corp)
+# Create Campaigns for Product 1 (ACME Corp)
 IO.puts("Creating campaigns for ACME Corp...")
 
 {:ok, campaign1} =
-  CampaignManagement.create_campaign(tenant1.id, %{
+  CampaignManagement.create_campaign(product1.id, %{
     name: "Summer Sale 2024",
     description: "Boost summer sales with exciting rewards",
     status: :active,
@@ -104,7 +104,7 @@ IO.puts("Creating campaigns for ACME Corp...")
   })
 
 {:ok, campaign2} =
-  CampaignManagement.create_campaign(tenant1.id, %{
+  CampaignManagement.create_campaign(product1.id, %{
     name: "Black Friday Bonanza",
     description: "Massive rewards for Black Friday shoppers",
     status: :paused,
@@ -113,7 +113,7 @@ IO.puts("Creating campaigns for ACME Corp...")
   })
 
 {:ok, campaign3} =
-  CampaignManagement.create_campaign(tenant1.id, %{
+  CampaignManagement.create_campaign(product1.id, %{
     name: "Loyalty Program Q4",
     description: "Year-end loyalty rewards program",
     status: :active,
@@ -121,11 +121,11 @@ IO.puts("Creating campaigns for ACME Corp...")
     end_time: DateTime.utc_now() |> DateTime.add(180, :day)
   })
 
-# Create Campaigns for Tenant 2 (Tech Startup)
+# Create Campaigns for Product 2 (Tech Startup)
 IO.puts("Creating campaigns for Tech Startup...")
 
 {:ok, campaign4} =
-  CampaignManagement.create_campaign(tenant2.id, %{
+  CampaignManagement.create_campaign(product2.id, %{
     name: "Launch Week Special",
     description: "Celebrate our product launch with rewards",
     status: :active,
@@ -134,7 +134,7 @@ IO.puts("Creating campaigns for Tech Startup...")
   })
 
 {:ok, campaign5} =
-  CampaignManagement.create_campaign(tenant2.id, %{
+  CampaignManagement.create_campaign(product2.id, %{
     name: "Early Adopter Program",
     description: "Rewards for our first 1000 customers",
     status: :active,
@@ -142,11 +142,11 @@ IO.puts("Creating campaigns for Tech Startup...")
     end_time: DateTime.utc_now() |> DateTime.add(365, :day)
   })
 
-# Create Campaigns for Tenant 3 (Retail Chain)
+# Create Campaigns for Product 3 (Retail Chain)
 IO.puts("Creating campaigns for Retail Chain...")
 
 {:ok, campaign6} =
-  CampaignManagement.create_campaign(tenant3.id, %{
+  CampaignManagement.create_campaign(product3.id, %{
     name: "Store Anniversary Sale",
     description: "Celebrating 10 years with amazing rewards",
     status: :active,
@@ -155,7 +155,7 @@ IO.puts("Creating campaigns for Retail Chain...")
   })
 
 {:ok, campaign7} =
-  CampaignManagement.create_campaign(tenant3.id, %{
+  CampaignManagement.create_campaign(product3.id, %{
     name: "Holiday Shopping Rewards",
     description: "Make holiday shopping more rewarding",
     status: :paused,
@@ -170,7 +170,7 @@ IO.puts("Creating campaign-challenge associations...")
 
 # ACME Corp - Summer Sale Campaign
 {:ok, _cc1} =
-  CampaignManagement.create_campaign_challenge(tenant1.id, campaign1.id, %{
+  CampaignManagement.create_campaign_challenge(product1.id, campaign1.id, %{
     challenge_id: challenge1.id,
     display_name: "Shop More, Earn More",
     display_description: "Make 5 purchases this month and earn bonus points",
@@ -180,7 +180,7 @@ IO.puts("Creating campaign-challenge associations...")
   })
 
 {:ok, _cc2} =
-  CampaignManagement.create_campaign_challenge(tenant1.id, campaign1.id, %{
+  CampaignManagement.create_campaign_challenge(product1.id, campaign1.id, %{
     challenge_id: challenge2.id,
     display_name: "Big Spender Bonus",
     display_description: "Spend over $500 and get 500 bonus points",
@@ -191,7 +191,7 @@ IO.puts("Creating campaign-challenge associations...")
 
 # ACME Corp - Loyalty Program
 {:ok, _cc3} =
-  CampaignManagement.create_campaign_challenge(tenant1.id, campaign3.id, %{
+  CampaignManagement.create_campaign_challenge(product1.id, campaign3.id, %{
     challenge_id: challenge3.id,
     display_name: "Loyalty Champion",
     display_description: "Reach 1 year as a customer",
@@ -201,7 +201,7 @@ IO.puts("Creating campaign-challenge associations...")
   })
 
 {:ok, _cc4} =
-  CampaignManagement.create_campaign_challenge(tenant1.id, campaign3.id, %{
+  CampaignManagement.create_campaign_challenge(product1.id, campaign3.id, %{
     challenge_id: challenge4.id,
     display_name: "Bring a Friend",
     display_description: "Refer a friend and both get rewards",
@@ -212,7 +212,7 @@ IO.puts("Creating campaign-challenge associations...")
 
 # Tech Startup - Launch Week
 {:ok, _cc5} =
-  CampaignManagement.create_campaign_challenge(tenant2.id, campaign4.id, %{
+  CampaignManagement.create_campaign_challenge(product2.id, campaign4.id, %{
     challenge_id: challenge1.id,
     display_name: "Launch Week Warrior",
     display_description: "Make 3 purchases during launch week",
@@ -222,7 +222,7 @@ IO.puts("Creating campaign-challenge associations...")
   })
 
 {:ok, _cc6} =
-  CampaignManagement.create_campaign_challenge(tenant2.id, campaign4.id, %{
+  CampaignManagement.create_campaign_challenge(product2.id, campaign4.id, %{
     challenge_id: challenge5.id,
     display_name: "Social Sharer",
     display_description: "Share our launch on social media",
@@ -233,7 +233,7 @@ IO.puts("Creating campaign-challenge associations...")
 
 # Tech Startup - Early Adopter
 {:ok, _cc7} =
-  CampaignManagement.create_campaign_challenge(tenant2.id, campaign5.id, %{
+  CampaignManagement.create_campaign_challenge(product2.id, campaign5.id, %{
     challenge_id: challenge3.id,
     display_name: "Early Adopter Badge",
     display_description: "Be among our first 1000 customers",
@@ -244,7 +244,7 @@ IO.puts("Creating campaign-challenge associations...")
 
 # Retail Chain - Anniversary Sale
 {:ok, _cc8} =
-  CampaignManagement.create_campaign_challenge(tenant3.id, campaign6.id, %{
+  CampaignManagement.create_campaign_challenge(product3.id, campaign6.id, %{
     challenge_id: challenge1.id,
     display_name: "Anniversary Shopper",
     display_description: "Shop 3 times during our anniversary month",
@@ -254,7 +254,7 @@ IO.puts("Creating campaign-challenge associations...")
   })
 
 {:ok, _cc9} =
-  CampaignManagement.create_campaign_challenge(tenant3.id, campaign6.id, %{
+  CampaignManagement.create_campaign_challenge(product3.id, campaign6.id, %{
     challenge_id: challenge2.id,
     display_name: "Anniversary VIP",
     display_description: "Spend $1000+ during anniversary sale",
@@ -264,7 +264,7 @@ IO.puts("Creating campaign-challenge associations...")
   })
 
 {:ok, _cc10} =
-  CampaignManagement.create_campaign_challenge(tenant3.id, campaign6.id, %{
+  CampaignManagement.create_campaign_challenge(product3.id, campaign6.id, %{
     challenge_id: challenge4.id,
     display_name: "Anniversary Ambassador",
     display_description: "Refer 3 friends during anniversary month",
@@ -279,7 +279,7 @@ IO.puts(
 
 IO.puts("\n✅ Database seeded successfully!")
 IO.puts("\nSummary:")
-IO.puts("  - #{Repo.aggregate(CampaignsApi.Tenants.Tenant, :count)} tenants")
+IO.puts("  - #{Repo.aggregate(CampaignsApi.Products.Product, :count)} products")
 IO.puts("  - #{Repo.aggregate(CampaignsApi.Challenges.Challenge, :count)} challenges")
 IO.puts("  - #{Repo.aggregate(CampaignsApi.CampaignManagement.Campaign, :count)} campaigns")
 
@@ -287,7 +287,7 @@ IO.puts(
   "  - #{Repo.aggregate(CampaignsApi.CampaignManagement.CampaignChallenge, :count)} campaign-challenge associations"
 )
 
-IO.puts("\nTenant IDs for testing:")
-IO.puts("  - ACME Corp: #{tenant1.id}")
-IO.puts("  - Tech Startup: #{tenant2.id}")
-IO.puts("  - Retail Chain: #{tenant3.id}")
+IO.puts("\nProduct IDs for testing:")
+IO.puts("  - ACME Corp: #{product1.id}")
+IO.puts("  - Tech Startup: #{product2.id}")
+IO.puts("  - Retail Chain: #{product3.id}")

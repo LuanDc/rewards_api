@@ -8,19 +8,19 @@ defmodule CampaignsApi.ParticipantManagement.CampaignParticipantTest do
 
   describe "changeset/2 - valid association creation" do
     setup do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
 
       participant =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "John Doe",
           nickname: "johndoe"
         })
         |> Repo.insert!()
 
-      %{tenant: tenant, campaign: campaign, participant: participant}
+      %{product: product, campaign: campaign, participant: participant}
     end
 
     test "creates valid campaign-participant association", %{
@@ -96,19 +96,19 @@ defmodule CampaignsApi.ParticipantManagement.CampaignParticipantTest do
 
   describe "changeset/2 - uniqueness constraint violation" do
     setup do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
 
       participant =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "John Doe",
           nickname: "johndoe_unique"
         })
         |> Repo.insert!()
 
-      %{tenant: tenant, campaign: campaign, participant: participant}
+      %{product: product, campaign: campaign, participant: participant}
     end
 
     test "enforces unique constraint on (participant_id, campaign_id)", %{
@@ -132,11 +132,11 @@ defmodule CampaignsApi.ParticipantManagement.CampaignParticipantTest do
     end
 
     test "allows same participant in different campaigns", %{
-      tenant: tenant,
+      product: product,
       participant: participant
     } do
-      campaign1 = insert(:campaign, tenant: tenant)
-      campaign2 = insert(:campaign, tenant: tenant)
+      campaign1 = insert(:campaign, product: product)
+      campaign2 = insert(:campaign, product: product)
 
       # Insert first association
       attrs1 = %{
@@ -159,13 +159,13 @@ defmodule CampaignsApi.ParticipantManagement.CampaignParticipantTest do
     end
 
     test "allows different participants in same campaign", %{
-      tenant: tenant,
+      product: product,
       campaign: campaign
     } do
       participant1 =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "John Doe",
           nickname: "johndoe_diff1"
         })
@@ -174,7 +174,7 @@ defmodule CampaignsApi.ParticipantManagement.CampaignParticipantTest do
       participant2 =
         %Participant{}
         |> Participant.changeset(%{
-          tenant_id: tenant.id,
+          product_id: product.id,
           name: "Jane Doe",
           nickname: "janedoe_diff2"
         })

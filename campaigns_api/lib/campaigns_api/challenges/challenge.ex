@@ -3,7 +3,7 @@ defmodule CampaignsApi.Challenges.Challenge do
   Schema for reusable challenge evaluation mechanisms.
 
   Challenges define the technical evaluation logic that can be
-  associated with multiple campaigns by any tenant. The actual evaluation
+  associated with multiple campaigns by any product. The actual evaluation
   implementation will be registered automatically in future iterations.
   """
 

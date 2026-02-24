@@ -5,8 +5,8 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
   alias CampaignsApiWeb.Plugs.RequireAuth
 
   describe "RequireAuth plug" do
-    test "extracts tenant_id from valid JWT with tenant_id claim", %{conn: conn} do
-      claims = %{"tenant_id" => "test-tenant-123", "name" => "Test Tenant"}
+    test "extracts product_id from valid JWT with product_id claim", %{conn: conn} do
+      claims = %{"product_id" => "test-product-123", "name" => "Test product"}
       token = create_jwt_token(claims)
 
       conn =
@@ -14,7 +14,7 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
         |> put_req_header("authorization", "Bearer #{token}")
         |> RequireAuth.call(%{})
 
-      assert conn.assigns.tenant_id == "test-tenant-123"
+      assert conn.assigns.product_id == "test-product-123"
       refute conn.halted
     end
 
@@ -26,7 +26,7 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
       assert json_response(conn, 401) == %{"error" => "Unauthorized"}
     end
 
-    test "returns 401 when JWT does not contain tenant_id claim", %{conn: conn} do
+    test "returns 401 when JWT does not contain product_id claim", %{conn: conn} do
       claims = %{"user_id" => "user-123", "name" => "Test User"}
       token = create_jwt_token(claims)
 
@@ -54,7 +54,7 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
     end
 
     test "returns 401 when Authorization header format is incorrect", %{conn: conn} do
-      claims = %{"tenant_id" => "test-tenant-123"}
+      claims = %{"product_id" => "test-product-123"}
       token = create_jwt_token(claims)
 
       conn =
@@ -81,13 +81,13 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
 
   describe "property-based tests" do
     @tag :property
-    property "extracts tenant_id from any valid JWT containing tenant_id claim" do
+    property "extracts product_id from any valid JWT containing product_id claim" do
       check all(
-              tenant_id <- tenant_id_generator(),
+              product_id <- product_id_generator(),
               additional_claims <- optional_claims_generator(),
               max_runs: 30
             ) do
-        claims = Map.put(additional_claims, "tenant_id", tenant_id)
+        claims = Map.put(additional_claims, "product_id", product_id)
         token = create_jwt_token(claims)
 
         conn =
@@ -95,13 +95,13 @@ defmodule CampaignsApiWeb.Plugs.RequireAuthTest do
           |> put_req_header("authorization", "Bearer #{token}")
           |> RequireAuth.call(%{})
 
-        assert conn.assigns.tenant_id == tenant_id
+        assert conn.assigns.product_id == product_id
         refute conn.halted
       end
     end
   end
 
-  defp tenant_id_generator do
+  defp product_id_generator do
     one_of([
       string(:alphanumeric, min_length: 1, max_length: 50),
       map(

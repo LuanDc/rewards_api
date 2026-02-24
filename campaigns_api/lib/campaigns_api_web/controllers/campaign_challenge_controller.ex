@@ -3,7 +3,7 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   Controller for managing campaign challenge associations.
 
   Handles CRUD operations for associating challenges with campaigns,
-  with tenant isolation enforced through campaign ownership.
+  with product isolation enforced through campaign ownership.
   """
 
   use CampaignsApiWeb, :controller
@@ -173,14 +173,14 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   """
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, %{"campaign_id" => campaign_id} = params) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
     opts = [
       limit: parse_int(params["limit"]),
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = CampaignManagement.list_campaign_challenges(tenant_id, campaign_id, opts)
+    result = CampaignManagement.list_campaign_challenges(product_id, campaign_id, opts)
     json(conn, result)
   end
 
@@ -207,9 +207,9 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   """
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, %{"campaign_id" => campaign_id, "id" => id}) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
-    case CampaignManagement.get_campaign_challenge(tenant_id, campaign_id, id) do
+    case CampaignManagement.get_campaign_challenge(product_id, campaign_id, id) do
       nil -> send_not_found(conn)
       campaign_challenge -> json(conn, campaign_challenge)
     end
@@ -245,9 +245,9 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   """
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"campaign_id" => campaign_id} = params) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
-    case CampaignManagement.create_campaign_challenge(tenant_id, campaign_id, params) do
+    case CampaignManagement.create_campaign_challenge(product_id, campaign_id, params) do
       {:ok, campaign_challenge} ->
         conn
         |> put_status(:created)
@@ -292,9 +292,9 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   """
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"campaign_id" => campaign_id, "id" => id} = params) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
-    case CampaignManagement.update_campaign_challenge(tenant_id, campaign_id, id, params) do
+    case CampaignManagement.update_campaign_challenge(product_id, campaign_id, id, params) do
       {:ok, campaign_challenge} -> json(conn, campaign_challenge)
       {:error, :not_found} -> send_not_found(conn)
       {:error, changeset} -> send_validation_error(conn, changeset)
@@ -324,9 +324,9 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
   """
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"campaign_id" => campaign_id, "id" => id}) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
-    case CampaignManagement.delete_campaign_challenge(tenant_id, campaign_id, id) do
+    case CampaignManagement.delete_campaign_challenge(product_id, campaign_id, id) do
       {:ok, _} -> send_resp(conn, :no_content, "")
       {:error, :not_found} -> send_not_found(conn)
     end

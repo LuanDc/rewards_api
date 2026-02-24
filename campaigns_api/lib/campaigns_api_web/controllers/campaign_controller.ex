@@ -9,11 +9,11 @@ defmodule CampaignsApiWeb.CampaignController do
       Campaign:
         swagger_schema do
           title("Campaign")
-          description("A reward campaign belonging to a tenant")
+          description("A reward campaign belonging to a product")
 
           properties do
             id(:string, "Campaign UUID", required: true, format: "uuid")
-            tenant_id(:string, "Tenant ID", required: true)
+            product_id(:string, "product ID", required: true)
             name(:string, "Campaign name", required: true, minLength: 3)
             description(:string, "Campaign description")
             start_time(:string, "Campaign start time", format: "date-time")
@@ -25,7 +25,7 @@ defmodule CampaignsApiWeb.CampaignController do
 
           example(%{
             id: "550e8400-e29b-41d4-a716-446655440000",
-            tenant_id: "tenant-123",
+            product_id: "product-123",
             name: "Summer Sale Campaign",
             description: "A great summer promotion",
             start_time: "2024-06-01T00:00:00Z",
@@ -76,7 +76,7 @@ defmodule CampaignsApiWeb.CampaignController do
             data: [
               %{
                 id: "550e8400-e29b-41d4-a716-446655440000",
-                tenant_id: "tenant-123",
+                product_id: "product-123",
                 name: "Summer Sale Campaign",
                 status: "active"
               }
@@ -120,7 +120,7 @@ defmodule CampaignsApiWeb.CampaignController do
   swagger_path :index do
     get("/campaigns")
     summary("List campaigns")
-    description("Returns a paginated list of campaigns for the authenticated tenant")
+    description("Returns a paginated list of campaigns for the authenticated product")
     tag("Campaign Management")
     security([%{Bearer: []}])
 
@@ -136,21 +136,21 @@ defmodule CampaignsApiWeb.CampaignController do
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, params) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
     opts = [
       limit: parse_int(params["limit"]),
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = CampaignManagement.list_campaigns(tenant_id, opts)
+    result = CampaignManagement.list_campaigns(product_id, opts)
     json(conn, result)
   end
 
   swagger_path :create do
     post("/campaigns")
     summary("Create campaign")
-    description("Creates a new campaign for the authenticated tenant")
+    description("Creates a new campaign for the authenticated product")
     tag("Campaign Management")
     security([%{Bearer: []}])
 
@@ -166,10 +166,10 @@ defmodule CampaignsApiWeb.CampaignController do
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, params) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
     attrs = atomize_keys(params)
 
-    case CampaignManagement.create_campaign(tenant_id, attrs) do
+    case CampaignManagement.create_campaign(product_id, attrs) do
       {:ok, campaign} ->
         conn
         |> put_status(:created)
@@ -185,7 +185,7 @@ defmodule CampaignsApiWeb.CampaignController do
   swagger_path :show do
     get("/campaigns/{id}")
     summary("Get campaign")
-    description("Returns a single campaign by ID for the authenticated tenant")
+    description("Returns a single campaign by ID for the authenticated product")
     tag("Campaign Management")
     security([%{Bearer: []}])
 
@@ -201,9 +201,9 @@ defmodule CampaignsApiWeb.CampaignController do
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, %{"id" => id}) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
-    case CampaignManagement.get_campaign(tenant_id, id) do
+    case CampaignManagement.get_campaign(product_id, id) do
       nil ->
         conn
         |> put_status(:not_found)
@@ -217,7 +217,7 @@ defmodule CampaignsApiWeb.CampaignController do
   swagger_path :update do
     put("/campaigns/{id}")
     summary("Update campaign")
-    description("Updates an existing campaign for the authenticated tenant")
+    description("Updates an existing campaign for the authenticated product")
     tag("Campaign Management")
     security([%{Bearer: []}])
 
@@ -235,10 +235,10 @@ defmodule CampaignsApiWeb.CampaignController do
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id} = params) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
     attrs = atomize_keys(params)
 
-    case CampaignManagement.update_campaign(tenant_id, id, attrs) do
+    case CampaignManagement.update_campaign(product_id, id, attrs) do
       {:ok, campaign} ->
         json(conn, campaign)
 
@@ -257,7 +257,7 @@ defmodule CampaignsApiWeb.CampaignController do
   swagger_path :delete do
     PhoenixSwagger.Path.delete("/campaigns/{id}")
     summary("Delete campaign")
-    description("Permanently deletes a campaign for the authenticated tenant")
+    description("Permanently deletes a campaign for the authenticated product")
     tag("Campaign Management")
     security([%{Bearer: []}])
 
@@ -273,9 +273,9 @@ defmodule CampaignsApiWeb.CampaignController do
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
-    tenant_id = conn.assigns.tenant.id
+    product_id = conn.assigns.product.id
 
-    case CampaignManagement.delete_campaign(tenant_id, id) do
+    case CampaignManagement.delete_campaign(product_id, id) do
       {:ok, _} ->
         send_resp(conn, :no_content, "")
 

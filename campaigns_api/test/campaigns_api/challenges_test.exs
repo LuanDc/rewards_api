@@ -82,12 +82,12 @@ defmodule CampaignsApi.ChallengesTest do
       assert Challenges.get_challenge(non_existent_id) == nil
     end
 
-    test "any tenant can retrieve any challenge (global availability)" do
-      _tenant1 = insert(:tenant)
-      _tenant2 = insert(:tenant)
+    test "any product can retrieve any challenge (global availability)" do
+      _product1 = insert(:product)
+      _product2 = insert(:product)
       challenge = insert(:challenge)
 
-      # Both tenants can access the same challenge
+      # Both products can access the same challenge
       result1 = Challenges.get_challenge(challenge.id)
       result2 = Challenges.get_challenge(challenge.id)
 
@@ -227,10 +227,10 @@ defmodule CampaignsApi.ChallengesTest do
 
   describe "list_campaign_challenges/3" do
     test "returns empty list when no campaign challenges exist" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id)
 
       assert result.data == []
       assert result.next_cursor == nil
@@ -238,15 +238,15 @@ defmodule CampaignsApi.ChallengesTest do
     end
 
     test "returns all campaign challenges for a specific campaign" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
 
       cc1 = insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
       cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id)
 
       assert length(result.data) == 2
       returned_ids = Enum.map(result.data, & &1.id)
@@ -255,31 +255,31 @@ defmodule CampaignsApi.ChallengesTest do
     end
 
     test "preloads challenge association" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge, name: "TestChallenge")
 
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id)
 
       assert length(result.data) == 1
       cc = hd(result.data)
       assert cc.challenge.name == "TestChallenge"
     end
 
-    test "respects tenant isolation - does not return other tenant's campaign challenges" do
-      tenant1 = insert(:tenant)
-      tenant2 = insert(:tenant)
-      campaign1 = insert(:campaign, tenant: tenant1)
-      campaign2 = insert(:campaign, tenant: tenant2)
+    test "respects product isolation - does not return other product's campaign challenges" do
+      product1 = insert(:product)
+      product2 = insert(:product)
+      campaign1 = insert(:campaign, product: product1)
+      campaign2 = insert(:campaign, product: product2)
       challenge = insert(:challenge)
 
       insert(:campaign_challenge, campaign: campaign1, challenge: challenge)
       insert(:campaign_challenge, campaign: campaign2, challenge: challenge)
 
-      result1 = CampaignManagement.list_campaign_challenges(tenant1.id, campaign1.id)
-      result2 = CampaignManagement.list_campaign_challenges(tenant2.id, campaign2.id)
+      result1 = CampaignManagement.list_campaign_challenges(product1.id, campaign1.id)
+      result2 = CampaignManagement.list_campaign_challenges(product2.id, campaign2.id)
 
       assert length(result1.data) == 1
       assert length(result2.data) == 1
@@ -287,29 +287,29 @@ defmodule CampaignsApi.ChallengesTest do
       assert hd(result2.data).campaign_id == campaign2.id
     end
 
-    test "returns empty list when querying with wrong tenant_id" do
-      tenant1 = insert(:tenant)
-      tenant2 = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant1)
+    test "returns empty list when querying with wrong product_id" do
+      product1 = insert(:product)
+      product2 = insert(:product)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
 
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.list_campaign_challenges(tenant2.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product2.id, campaign.id)
 
       assert result.data == []
     end
 
     test "respects pagination limit" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
 
       Enum.each(1..10, fn _ ->
         challenge = insert(:challenge)
         insert(:campaign_challenge, campaign: campaign, challenge: challenge)
       end)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id, limit: 3)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id, limit: 3)
 
       assert length(result.data) == 3
       assert result.has_more == true
@@ -317,20 +317,20 @@ defmodule CampaignsApi.ChallengesTest do
     end
 
     test "handles pagination with cursor" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
 
       Enum.each(1..12, fn _ ->
         challenge = insert(:challenge)
         insert(:campaign_challenge, campaign: campaign, challenge: challenge)
       end)
 
-      first_page = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id, limit: 5)
+      first_page = CampaignManagement.list_campaign_challenges(product.id, campaign.id, limit: 5)
       assert length(first_page.data) == 5
 
       if first_page.has_more do
         second_page =
-          CampaignManagement.list_campaign_challenges(tenant.id, campaign.id,
+          CampaignManagement.list_campaign_challenges(product.id, campaign.id,
             limit: 5,
             cursor: first_page.next_cursor
           )
@@ -345,12 +345,12 @@ defmodule CampaignsApi.ChallengesTest do
 
   describe "get_campaign_challenge/3" do
     test "returns campaign challenge when it exists" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id)
+      result = CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id)
 
       assert result.id == cc.id
       assert result.campaign_id == campaign.id
@@ -358,46 +358,46 @@ defmodule CampaignsApi.ChallengesTest do
     end
 
     test "preloads challenge association" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge, name: "PreloadTest")
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id)
+      result = CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id)
 
       assert result.challenge.name == "PreloadTest"
     end
 
     test "returns nil when campaign challenge does not exist" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       non_existent_id = Ecto.UUID.generate()
 
-      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, non_existent_id)
+      result = CampaignManagement.get_campaign_challenge(product.id, campaign.id, non_existent_id)
 
       assert result == nil
     end
 
-    test "returns nil when querying with wrong tenant_id" do
-      tenant1 = insert(:tenant)
-      tenant2 = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant1)
+    test "returns nil when querying with wrong product_id" do
+      product1 = insert(:product)
+      product2 = insert(:product)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.get_campaign_challenge(tenant2.id, campaign.id, cc.id)
+      result = CampaignManagement.get_campaign_challenge(product2.id, campaign.id, cc.id)
 
       assert result == nil
     end
 
     test "returns nil when querying with wrong campaign_id" do
-      tenant = insert(:tenant)
-      campaign1 = insert(:campaign, tenant: tenant)
-      campaign2 = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign1 = insert(:campaign, product: product)
+      campaign2 = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign1, challenge: challenge)
 
-      result = CampaignManagement.get_campaign_challenge(tenant.id, campaign2.id, cc.id)
+      result = CampaignManagement.get_campaign_challenge(product.id, campaign2.id, cc.id)
 
       assert result == nil
     end
@@ -405,8 +405,8 @@ defmodule CampaignsApi.ChallengesTest do
 
   describe "create_campaign_challenge/3" do
     test "successfully creates campaign challenge with valid data" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -418,7 +418,7 @@ defmodule CampaignsApi.ChallengesTest do
         configuration: %{"threshold" => 10}
       }
 
-      {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      {:ok, cc} = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       assert cc.campaign_id == campaign.id
       assert cc.challenge_id == challenge.id
@@ -427,26 +427,26 @@ defmodule CampaignsApi.ChallengesTest do
       assert cc.reward_points == 100
     end
 
-    test "returns error when campaign does not belong to tenant" do
-      tenant1 = insert(:tenant)
-      tenant2 = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant1)
+    test "returns error when campaign does not belong to product" do
+      product1 = insert(:product)
+      product2 = insert(:product)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
 
       attrs = %{
         challenge_id: challenge.id,
-        display_name: "Cross-tenant Challenge",
+        display_name: "Cross-product Challenge",
         evaluation_frequency: "daily",
         reward_points: 100
       }
 
-      result = CampaignManagement.create_campaign_challenge(tenant2.id, campaign.id, attrs)
+      result = CampaignManagement.create_campaign_challenge(product2.id, campaign.id, attrs)
 
       assert {:error, :campaign_not_found} = result
     end
 
     test "returns error when campaign does not exist" do
-      tenant = insert(:tenant)
+      product = insert(:product)
       challenge = insert(:challenge)
       non_existent_campaign_id = Ecto.UUID.generate()
 
@@ -458,14 +458,14 @@ defmodule CampaignsApi.ChallengesTest do
       }
 
       result =
-        CampaignManagement.create_campaign_challenge(tenant.id, non_existent_campaign_id, attrs)
+        CampaignManagement.create_campaign_challenge(product.id, non_existent_campaign_id, attrs)
 
       assert {:error, :campaign_not_found} = result
     end
 
     test "successfully creates with any valid challenge (challenges are global)" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -475,14 +475,14 @@ defmodule CampaignsApi.ChallengesTest do
         reward_points: 100
       }
 
-      {:ok, cc} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      {:ok, cc} = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       assert cc.challenge_id == challenge.id
     end
 
     test "returns error when creating duplicate association" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -492,17 +492,17 @@ defmodule CampaignsApi.ChallengesTest do
         reward_points: 100
       }
 
-      {:ok, _first} = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      {:ok, _first} = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
-      result = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      result = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       assert {:error, changeset} = result
       assert %{campaign_id: ["has already been taken"]} = errors_on(changeset)
     end
 
     test "returns error when validation fails" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       attrs = %{
@@ -512,7 +512,7 @@ defmodule CampaignsApi.ChallengesTest do
         reward_points: 100
       }
 
-      result = CampaignManagement.create_campaign_challenge(tenant.id, campaign.id, attrs)
+      result = CampaignManagement.create_campaign_challenge(product.id, campaign.id, attrs)
 
       assert {:error, changeset} = result
       assert %{display_name: ["should be at least 3 character(s)"]} = errors_on(changeset)
@@ -521,15 +521,15 @@ defmodule CampaignsApi.ChallengesTest do
 
   describe "update_campaign_challenge/4" do
     test "successfully updates campaign challenge with valid data" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
 
       cc =
         insert(:campaign_challenge, campaign: campaign, challenge: challenge, reward_points: 100)
 
       {:ok, updated} =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{
+        CampaignManagement.update_campaign_challenge(product.id, campaign.id, cc.id, %{
           reward_points: 200
         })
 
@@ -538,27 +538,27 @@ defmodule CampaignsApi.ChallengesTest do
     end
 
     test "returns error when campaign challenge does not exist" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       non_existent_id = Ecto.UUID.generate()
 
       result =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, non_existent_id, %{
+        CampaignManagement.update_campaign_challenge(product.id, campaign.id, non_existent_id, %{
           reward_points: 200
         })
 
       assert {:error, :not_found} = result
     end
 
-    test "returns error when querying with wrong tenant_id" do
-      tenant1 = insert(:tenant)
-      tenant2 = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant1)
+    test "returns error when querying with wrong product_id" do
+      product1 = insert(:product)
+      product2 = insert(:product)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       result =
-        CampaignManagement.update_campaign_challenge(tenant2.id, campaign.id, cc.id, %{
+        CampaignManagement.update_campaign_challenge(product2.id, campaign.id, cc.id, %{
           reward_points: 200
         })
 
@@ -566,13 +566,13 @@ defmodule CampaignsApi.ChallengesTest do
     end
 
     test "returns error when update data is invalid" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       result =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{
+        CampaignManagement.update_campaign_challenge(product.id, campaign.id, cc.id, %{
           display_name: "ab"
         })
 
@@ -581,13 +581,13 @@ defmodule CampaignsApi.ChallengesTest do
     end
 
     test "can update multiple fields at once" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
       {:ok, updated} =
-        CampaignManagement.update_campaign_challenge(tenant.id, campaign.id, cc.id, %{
+        CampaignManagement.update_campaign_challenge(product.id, campaign.id, cc.id, %{
           display_name: "Updated Name",
           reward_points: 300,
           evaluation_frequency: "weekly"
@@ -601,51 +601,51 @@ defmodule CampaignsApi.ChallengesTest do
 
   describe "delete_campaign_challenge/3" do
     test "successfully deletes campaign challenge" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      {:ok, deleted} = CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, cc.id)
+      {:ok, deleted} = CampaignManagement.delete_campaign_challenge(product.id, campaign.id, cc.id)
 
       assert deleted.id == cc.id
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc.id) == nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc.id) == nil
     end
 
     test "returns error when campaign challenge does not exist" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       non_existent_id = Ecto.UUID.generate()
 
       result =
-        CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, non_existent_id)
+        CampaignManagement.delete_campaign_challenge(product.id, campaign.id, non_existent_id)
 
       assert {:error, :not_found} = result
     end
 
-    test "returns error when querying with wrong tenant_id" do
-      tenant1 = insert(:tenant)
-      tenant2 = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant1)
+    test "returns error when querying with wrong product_id" do
+      product1 = insert(:product)
+      product2 = insert(:product)
+      campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       cc = insert(:campaign_challenge, campaign: campaign, challenge: challenge)
 
-      result = CampaignManagement.delete_campaign_challenge(tenant2.id, campaign.id, cc.id)
+      result = CampaignManagement.delete_campaign_challenge(product2.id, campaign.id, cc.id)
 
       assert {:error, :not_found} = result
     end
 
     test "campaign challenge does not appear in list after deletion" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
       cc1 = insert(:campaign_challenge, campaign: campaign, challenge: challenge1)
       cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
 
-      {:ok, _} = CampaignManagement.delete_campaign_challenge(tenant.id, campaign.id, cc1.id)
+      {:ok, _} = CampaignManagement.delete_campaign_challenge(product.id, campaign.id, cc1.id)
 
-      result = CampaignManagement.list_campaign_challenges(tenant.id, campaign.id)
+      result = CampaignManagement.list_campaign_challenges(product.id, campaign.id)
 
       assert length(result.data) == 1
       assert hd(result.data).id == cc2.id
@@ -654,8 +654,8 @@ defmodule CampaignsApi.ChallengesTest do
 
   describe "campaign deletion cascades to campaign_challenges" do
     test "deleting a campaign automatically deletes all associated campaign_challenges" do
-      tenant = insert(:tenant)
-      campaign = insert(:campaign, tenant: tenant)
+      product = insert(:product)
+      campaign = insert(:campaign, product: product)
       challenge1 = insert(:challenge)
       challenge2 = insert(:challenge)
 
@@ -663,15 +663,15 @@ defmodule CampaignsApi.ChallengesTest do
       cc2 = insert(:campaign_challenge, campaign: campaign, challenge: challenge2)
 
       # Verify campaign challenges exist
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc1.id) != nil
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc2.id) != nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc1.id) != nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc2.id) != nil
 
       # Delete the campaign
       Repo.delete(campaign)
 
       # Verify campaign challenges are automatically deleted
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc1.id) == nil
-      assert CampaignManagement.get_campaign_challenge(tenant.id, campaign.id, cc2.id) == nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc1.id) == nil
+      assert CampaignManagement.get_campaign_challenge(product.id, campaign.id, cc2.id) == nil
 
       # Verify challenges still exist (only associations were deleted)
       assert Challenges.get_challenge(challenge1.id) != nil

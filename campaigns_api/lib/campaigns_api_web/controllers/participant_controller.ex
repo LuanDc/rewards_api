@@ -7,12 +7,12 @@ defmodule CampaignsApiWeb.ParticipantController do
   - Campaign-participant associations (associate, disassociate, list)
   - Participant-challenge associations (associate, disassociate, list)
 
-  All operations enforce tenant isolation, ensuring participants can only
-  access and manage data within their own tenant context.
+  All operations enforce product isolation, ensuring participants can only
+  access and manage data within their own product context.
 
   ## Authentication
 
-  All endpoints require authentication via Bearer token. The tenant context
+  All endpoints require authentication via Bearer token. The product context
   is extracted from the authenticated user and used to scope all operations.
 
   ## Pagination
@@ -28,7 +28,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   - 201: Created (POST)
   - 204: No Content (DELETE)
   - 401: Unauthorized (missing or invalid authentication)
-  - 403: Forbidden (tenant mismatch)
+  - 403: Forbidden (product mismatch)
   - 404: Not Found (resource doesn't exist)
   - 422: Unprocessable Entity (validation errors)
   """
@@ -41,7 +41,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :index do
     get("/participants")
     summary("List participants")
-    description("Returns a paginated list of participants for the authenticated tenant")
+    description("Returns a paginated list of participants for the authenticated product")
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -61,7 +61,7 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, params) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     opts = [
       limit: parse_int(params["limit"]),
@@ -69,14 +69,14 @@ defmodule CampaignsApiWeb.ParticipantController do
       nickname: params["nickname"]
     ]
 
-    result = CampaignManagement.list_participants(tenant_id, opts)
+    result = CampaignManagement.list_participants(product_id, opts)
     json(conn, result)
   end
 
   swagger_path :create do
     post("/participants")
     summary("Create participant")
-    description("Creates a new participant for the authenticated tenant")
+    description("Creates a new participant for the authenticated product")
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -94,10 +94,10 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, params) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
     attrs = atomize_keys(params)
 
-    case CampaignManagement.create_participant(tenant_id, attrs) do
+    case CampaignManagement.create_participant(product_id, attrs) do
       {:ok, participant} ->
         conn
         |> put_status(:created)
@@ -113,7 +113,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :show do
     get("/participants/{id}")
     summary("Get participant")
-    description("Returns a single participant by ID for the authenticated tenant")
+    description("Returns a single participant by ID for the authenticated product")
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -129,9 +129,9 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, %{"id" => id}) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
-    case CampaignManagement.get_participant(tenant_id, id) do
+    case CampaignManagement.get_participant(product_id, id) do
       nil ->
         conn
         |> put_status(:not_found)
@@ -145,7 +145,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :update do
     put("/participants/{id}")
     summary("Update participant")
-    description("Updates an existing participant for the authenticated tenant")
+    description("Updates an existing participant for the authenticated product")
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -166,10 +166,10 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id} = params) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
     attrs = atomize_keys(params)
 
-    case CampaignManagement.update_participant(tenant_id, id, attrs) do
+    case CampaignManagement.update_participant(product_id, id, attrs) do
       {:ok, participant} ->
         json(conn, participant)
 
@@ -188,7 +188,7 @@ defmodule CampaignsApiWeb.ParticipantController do
   swagger_path :delete do
     PhoenixSwagger.Path.delete("/participants/{id}")
     summary("Delete participant")
-    description("Permanently deletes a participant for the authenticated tenant")
+    description("Permanently deletes a participant for the authenticated product")
     tag("Participant Management")
     security([%{Bearer: []}])
 
@@ -204,9 +204,9 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
-    case CampaignManagement.delete_participant(tenant_id, id) do
+    case CampaignManagement.delete_participant(product_id, id) do
       {:ok, participant} ->
         json(conn, participant)
 
@@ -222,7 +222,7 @@ defmodule CampaignsApiWeb.ParticipantController do
     summary("Associate participant with campaign")
 
     description(
-      "Creates an association between a participant and a campaign within the authenticated tenant"
+      "Creates an association between a participant and a campaign within the authenticated product"
     )
 
     tag("Participant Management")
@@ -235,16 +235,16 @@ defmodule CampaignsApiWeb.ParticipantController do
 
     response(201, "Created", Schema.ref(:CampaignParticipant))
     response(401, "Unauthorized", Schema.ref(:ErrorResponse))
-    response(403, "Forbidden - Tenant mismatch", Schema.ref(:ErrorResponse))
+    response(403, "Forbidden - product mismatch", Schema.ref(:ErrorResponse))
     response(422, "Validation Error", Schema.ref(:ValidationErrorResponse))
   end
 
   @spec associate_campaign(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def associate_campaign(conn, %{"participant_id" => participant_id, "campaign_id" => campaign_id}) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     case CampaignManagement.associate_participant_with_campaign(
-           tenant_id,
+           product_id,
            participant_id,
            campaign_id
          ) do
@@ -253,10 +253,10 @@ defmodule CampaignsApiWeb.ParticipantController do
         |> put_status(:created)
         |> json(association)
 
-      {:error, :tenant_mismatch} ->
+      {:error, :product_mismatch} ->
         conn
         |> put_status(:forbidden)
-        |> json(%{error: "Participant or campaign not found in tenant"})
+        |> json(%{error: "Participant or campaign not found in product"})
 
       {:error, changeset} ->
         conn
@@ -270,7 +270,7 @@ defmodule CampaignsApiWeb.ParticipantController do
     summary("Disassociate participant from campaign")
 
     description(
-      "Removes the association between a participant and a campaign within the authenticated tenant. All participant-challenge associations for this campaign will also be removed."
+      "Removes the association between a participant and a campaign within the authenticated product. All participant-challenge associations for this campaign will also be removed."
     )
 
     tag("Participant Management")
@@ -292,10 +292,10 @@ defmodule CampaignsApiWeb.ParticipantController do
         "participant_id" => participant_id,
         "campaign_id" => campaign_id
       }) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     case CampaignManagement.disassociate_participant_from_campaign(
-           tenant_id,
+           product_id,
            participant_id,
            campaign_id
          ) do
@@ -329,14 +329,14 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec list_campaigns(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def list_campaigns(conn, %{"participant_id" => participant_id} = params) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     opts = [
       limit: parse_int(params["limit"]),
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = CampaignManagement.list_campaigns_for_participant(tenant_id, participant_id, opts)
+    result = CampaignManagement.list_campaigns_for_participant(product_id, participant_id, opts)
     json(conn, result)
   end
 
@@ -360,14 +360,14 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec list_participants(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def list_participants(conn, %{"campaign_id" => campaign_id} = params) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     opts = [
       limit: parse_int(params["limit"]),
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = CampaignManagement.list_participants_for_campaign(tenant_id, campaign_id, opts)
+    result = CampaignManagement.list_participants_for_campaign(product_id, campaign_id, opts)
     json(conn, result)
   end
 
@@ -376,7 +376,7 @@ defmodule CampaignsApiWeb.ParticipantController do
     summary("Associate participant with challenge")
 
     description(
-      "Creates an association between a participant and a challenge within the authenticated tenant. The participant must already be associated with the challenge's campaign."
+      "Creates an association between a participant and a challenge within the authenticated product. The participant must already be associated with the challenge's campaign."
     )
 
     tag("Participant Management")
@@ -389,7 +389,7 @@ defmodule CampaignsApiWeb.ParticipantController do
 
     response(201, "Created", Schema.ref(:ParticipantChallenge))
     response(401, "Unauthorized", Schema.ref(:ErrorResponse))
-    response(403, "Forbidden - Tenant mismatch", Schema.ref(:ErrorResponse))
+    response(403, "Forbidden - product mismatch", Schema.ref(:ErrorResponse))
 
     response(
       422,
@@ -403,10 +403,10 @@ defmodule CampaignsApiWeb.ParticipantController do
         "participant_id" => participant_id,
         "challenge_id" => challenge_id
       }) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     case CampaignManagement.associate_participant_with_challenge(
-           tenant_id,
+           product_id,
            participant_id,
            challenge_id
          ) do
@@ -415,10 +415,10 @@ defmodule CampaignsApiWeb.ParticipantController do
         |> put_status(:created)
         |> json(association)
 
-      {:error, :tenant_mismatch} ->
+      {:error, :product_mismatch} ->
         conn
         |> put_status(:forbidden)
-        |> json(%{error: "Participant or challenge not found in tenant"})
+        |> json(%{error: "Participant or challenge not found in product"})
 
       {:error, :participant_not_in_campaign} ->
         conn
@@ -437,7 +437,7 @@ defmodule CampaignsApiWeb.ParticipantController do
     summary("Disassociate participant from challenge")
 
     description(
-      "Removes the association between a participant and a challenge within the authenticated tenant"
+      "Removes the association between a participant and a challenge within the authenticated product"
     )
 
     tag("Participant Management")
@@ -459,10 +459,10 @@ defmodule CampaignsApiWeb.ParticipantController do
         "participant_id" => participant_id,
         "challenge_id" => challenge_id
       }) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     case CampaignManagement.disassociate_participant_from_challenge(
-           tenant_id,
+           product_id,
            participant_id,
            challenge_id
          ) do
@@ -501,7 +501,7 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec list_challenges(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def list_challenges(conn, %{"participant_id" => participant_id} = params) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     opts = [
       limit: parse_int(params["limit"]),
@@ -509,7 +509,7 @@ defmodule CampaignsApiWeb.ParticipantController do
       campaign_id: params["campaign_id"]
     ]
 
-    result = CampaignManagement.list_challenges_for_participant(tenant_id, participant_id, opts)
+    result = CampaignManagement.list_challenges_for_participant(product_id, participant_id, opts)
     json(conn, result)
   end
 
@@ -533,14 +533,14 @@ defmodule CampaignsApiWeb.ParticipantController do
 
   @spec list_challenge_participants(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def list_challenge_participants(conn, %{"challenge_id" => challenge_id} = params) do
-    tenant_id = conn.assigns.tenant_id
+    product_id = conn.assigns.product_id
 
     opts = [
       limit: parse_int(params["limit"]),
       cursor: parse_datetime(params["cursor"])
     ]
 
-    result = CampaignManagement.list_participants_for_challenge(tenant_id, challenge_id, opts)
+    result = CampaignManagement.list_participants_for_challenge(product_id, challenge_id, opts)
     json(conn, result)
   end
 
@@ -555,7 +555,7 @@ defmodule CampaignsApiWeb.ParticipantController do
             id(:string, "Participant UUID", required: true, format: "uuid")
             name(:string, "Participant full name", required: true, minLength: 1)
             nickname(:string, "Unique participant identifier", required: true, minLength: 3)
-            tenant_id(:string, "Tenant ID", required: true)
+            product_id(:string, "product ID", required: true)
 
             status(:string, "Participant status",
               enum: [:active, :inactive, :ineligible],
@@ -570,7 +570,7 @@ defmodule CampaignsApiWeb.ParticipantController do
             id: "550e8400-e29b-41d4-a716-446655440000",
             name: "John Doe",
             nickname: "johndoe",
-            tenant_id: "tenant-123",
+            product_id: "product-123",
             status: "active",
             inserted_at: "2024-05-01T10:00:00Z",
             updated_at: "2024-05-01T10:00:00Z"
@@ -615,7 +615,7 @@ defmodule CampaignsApiWeb.ParticipantController do
                 id: "550e8400-e29b-41d4-a716-446655440000",
                 name: "John Doe",
                 nickname: "johndoe",
-                tenant_id: "tenant-123",
+                product_id: "product-123",
                 status: "active"
               }
             ],
@@ -632,7 +632,7 @@ defmodule CampaignsApiWeb.ParticipantController do
             id(:string, "Campaign UUID", required: true, format: "uuid")
             name(:string, "Campaign name", required: true)
             description(:string, "Campaign description")
-            tenant_id(:string, "Tenant ID", required: true)
+            product_id(:string, "product ID", required: true)
             inserted_at(:string, "Creation timestamp", format: "date-time")
             updated_at(:string, "Last update timestamp", format: "date-time")
           end
@@ -641,7 +641,7 @@ defmodule CampaignsApiWeb.ParticipantController do
             id: "770e8400-e29b-41d4-a716-446655440002",
             name: "Summer Campaign",
             description: "Summer rewards campaign",
-            tenant_id: "tenant-123",
+            product_id: "product-123",
             inserted_at: "2024-05-01T10:00:00Z",
             updated_at: "2024-05-01T10:00:00Z"
           })
@@ -668,7 +668,7 @@ defmodule CampaignsApiWeb.ParticipantController do
                 id: "770e8400-e29b-41d4-a716-446655440002",
                 name: "Summer Campaign",
                 description: "Summer rewards campaign",
-                tenant_id: "tenant-123"
+                product_id: "product-123"
               }
             ],
             next_cursor: "2024-05-01T10:00:00Z",

@@ -9,7 +9,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
   describe "changeset/2 - valid participant creation" do
     test "creates valid participant with all fields" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe",
         nickname: "johndoe",
         status: :inactive
@@ -18,7 +18,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
       changeset = Participant.changeset(%Participant{}, attrs)
 
       assert changeset.valid?
-      assert get_change(changeset, :tenant_id) == "tenant-1"
+      assert get_change(changeset, :product_id) == "product-1"
       assert get_change(changeset, :name) == "John Doe"
       assert get_change(changeset, :nickname) == "johndoe"
       # Status is different from default, so it appears in changes
@@ -27,7 +27,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "creates valid participant with only required fields" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "Jane Doe",
         nickname: "janedoe"
       }
@@ -35,7 +35,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
       changeset = Participant.changeset(%Participant{}, attrs)
 
       assert changeset.valid?
-      assert get_change(changeset, :tenant_id) == "tenant-1"
+      assert get_change(changeset, :product_id) == "product-1"
       assert get_change(changeset, :name) == "Jane Doe"
       assert get_change(changeset, :nickname) == "janedoe"
       # Status defaults to :active
@@ -44,7 +44,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "creates valid participant with inactive status" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "Bob Smith",
         nickname: "bobsmith",
         status: :inactive
@@ -58,7 +58,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "creates valid participant with ineligible status" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "Alice Johnson",
         nickname: "alicejohnson",
         status: :ineligible
@@ -74,7 +74,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
   describe "changeset/2 - field length validations" do
     test "accepts name with exactly 1 character" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "A",
         nickname: "abc"
       }
@@ -86,7 +86,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "accepts name with more than 1 character" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe",
         nickname: "johndoe"
       }
@@ -98,7 +98,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "rejects name with empty string" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "",
         nickname: "johndoe"
       }
@@ -112,7 +112,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "accepts nickname with exactly 3 characters" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe",
         nickname: "abc"
       }
@@ -124,7 +124,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "accepts nickname with more than 3 characters" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe",
         nickname: "johndoe"
       }
@@ -136,7 +136,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "rejects nickname with less than 3 characters" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe",
         nickname: "ab"
       }
@@ -149,7 +149,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "rejects nickname with empty string" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe",
         nickname: ""
       }
@@ -163,7 +163,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
   end
 
   describe "changeset/2 - required field validations" do
-    test "rejects participant without tenant_id" do
+    test "rejects participant without product_id" do
       attrs = %{
         name: "John Doe",
         nickname: "johndoe"
@@ -172,12 +172,12 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
       changeset = Participant.changeset(%Participant{}, attrs)
 
       refute changeset.valid?
-      assert %{tenant_id: ["can't be blank"]} = errors_on(changeset)
+      assert %{product_id: ["can't be blank"]} = errors_on(changeset)
     end
 
     test "rejects participant without name" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         nickname: "johndoe"
       }
 
@@ -189,7 +189,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "rejects participant without nickname" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe"
       }
 
@@ -206,7 +206,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
       refute changeset.valid?
       errors = errors_on(changeset)
-      assert %{tenant_id: ["can't be blank"]} = errors
+      assert %{product_id: ["can't be blank"]} = errors
       assert %{name: ["can't be blank"]} = errors
       assert %{nickname: ["can't be blank"]} = errors
     end
@@ -218,7 +218,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
       for status <- valid_statuses do
         attrs = %{
-          tenant_id: "tenant-1",
+          product_id: "product-1",
           name: "John Doe",
           nickname: "user#{System.unique_integer([:positive])}",
           status: status
@@ -233,7 +233,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
     test "rejects invalid status value" do
       attrs = %{
-        tenant_id: "tenant-1",
+        product_id: "product-1",
         name: "John Doe",
         nickname: "johndoe",
         status: :invalid_status
@@ -248,16 +248,16 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
   describe "changeset/2 - nickname uniqueness constraint" do
     setup do
-      # Create tenants for testing
-      tenant1 = insert(:tenant, id: "tenant-unique-1")
-      tenant2 = insert(:tenant, id: "tenant-unique-2")
-      %{tenant1: tenant1, tenant2: tenant2}
+      # Create products for testing
+      product1 = insert(:product, id: "product-unique-1")
+      product2 = insert(:product, id: "product-unique-2")
+      %{product1: product1, product2: product2}
     end
 
-    test "enforces unique constraint on nickname", %{tenant1: tenant1, tenant2: tenant2} do
+    test "enforces unique constraint on nickname", %{product1: product1, product2: product2} do
       # Insert first participant using changeset
       attrs1 = %{
-        tenant_id: tenant1.id,
+        product_id: product1.id,
         name: "John Doe",
         nickname: "johndoe"
       }
@@ -267,7 +267,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
       # Try to insert second participant with same nickname
       attrs2 = %{
-        tenant_id: tenant2.id,
+        product_id: product2.id,
         name: "Jane Doe",
         nickname: "johndoe"
       }
@@ -278,10 +278,10 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
       assert %{nickname: ["has already been taken"]} = errors_on(changeset)
     end
 
-    test "allows different nicknames for different participants", %{tenant1: tenant1} do
+    test "allows different nicknames for different participants", %{product1: product1} do
       # Insert first participant
       attrs1 = %{
-        tenant_id: tenant1.id,
+        product_id: product1.id,
         name: "John Doe",
         nickname: "johndoe"
       }
@@ -291,7 +291,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
 
       # Insert second participant with different nickname
       attrs2 = %{
-        tenant_id: tenant1.id,
+        product_id: product1.id,
         name: "Jane Doe",
         nickname: "janedoe"
       }
@@ -311,7 +311,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
               max_runs: 50
             ) do
         attrs = %{
-          tenant_id: "tenant-1",
+          product_id: "product-1",
           name: invalid_value,
           nickname: "johndoe"
         }
@@ -332,7 +332,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
               max_runs: 50
             ) do
         attrs = %{
-          tenant_id: "tenant-1",
+          product_id: "product-1",
           name: "John Doe",
           nickname: invalid_value
         }
@@ -347,13 +347,13 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
     end
 
     @tag :property
-    property "rejects all invalid types for tenant_id field" do
+    property "rejects all invalid types for product_id field" do
       check all(
               invalid_value <- invalid_type_generator(),
               max_runs: 50
             ) do
         attrs = %{
-          tenant_id: invalid_value,
+          product_id: invalid_value,
           name: "John Doe",
           nickname: "johndoe"
         }
@@ -361,9 +361,9 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
         changeset = Participant.changeset(%Participant{}, attrs)
 
         refute changeset.valid?,
-               "Expected tenant_id with invalid type #{inspect(invalid_value)} to be rejected"
+               "Expected product_id with invalid type #{inspect(invalid_value)} to be rejected"
 
-        assert %{tenant_id: _errors} = errors_on(changeset)
+        assert %{product_id: _errors} = errors_on(changeset)
       end
     end
 
@@ -384,7 +384,7 @@ defmodule CampaignsApi.ParticipantManagement.ParticipantTest do
               max_runs: 50
             ) do
         attrs = %{
-          tenant_id: "tenant-1",
+          product_id: "product-1",
           name: "John Doe",
           nickname: "johndoe",
           status: invalid_value

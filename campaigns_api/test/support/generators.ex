@@ -6,11 +6,11 @@ defmodule CampaignsApi.Generators do
   import StreamData
 
   @doc """
-  Generates valid tenant IDs (non-empty strings).
+  Generates valid product IDs (non-empty strings).
   """
-  def tenant_id_generator do
+  def product_id_generator do
     string(:alphanumeric, min_length: 1, max_length: 50)
-    |> map(fn str -> "tenant-#{str}" end)
+    |> map(fn str -> "product-#{str}" end)
   end
 
   @doc """
@@ -39,9 +39,9 @@ defmodule CampaignsApi.Generators do
   end
 
   @doc """
-  Generates tenant status values (:active, :suspended, or :deleted).
+  Generates product status values (:active, :suspended, or :deleted).
   """
-  def tenant_status_generator do
+  def product_status_generator do
     member_of([:active, :suspended, :deleted])
   end
 
@@ -50,7 +50,7 @@ defmodule CampaignsApi.Generators do
 
   ## Examples
 
-      iex> jwt_generator(%{"tenant_id" => "test-tenant"})
+      iex> jwt_generator(%{"product_id" => "test-product"})
   """
   def jwt_generator(claims) do
     constant(create_jwt(claims))

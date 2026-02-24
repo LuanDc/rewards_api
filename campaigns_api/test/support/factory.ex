@@ -12,29 +12,29 @@ defmodule CampaignsApi.Factory do
   alias CampaignsApi.CampaignManagement.Participant
   alias CampaignsApi.CampaignManagement.ParticipantChallenge
   alias CampaignsApi.Challenges.Challenge
-  alias CampaignsApi.Tenants.Tenant
+  alias CampaignsApi.Products.Product
 
-  def tenant_factory do
+  def product_factory do
     id = System.unique_integer([:positive])
 
-    %Tenant{
-      id: "tenant-#{id}",
-      name: "Tenant #{id}",
+    %Product{
+      id: "product-#{id}",
+      name: "Product #{id}",
       status: :active,
       deleted_at: nil
     }
   end
 
-  def suspended_tenant_factory do
+  def suspended_product_factory do
     struct!(
-      tenant_factory(),
+      product_factory(),
       %{status: :suspended}
     )
   end
 
-  def deleted_tenant_factory do
+  def deleted_product_factory do
     struct!(
-      tenant_factory(),
+      product_factory(),
       %{
         status: :deleted,
         deleted_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -51,7 +51,7 @@ defmodule CampaignsApi.Factory do
       status: :active,
       start_time: nil,
       end_time: nil,
-      tenant: build(:tenant)
+      product: build(:product)
     }
   end
 
@@ -105,7 +105,7 @@ defmodule CampaignsApi.Factory do
       name: "Participant #{id}",
       nickname: "user#{id}",
       status: :active,
-      tenant: build(:tenant)
+      product: build(:product)
     }
   end
 
@@ -124,8 +124,8 @@ defmodule CampaignsApi.Factory do
     }
   end
 
-  def jwt_token(tenant_id) do
-    claims = %{"tenant_id" => tenant_id}
+  def jwt_token(product_id) do
+    claims = %{"product_id" => product_id}
     header = %{"alg" => "HS256", "typ" => "JWT"}
 
     encoded_header = header |> Jason.encode!() |> Base.url_encode64(padding: false)

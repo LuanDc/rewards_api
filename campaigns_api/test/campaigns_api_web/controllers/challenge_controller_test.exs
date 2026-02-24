@@ -2,11 +2,11 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
   use CampaignsApiWeb.ConnCase, async: true
 
   setup %{conn: conn} do
-    tenant = insert(:tenant)
-    token = jwt_token(tenant.id)
+    product = insert(:product)
+    token = jwt_token(product.id)
     conn = put_req_header(conn, "authorization", "Bearer #{token}")
 
-    {:ok, conn: conn, tenant: tenant}
+    {:ok, conn: conn, product: product}
   end
 
   describe "GET /api/challenges (index)" do
@@ -150,18 +150,18 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
       assert length(challenges) == 2
     end
 
-    test "all tenants see the same challenges (global availability)", %{conn: conn} do
+    test "all products see the same challenges (global availability)", %{conn: conn} do
       # Create challenges
       insert(:challenge)
       insert(:challenge)
 
-      # First tenant request
+      # First product request
       conn1 = get(conn, ~p"/api/challenges")
       response1 = json_response(conn1, 200)
 
-      # Second tenant request
-      tenant2 = insert(:tenant)
-      token2 = jwt_token(tenant2.id)
+      # Second product request
+      product2 = insert(:product)
+      token2 = jwt_token(product2.id)
 
       conn2 =
         build_conn()
@@ -170,7 +170,7 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
 
       response2 = json_response(conn2, 200)
 
-      # Both tenants should see the same challenges
+      # Both products should see the same challenges
       ids1 = Enum.map(response1["data"], & &1["id"]) |> Enum.sort()
       ids2 = Enum.map(response2["data"], & &1["id"]) |> Enum.sort()
 
@@ -221,16 +221,16 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
       assert %{"error" => "Challenge not found"} = json_response(conn, 404)
     end
 
-    test "all tenants can access the same challenge (global availability)", %{conn: conn} do
+    test "all products can access the same challenge (global availability)", %{conn: conn} do
       challenge = insert(:challenge)
 
-      # First tenant request
+      # First product request
       conn1 = get(conn, ~p"/api/challenges/#{challenge.id}")
       response1 = json_response(conn1, 200)
 
-      # Second tenant request
-      tenant2 = insert(:tenant)
-      token2 = jwt_token(tenant2.id)
+      # Second product request
+      product2 = insert(:product)
+      token2 = jwt_token(product2.id)
 
       conn2 =
         build_conn()
@@ -239,7 +239,7 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
 
       response2 = json_response(conn2, 200)
 
-      # Both tenants should see the same challenge
+      # Both products should see the same challenge
       assert response1["id"] == response2["id"]
       assert response1["name"] == response2["name"]
     end
@@ -333,9 +333,9 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
       assert is_binary(response["error"])
     end
 
-    test "403 errors return structured JSON for suspended tenants" do
-      suspended_tenant = insert(:suspended_tenant)
-      token = jwt_token(suspended_tenant.id)
+    test "403 errors return structured JSON for suspended products" do
+      suspended_product = insert(:suspended_product)
+      token = jwt_token(suspended_product.id)
 
       conn =
         build_conn()
@@ -351,8 +351,8 @@ defmodule CampaignsApiWeb.ChallengeControllerTest do
 
     test "error responses contain only error field" do
       fake_id = Ecto.UUID.generate()
-      tenant = insert(:tenant)
-      token = jwt_token(tenant.id)
+      product = insert(:product)
+      token = jwt_token(product.id)
 
       conn =
         build_conn()
