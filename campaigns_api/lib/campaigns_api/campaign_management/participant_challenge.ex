@@ -41,9 +41,9 @@ defmodule CampaignsApi.CampaignManagement.ParticipantChallenge do
            ]}
 
   schema "participant_challenges" do
-    belongs_to :participant, CampaignsApi.CampaignManagement.Participant
-    belongs_to :challenge, CampaignsApi.Challenges.Challenge
-    belongs_to :campaign, CampaignsApi.CampaignManagement.Campaign
+    belongs_to(:participant, CampaignsApi.CampaignManagement.Participant)
+    belongs_to(:challenge, CampaignsApi.Challenges.Challenge)
+    belongs_to(:campaign, CampaignsApi.CampaignManagement.Campaign)
 
     timestamps(type: :utc_datetime)
   end

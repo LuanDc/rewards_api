@@ -46,14 +46,14 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallenge do
   @frequency_keywords ~w(daily weekly monthly on_event)
 
   schema "campaign_challenges" do
-    field :display_name, :string
-    field :display_description, :string
-    field :evaluation_frequency, :string
-    field :reward_points, :integer
-    field :configuration, :map
+    field(:display_name, :string)
+    field(:display_description, :string)
+    field(:evaluation_frequency, :string)
+    field(:reward_points, :integer)
+    field(:configuration, :map)
 
-    belongs_to :campaign, CampaignsApi.CampaignManagement.Campaign
-    belongs_to :challenge, CampaignsApi.Challenges.Challenge
+    belongs_to(:campaign, CampaignsApi.CampaignManagement.Campaign)
+    belongs_to(:challenge, CampaignsApi.Challenges.Challenge)
 
     timestamps(type: :utc_datetime)
   end

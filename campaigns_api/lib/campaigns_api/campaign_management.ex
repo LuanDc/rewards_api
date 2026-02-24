@@ -34,8 +34,9 @@ defmodule CampaignsApi.CampaignManagement do
   @spec list_campaigns(tenant_id(), pagination_opts()) :: pagination_result()
   def list_campaigns(tenant_id, opts \\ []) do
     query =
-      from c in Campaign,
+      from(c in Campaign,
         where: c.tenant_id == ^tenant_id
+      )
 
     Pagination.paginate(Repo, query, opts)
   end
@@ -99,10 +100,11 @@ defmodule CampaignsApi.CampaignManagement do
           pagination_result()
   def list_campaign_challenges(tenant_id, campaign_id, opts \\ []) do
     query =
-      from cc in CampaignChallenge,
+      from(cc in CampaignChallenge,
         join: c in assoc(cc, :campaign),
         where: c.tenant_id == ^tenant_id and cc.campaign_id == ^campaign_id,
         preload: [:challenge]
+      )
 
     Pagination.paginate(Repo, query, opts)
   end
@@ -197,14 +199,15 @@ defmodule CampaignsApi.CampaignManagement do
   @spec list_participants(tenant_id(), pagination_opts()) :: pagination_result()
   def list_participants(tenant_id, opts \\ []) do
     query =
-      from p in Participant,
+      from(p in Participant,
         where: p.tenant_id == ^tenant_id
+      )
 
     # Apply optional nickname filter
     query =
       case Keyword.get(opts, :nickname) do
         nil -> query
-        nickname -> from p in query, where: ilike(p.nickname, ^"%#{nickname}%")
+        nickname -> from(p in query, where: ilike(p.nickname, ^"%#{nickname}%"))
       end
 
     Pagination.paginate(Repo, query, opts)
@@ -328,7 +331,7 @@ defmodule CampaignsApi.CampaignManagement do
           pagination_result()
   def list_campaigns_for_participant(tenant_id, participant_id, opts \\ []) do
     query =
-      from c in Campaign,
+      from(c in Campaign,
         join: cp in CampaignParticipant,
         on: cp.campaign_id == c.id,
         join: p in Participant,
@@ -339,6 +342,7 @@ defmodule CampaignsApi.CampaignManagement do
             c.tenant_id == ^tenant_id,
         order_by: [desc: cp.inserted_at],
         select: %{c | inserted_at: cp.inserted_at}
+      )
 
     Pagination.paginate(Repo, query, opts)
   end
@@ -353,7 +357,7 @@ defmodule CampaignsApi.CampaignManagement do
           pagination_result()
   def list_participants_for_campaign(tenant_id, campaign_id, opts \\ []) do
     query =
-      from p in Participant,
+      from(p in Participant,
         join: cp in CampaignParticipant,
         on: cp.participant_id == p.id,
         join: c in Campaign,
@@ -364,6 +368,7 @@ defmodule CampaignsApi.CampaignManagement do
             c.tenant_id == ^tenant_id,
         order_by: [desc: cp.inserted_at],
         select: %{p | inserted_at: cp.inserted_at}
+      )
 
     Pagination.paginate(Repo, query, opts)
   end
@@ -474,7 +479,7 @@ defmodule CampaignsApi.CampaignManagement do
           pagination_result()
   def list_challenges_for_participant(tenant_id, participant_id, opts \\ []) do
     query =
-      from ch in ChallengeSchema,
+      from(ch in ChallengeSchema,
         join: pc in ParticipantChallenge,
         on: pc.challenge_id == ch.id,
         join: p in Participant,
@@ -487,12 +492,13 @@ defmodule CampaignsApi.CampaignManagement do
             c.tenant_id == ^tenant_id,
         order_by: [desc: pc.inserted_at],
         select: %{ch | inserted_at: pc.inserted_at}
+      )
 
     # Apply optional campaign_id filter
     query =
       case Keyword.get(opts, :campaign_id) do
         nil -> query
-        campaign_id -> from [ch, pc, p, c] in query, where: pc.campaign_id == ^campaign_id
+        campaign_id -> from([ch, pc, p, c] in query, where: pc.campaign_id == ^campaign_id)
       end
 
     Pagination.paginate(Repo, query, opts)
@@ -508,7 +514,7 @@ defmodule CampaignsApi.CampaignManagement do
           pagination_result()
   def list_participants_for_challenge(tenant_id, challenge_id, opts \\ []) do
     query =
-      from p in Participant,
+      from(p in Participant,
         join: pc in ParticipantChallenge,
         on: pc.participant_id == p.id,
         join: c in Campaign,
@@ -519,6 +525,7 @@ defmodule CampaignsApi.CampaignManagement do
             c.tenant_id == ^tenant_id,
         order_by: [desc: pc.inserted_at],
         select: %{p | inserted_at: pc.inserted_at}
+      )
 
     Pagination.paginate(Repo, query, opts)
   end

@@ -37,14 +37,14 @@ defmodule CampaignsApi.CampaignManagement.Participant do
            only: [:id, :name, :nickname, :tenant_id, :status, :inserted_at, :updated_at]}
 
   schema "participants" do
-    field :name, :string
-    field :nickname, :string
-    field :status, Ecto.Enum, values: [:active, :inactive, :ineligible], default: :active
+    field(:name, :string)
+    field(:nickname, :string)
+    field(:status, Ecto.Enum, values: [:active, :inactive, :ineligible], default: :active)
 
-    belongs_to :tenant, CampaignsApi.Tenants.Tenant, type: :string
+    belongs_to(:tenant, CampaignsApi.Tenants.Tenant, type: :string)
 
-    has_many :campaign_participants, CampaignsApi.CampaignManagement.CampaignParticipant
-    has_many :participant_challenges, CampaignsApi.CampaignManagement.ParticipantChallenge
+    has_many(:campaign_participants, CampaignsApi.CampaignManagement.CampaignParticipant)
+    has_many(:participant_challenges, CampaignsApi.CampaignManagement.ParticipantChallenge)
 
     timestamps(type: :utc_datetime)
   end

@@ -38,13 +38,13 @@ defmodule CampaignsApi.CampaignManagement.Campaign do
            ]}
 
   schema "campaigns" do
-    field :name, :string
-    field :description, :string
-    field :start_time, :utc_datetime
-    field :end_time, :utc_datetime
-    field :status, Ecto.Enum, values: [:active, :paused], default: :active
+    field(:name, :string)
+    field(:description, :string)
+    field(:start_time, :utc_datetime)
+    field(:end_time, :utc_datetime)
+    field(:status, Ecto.Enum, values: [:active, :paused], default: :active)
 
-    belongs_to :tenant, CampaignsApi.Tenants.Tenant, type: :string
+    belongs_to(:tenant, CampaignsApi.Tenants.Tenant, type: :string)
 
     timestamps(type: :utc_datetime)
   end

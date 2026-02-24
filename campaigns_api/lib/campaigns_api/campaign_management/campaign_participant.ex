@@ -36,8 +36,8 @@ defmodule CampaignsApi.CampaignManagement.CampaignParticipant do
            ]}
 
   schema "campaign_participants" do
-    belongs_to :participant, CampaignsApi.CampaignManagement.Participant
-    belongs_to :campaign, CampaignsApi.CampaignManagement.Campaign
+    belongs_to(:participant, CampaignsApi.CampaignManagement.Participant)
+    belongs_to(:campaign, CampaignsApi.CampaignManagement.Campaign)
 
     timestamps(type: :utc_datetime)
   end
