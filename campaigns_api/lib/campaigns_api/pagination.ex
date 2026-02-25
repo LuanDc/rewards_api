@@ -15,8 +15,8 @@ defmodule CampaignsApi.Pagination do
           order: :asc | :desc
         ]
 
-  @type pagination_result :: %{
-          data: [struct()],
+  @type pagination_result(data_type) :: %{
+          data: [data_type],
           next_cursor: DateTime.t() | nil,
           has_more: boolean()
         }
@@ -27,7 +27,7 @@ defmodule CampaignsApi.Pagination do
   @doc """
   Applies cursor-based pagination to any Ecto query.
   """
-  @spec paginate(Ecto.Repo.t(), Ecto.Query.t(), pagination_opts()) :: pagination_result()
+  @spec paginate(Ecto.Repo.t(), Ecto.Query.t(), pagination_opts()) :: pagination_result(struct())
   def paginate(repo, query, opts \\ []) do
     limit = opts |> Keyword.get(:limit, @default_limit) |> min(@max_limit)
     cursor = Keyword.get(opts, :cursor)

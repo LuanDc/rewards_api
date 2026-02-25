@@ -265,7 +265,8 @@ defmodule CampaignsApi.CampaignManagementTest do
     test "returns error when campaign does not exist", %{product1: product} do
       non_existent_id = Ecto.UUID.generate()
 
-      assert {:error, :not_found} = CampaignManagement.delete_campaign(product.id, non_existent_id)
+      assert {:error, :not_found} =
+               CampaignManagement.delete_campaign(product.id, non_existent_id)
     end
 
     test "returns error when campaign belongs to different product", %{
@@ -330,10 +331,11 @@ defmodule CampaignsApi.CampaignManagementTest do
       assert campaign_challenge.challenge.name == "Test Challenge"
     end
 
-    test "enforces product isolation - cannot list challenges from different product's campaign", %{
-      product1: product1,
-      product2: product2
-    } do
+    test "enforces product isolation - cannot list challenges from different product's campaign",
+         %{
+           product1: product1,
+           product2: product2
+         } do
       campaign = insert(:campaign, product: product1)
       challenge = insert(:challenge)
       insert(:campaign_challenge, campaign: campaign, challenge: challenge)
@@ -637,7 +639,8 @@ defmodule CampaignsApi.CampaignManagementTest do
                "product2 should not be able to update product1's campaign"
 
         # Product2 cannot delete product1's campaign
-        assert {:error, :not_found} = CampaignManagement.delete_campaign(product2.id, campaign.id),
+        assert {:error, :not_found} =
+                 CampaignManagement.delete_campaign(product2.id, campaign.id),
                "product2 should not be able to delete product1's campaign"
 
         # Campaign still exists for product1
@@ -1621,7 +1624,9 @@ defmodule CampaignsApi.ParticipantManagementTest do
         # Create participant in product_a with unique nickname
         nickname = "#{nickname_base}-#{System.unique_integer([:positive])}"
         participant_attrs = params_for(:participant, name: participant_name, nickname: nickname)
-        {:ok, participant} = CampaignManagement.create_participant(product_a.id, participant_attrs)
+
+        {:ok, participant} =
+          CampaignManagement.create_participant(product_a.id, participant_attrs)
 
         # Create campaign in either same product or different product
         campaign_product = if same_product, do: product_a, else: product_b

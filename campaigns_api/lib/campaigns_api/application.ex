@@ -19,7 +19,6 @@ defmodule CampaignsApi.Application do
     Supervisor.start_link(children, opts)
   end
 
-  @spec messaging_children() :: [Supervisor.child_spec()]
   defp messaging_children do
     if Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[:enabled] do
       [CampaignsApiMessaging.ChallengeConsumer]

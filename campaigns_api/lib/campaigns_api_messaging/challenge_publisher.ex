@@ -35,8 +35,8 @@ defmodule CampaignsApiMessaging.ChallengePublisher do
              content_type: "application/json",
              headers: Keyword.get(opts, :headers, [])
            ) do
-      AMQP.Channel.close(channel)
-      AMQP.Connection.close(connection)
+      _ = AMQP.Channel.close(channel)
+      _ = AMQP.Connection.close(connection)
       :ok
     else
       {:error, reason} ->
@@ -44,7 +44,7 @@ defmodule CampaignsApiMessaging.ChallengePublisher do
     end
   end
 
-  @spec setup_topology(AMQP.Channel.t()) :: :ok | {:error, term()}
+  @spec setup_topology(AMQP.Channel.t()) :: :ok | {:error, :blocked | :closing}
   def setup_topology(channel) do
     exchange = config(:exchange)
     queue = config(:queue)
@@ -56,15 +56,14 @@ defmodule CampaignsApiMessaging.ChallengePublisher do
          {:ok, _} <- AMQP.Queue.declare(channel, queue, durable: true),
          {:ok, _} <- AMQP.Queue.declare(channel, queue_dlq, durable: true),
          :ok <- AMQP.Queue.bind(channel, queue, exchange, routing_key: routing_key),
-         :ok <- AMQP.Queue.bind(channel, queue_dlq, exchange, routing_key: dlq_routing_key) do
-      :ok
-    end
+         do: AMQP.Queue.bind(channel, queue_dlq, exchange, routing_key: dlq_routing_key)
   end
 
-  @spec config(atom()) :: term()
+  @spec config(:dlq_routing_key | :exchange | :queue | :queue_dlq | :rabbitmq_url | :routing_key) ::
+          term()
   defp config(key), do: Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[key]
 
-  @spec get_field(map(), atom()) :: term()
+  @spec get_field(map(), :description | :external_id | :metadata | :name) :: term()
   defp get_field(map, key) when is_map(map) do
     Map.get(map, key) || Map.get(map, Atom.to_string(key))
   end

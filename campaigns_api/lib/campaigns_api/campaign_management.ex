@@ -21,17 +21,11 @@ defmodule CampaignsApi.CampaignManagement do
   @type participant_id :: Ecto.UUID.t()
   @type challenge_id :: Ecto.UUID.t()
   @type attrs :: map()
-  @type pagination_opts :: keyword()
-  @type pagination_result :: %{
-          data: [Campaign.t()],
-          next_cursor: DateTime.t() | nil,
-          has_more: boolean()
-        }
-
   @doc """
   Lists campaigns for a specific product with cursor-based pagination.
   """
-  @spec list_campaigns(product_id(), pagination_opts()) :: pagination_result()
+  @spec list_campaigns(product_id(), Pagination.pagination_opts()) ::
+          Pagination.pagination_result(Campaign.t())
   def list_campaigns(product_id, opts \\ []) do
     query =
       from(c in Campaign,
@@ -96,8 +90,8 @@ defmodule CampaignsApi.CampaignManagement do
   @doc """
   Lists campaign challenges for a specific campaign with product isolation.
   """
-  @spec list_campaign_challenges(product_id(), campaign_id(), pagination_opts()) ::
-          pagination_result()
+  @spec list_campaign_challenges(product_id(), campaign_id(), Pagination.pagination_opts()) ::
+          Pagination.pagination_result(CampaignChallenge.t())
   def list_campaign_challenges(product_id, campaign_id, opts \\ []) do
     query =
       from(cc in CampaignChallenge,
@@ -196,7 +190,8 @@ defmodule CampaignsApi.CampaignManagement do
 
   Supports optional nickname filtering (case-insensitive substring match).
   """
-  @spec list_participants(product_id(), pagination_opts()) :: pagination_result()
+  @spec list_participants(product_id(), keyword()) ::
+          Pagination.pagination_result(Participant.t())
   def list_participants(product_id, opts \\ []) do
     query =
       from(p in Participant,
@@ -210,7 +205,7 @@ defmodule CampaignsApi.CampaignManagement do
         nickname -> from(p in query, where: ilike(p.nickname, ^"%#{nickname}%"))
       end
 
-    Pagination.paginate(Repo, query, opts)
+    Pagination.paginate(Repo, query, Keyword.drop(opts, [:nickname]))
   end
 
   @doc """
@@ -327,8 +322,12 @@ defmodule CampaignsApi.CampaignManagement do
   Returns a paginated list of campaigns ordered by association creation time (newest first).
   Only returns campaigns for participants belonging to the requesting product.
   """
-  @spec list_campaigns_for_participant(product_id(), participant_id(), pagination_opts()) ::
-          pagination_result()
+  @spec list_campaigns_for_participant(
+          product_id(),
+          participant_id(),
+          Pagination.pagination_opts()
+        ) ::
+          Pagination.pagination_result(Campaign.t())
   def list_campaigns_for_participant(product_id, participant_id, opts \\ []) do
     query =
       from(c in Campaign,
@@ -353,8 +352,8 @@ defmodule CampaignsApi.CampaignManagement do
   Returns a paginated list of participants ordered by association creation time (newest first).
   Only returns participants for campaigns belonging to the requesting product.
   """
-  @spec list_participants_for_campaign(product_id(), campaign_id(), pagination_opts()) ::
-          pagination_result()
+  @spec list_participants_for_campaign(product_id(), campaign_id(), Pagination.pagination_opts()) ::
+          Pagination.pagination_result(Participant.t())
   def list_participants_for_campaign(product_id, campaign_id, opts \\ []) do
     query =
       from(p in Participant,
@@ -475,8 +474,12 @@ defmodule CampaignsApi.CampaignManagement do
   Returns a paginated list of challenges ordered by association creation time (newest first).
   Only returns challenges for participants belonging to the requesting product.
   """
-  @spec list_challenges_for_participant(product_id(), participant_id(), pagination_opts()) ::
-          pagination_result()
+  @spec list_challenges_for_participant(
+          product_id(),
+          participant_id(),
+          keyword()
+        ) ::
+          Pagination.pagination_result(ChallengeSchema.t())
   def list_challenges_for_participant(product_id, participant_id, opts \\ []) do
     query =
       from(ch in ChallengeSchema,
@@ -501,7 +504,7 @@ defmodule CampaignsApi.CampaignManagement do
         campaign_id -> from([ch, pc, p, c] in query, where: pc.campaign_id == ^campaign_id)
       end
 
-    Pagination.paginate(Repo, query, opts)
+    Pagination.paginate(Repo, query, Keyword.drop(opts, [:campaign_id]))
   end
 
   @doc """
@@ -510,8 +513,12 @@ defmodule CampaignsApi.CampaignManagement do
   Returns a paginated list of participants ordered by association creation time (newest first).
   Only returns participants for challenges belonging to the requesting product.
   """
-  @spec list_participants_for_challenge(product_id(), challenge_id(), pagination_opts()) ::
-          pagination_result()
+  @spec list_participants_for_challenge(
+          product_id(),
+          challenge_id(),
+          Pagination.pagination_opts()
+        ) ::
+          Pagination.pagination_result(Participant.t())
   def list_participants_for_challenge(product_id, challenge_id, opts \\ []) do
     query =
       from(p in Participant,

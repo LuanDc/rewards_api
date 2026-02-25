@@ -831,9 +831,7 @@ defmodule CampaignsApiWeb.ParticipantController do
       map
   end
 
-  @spec parse_int(String.t() | integer() | nil) :: integer() | nil
-  defp parse_int(nil), do: nil
-  defp parse_int(""), do: nil
+  defp parse_int(int) when is_integer(int), do: int
 
   defp parse_int(str) when is_binary(str) do
     case Integer.parse(str) do
@@ -842,10 +840,7 @@ defmodule CampaignsApiWeb.ParticipantController do
     end
   end
 
-  defp parse_int(int) when is_integer(int), do: int
-
-  @spec parse_datetime(String.t() | nil) :: DateTime.t() | nil
-  defp parse_datetime(nil), do: nil
+  defp parse_int(_), do: nil
 
   defp parse_datetime(str) when is_binary(str) do
     case DateTime.from_iso8601(str) do
@@ -853,4 +848,6 @@ defmodule CampaignsApiWeb.ParticipantController do
       _ -> nil
     end
   end
+
+  defp parse_datetime(_), do: nil
 end

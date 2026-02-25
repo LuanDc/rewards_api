@@ -108,7 +108,10 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
   end
 
   describe "GET /api/participants/:id (show)" do
-    test "returns participant when it exists and belongs to product", %{conn: conn, product: product} do
+    test "returns participant when it exists and belongs to product", %{
+      conn: conn,
+      product: product
+    } do
       participant = insert(:participant, product: product)
 
       conn = get(conn, ~p"/api/participants/#{participant.id}")
@@ -234,7 +237,10 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert campaign_id == campaign.id
     end
 
-    test "returns 403 when participant belongs to different product", %{conn: conn, product: product} do
+    test "returns 403 when participant belongs to different product", %{
+      conn: conn,
+      product: product
+    } do
       other_product = insert(:product)
       participant = insert(:participant, product: other_product)
       campaign = insert(:campaign, product: product)
@@ -288,7 +294,10 @@ defmodule CampaignsApiWeb.ParticipantControllerTest do
       assert %{"error" => "Association not found"} = json_response(conn, 404)
     end
 
-    test "returns 404 when participant belongs to different product", %{conn: conn, product: product} do
+    test "returns 404 when participant belongs to different product", %{
+      conn: conn,
+      product: product
+    } do
       other_product = insert(:product)
       participant = insert(:participant, product: other_product)
       campaign = insert(:campaign, product: product)

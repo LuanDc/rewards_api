@@ -3,8 +3,8 @@ defmodule CampaignsApi.Products do
   The products context manages product lifecycle, status checks, and JIT provisioning.
   """
 
-  alias CampaignsApi.Repo
   alias CampaignsApi.Products.Product
+  alias CampaignsApi.Repo
 
   @type product_id :: String.t()
   @type attrs :: map()

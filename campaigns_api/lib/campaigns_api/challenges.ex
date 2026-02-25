@@ -14,13 +14,6 @@ defmodule CampaignsApi.Challenges do
   alias CampaignsApi.Pagination
   alias CampaignsApi.Repo
 
-  @type pagination_opts :: [limit: pos_integer(), cursor: DateTime.t() | nil]
-  @type pagination_result :: %{
-          data: [Challenge.t()],
-          next_cursor: DateTime.t() | nil,
-          has_more: boolean()
-        }
-
   # Challenge Operations
 
   @doc """
@@ -42,7 +35,7 @@ defmodule CampaignsApi.Challenges do
       %{data: [%Challenge{}, ...], next_cursor: nil, has_more: false}
 
   """
-  @spec list_challenges(pagination_opts()) :: pagination_result()
+  @spec list_challenges(Pagination.pagination_opts()) :: Pagination.pagination_result(Challenge.t())
   def list_challenges(opts \\ []) do
     query = from(c in Challenge)
     Pagination.paginate(Repo, query, opts)
@@ -190,7 +183,7 @@ defmodule CampaignsApi.Challenges do
     Repo.get_by(Challenge, external_id: external_id)
   end
 
-  @spec ensure_external_id(map()) :: map()
+  @spec ensure_external_id(map()) :: %{required(:external_id) => term()}
   defp ensure_external_id(attrs) do
     external_id = get_field(attrs, :external_id) || Ecto.UUID.generate()
 
@@ -211,7 +204,7 @@ defmodule CampaignsApi.Challenges do
     |> Map.new()
   end
 
-  @spec get_field(map(), atom()) :: term()
+  @spec get_field(map(), :description | :external_id | :metadata | :name) :: term()
   defp get_field(attrs, key) do
     Map.get(attrs, key) || Map.get(attrs, Atom.to_string(key))
   end

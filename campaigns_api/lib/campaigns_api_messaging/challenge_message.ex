@@ -52,7 +52,9 @@ defmodule CampaignsApiMessaging.ChallengeMessage do
   defp validate_schema_version(1), do: :ok
   defp validate_schema_version(_), do: {:error, :invalid_schema_version}
 
-  @spec validate_types(map()) :: :ok | {:error, atom()}
+  @spec validate_types(map()) ::
+          :ok
+          | {:error, :invalid_description | :invalid_external_id | :invalid_metadata | :invalid_name}
   defp validate_types(payload) do
     cond do
       not is_binary(payload["external_id"]) ->
