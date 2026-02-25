@@ -803,7 +803,6 @@ defmodule CampaignsApiWeb.ParticipantController do
     }
   end
 
-  @spec translate_errors(Ecto.Changeset.t()) :: map()
   defp translate_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Enum.reduce(opts, msg, fn {key, value}, acc ->
@@ -812,7 +811,6 @@ defmodule CampaignsApiWeb.ParticipantController do
     end)
   end
 
-  @spec atomize_keys(map()) :: map()
   defp atomize_keys(map) when is_map(map) do
     Map.new(map, fn
       {key, value} when is_binary(key) ->

@@ -87,7 +87,6 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallenge do
     |> foreign_key_constraint(:challenge_id)
   end
 
-  @spec validate_evaluation_frequency(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   defp validate_evaluation_frequency(changeset) do
     frequency = get_field(changeset, :evaluation_frequency)
 
@@ -110,7 +109,6 @@ defmodule CampaignsApi.CampaignManagement.CampaignChallenge do
     end
   end
 
-  @spec valid_cron_expression?(String.t()) :: boolean()
   defp valid_cron_expression?(expression) do
     parts = String.split(expression, " ")
     length(parts) == 5

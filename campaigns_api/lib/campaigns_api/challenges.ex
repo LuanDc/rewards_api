@@ -35,7 +35,8 @@ defmodule CampaignsApi.Challenges do
       %{data: [%Challenge{}, ...], next_cursor: nil, has_more: false}
 
   """
-  @spec list_challenges(Pagination.pagination_opts()) :: Pagination.pagination_result(Challenge.t())
+  @spec list_challenges(Pagination.pagination_opts()) ::
+          Pagination.pagination_result(Challenge.t())
   def list_challenges(opts \\ []) do
     query = from(c in Challenge)
     Pagination.paginate(Repo, query, opts)
@@ -173,17 +174,14 @@ defmodule CampaignsApi.Challenges do
 
   # Private Helpers
 
-  @spec has_campaign_associations?(Ecto.UUID.t()) :: boolean()
   defp has_campaign_associations?(challenge_id) do
     Repo.exists?(from cc in CampaignChallenge, where: cc.challenge_id == ^challenge_id)
   end
 
-  @spec get_challenge_by_external_id(String.t()) :: Challenge.t() | nil
   defp get_challenge_by_external_id(external_id) do
     Repo.get_by(Challenge, external_id: external_id)
   end
 
-  @spec ensure_external_id(map()) :: %{required(:external_id) => term()}
   defp ensure_external_id(attrs) do
     external_id = get_field(attrs, :external_id) || Ecto.UUID.generate()
 
@@ -192,7 +190,6 @@ defmodule CampaignsApi.Challenges do
     |> Map.put(:external_id, external_id)
   end
 
-  @spec normalize_attrs(map()) :: map()
   defp normalize_attrs(attrs) do
     %{
       external_id: get_field(attrs, :external_id),
@@ -204,7 +201,6 @@ defmodule CampaignsApi.Challenges do
     |> Map.new()
   end
 
-  @spec get_field(map(), :description | :external_id | :metadata | :name) :: term()
   defp get_field(attrs, key) do
     Map.get(attrs, key) || Map.get(attrs, Atom.to_string(key))
   end

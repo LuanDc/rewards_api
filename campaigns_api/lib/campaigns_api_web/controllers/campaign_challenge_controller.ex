@@ -334,21 +334,18 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
 
   # Private helper functions
 
-  @spec send_not_found(Plug.Conn.t(), String.t()) :: Plug.Conn.t()
   defp send_not_found(conn, message \\ "Campaign challenge not found") do
     conn
     |> put_status(:not_found)
     |> json(%{error: message})
   end
 
-  @spec send_validation_error(Plug.Conn.t(), Ecto.Changeset.t()) :: Plug.Conn.t()
   defp send_validation_error(conn, changeset) do
     conn
     |> put_status(:unprocessable_entity)
     |> json(%{errors: translate_errors(changeset)})
   end
 
-  @spec translate_errors(Ecto.Changeset.t()) :: map()
   defp translate_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Enum.reduce(opts, msg, fn {key, value}, acc ->
@@ -357,7 +354,6 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
     end)
   end
 
-  @spec parse_int(nil | String.t() | integer()) :: nil | integer()
   defp parse_int(nil), do: nil
   defp parse_int(""), do: nil
 
@@ -370,7 +366,6 @@ defmodule CampaignsApiWeb.CampaignChallengeController do
 
   defp parse_int(int) when is_integer(int), do: int
 
-  @spec parse_datetime(nil | String.t()) :: nil | DateTime.t()
   defp parse_datetime(nil), do: nil
 
   defp parse_datetime(str) when is_binary(str) do

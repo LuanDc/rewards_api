@@ -579,8 +579,6 @@ defmodule CampaignsApi.CampaignManagement do
   defp handle_transaction_result({:error, reason}), do: {:error, reason}
 
   @doc false
-  @spec validate_campaign_ownership(product_id(), campaign_id()) ::
-          {:ok, Campaign.t()} | {:error, :campaign_not_found}
   defp validate_campaign_ownership(product_id, campaign_id) do
     case Repo.get_by(Campaign, id: campaign_id, product_id: product_id) do
       nil -> {:error, :campaign_not_found}

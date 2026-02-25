@@ -59,11 +59,8 @@ defmodule CampaignsApiMessaging.ChallengePublisher do
          do: AMQP.Queue.bind(channel, queue_dlq, exchange, routing_key: dlq_routing_key)
   end
 
-  @spec config(:dlq_routing_key | :exchange | :queue | :queue_dlq | :rabbitmq_url | :routing_key) ::
-          term()
   defp config(key), do: Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[key]
 
-  @spec get_field(map(), :description | :external_id | :metadata | :name) :: term()
   defp get_field(map, key) when is_map(map) do
     Map.get(map, key) || Map.get(map, Atom.to_string(key))
   end

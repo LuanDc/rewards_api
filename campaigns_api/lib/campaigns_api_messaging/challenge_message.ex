@@ -37,7 +37,6 @@ defmodule CampaignsApiMessaging.ChallengeMessage do
     Jason.encode(payload)
   end
 
-  @spec validate_required_fields(map()) :: :ok | {:error, {:missing_fields, [String.t()]}}
   defp validate_required_fields(payload) do
     missing_fields = Enum.filter(@required_fields, &(is_nil(payload[&1]) or payload[&1] == ""))
 
@@ -48,13 +47,9 @@ defmodule CampaignsApiMessaging.ChallengeMessage do
     end
   end
 
-  @spec validate_schema_version(term()) :: :ok | {:error, :invalid_schema_version}
   defp validate_schema_version(1), do: :ok
   defp validate_schema_version(_), do: {:error, :invalid_schema_version}
 
-  @spec validate_types(map()) ::
-          :ok
-          | {:error, :invalid_description | :invalid_external_id | :invalid_metadata | :invalid_name}
   defp validate_types(payload) do
     cond do
       not is_binary(payload["external_id"]) ->

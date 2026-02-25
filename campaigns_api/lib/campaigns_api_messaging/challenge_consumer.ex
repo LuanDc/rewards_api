@@ -76,7 +76,6 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
     Enum.map(messages, &route_failed_message/1)
   end
 
-  @spec route_failed_message(Message.t()) :: Message.t()
   defp route_failed_message(message) do
     case classify_failure_action(message.status) do
       :dlq ->
@@ -93,12 +92,10 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
     end
   end
 
-  @spec classify_failure_action(term()) :: :retry | :dlq
   defp classify_failure_action({:invalid_payload, _}), do: :dlq
   defp classify_failure_action({:validation_error, _}), do: :dlq
   defp classify_failure_action(_), do: :retry
 
-  @spec republish_with_retry(Message.t()) :: :ok | {:error, term()}
   defp republish_with_retry(message) do
     current_retry_count = retry_count(message)
     max_retries = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[:max_retries]
@@ -112,7 +109,6 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
     end
   end
 
-  @spec publish_to_dlq(Message.t()) :: :ok | {:error, term()}
   defp publish_to_dlq(message) do
     messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)
 
@@ -122,12 +118,10 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
     )
   end
 
-  @spec raw_payload(Message.t()) :: binary()
   defp raw_payload(%Message{metadata: metadata, data: data}) do
     Map.get(metadata, :raw_payload, data)
   end
 
-  @spec retry_count(Message.t()) :: non_neg_integer()
   defp retry_count(%Message{metadata: metadata}) do
     metadata
     |> Map.get(:headers, [])
@@ -138,7 +132,6 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
     end)
   end
 
-  @spec put_raw_payload(Message.t(), binary()) :: Message.t()
   defp put_raw_payload(%Message{metadata: metadata} = message, payload) do
     %{message | metadata: Map.put(metadata, :raw_payload, payload)}
   end

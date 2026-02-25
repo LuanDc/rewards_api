@@ -32,7 +32,6 @@ defmodule CampaignsApiWeb.Plugs.RequireAuth do
     end
   end
 
-  @spec decode_jwt(binary()) :: {:ok, %{binary() => term()}} | {:error, :invalid_token}
   defp decode_jwt(token) do
     case Joken.peek_claims(token) do
       {:ok, claims} -> {:ok, claims}
@@ -42,7 +41,6 @@ defmodule CampaignsApiWeb.Plugs.RequireAuth do
     _ -> {:error, :invalid_token}
   end
 
-  @spec unauthorized(Plug.Conn.t()) :: Plug.Conn.t()
   defp unauthorized(conn) do
     conn
     |> put_status(:unauthorized)

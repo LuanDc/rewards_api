@@ -31,7 +31,6 @@ defmodule CampaignsApiWeb.Plugs.AssignProduct do
     end
   end
 
-  @spec forbidden(Plug.Conn.t()) :: Plug.Conn.t()
   defp forbidden(conn) do
     conn
     |> put_status(:forbidden)

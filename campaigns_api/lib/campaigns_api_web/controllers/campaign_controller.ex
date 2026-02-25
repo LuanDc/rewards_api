@@ -286,7 +286,6 @@ defmodule CampaignsApiWeb.CampaignController do
     end
   end
 
-  @spec translate_errors(Ecto.Changeset.t()) :: map()
   defp translate_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Enum.reduce(opts, msg, fn {key, value}, acc ->
@@ -295,7 +294,6 @@ defmodule CampaignsApiWeb.CampaignController do
     end)
   end
 
-  @spec atomize_keys(map()) :: map()
   defp atomize_keys(map) when is_map(map) do
     Map.new(map, fn
       {key, value} when is_binary(key) ->
@@ -314,7 +312,6 @@ defmodule CampaignsApiWeb.CampaignController do
       map
   end
 
-  @spec parse_int(String.t() | integer() | nil) :: integer() | nil
   defp parse_int(nil), do: nil
   defp parse_int(""), do: nil
 
@@ -327,7 +324,6 @@ defmodule CampaignsApiWeb.CampaignController do
 
   defp parse_int(int) when is_integer(int), do: int
 
-  @spec parse_datetime(String.t() | nil) :: DateTime.t() | nil
   defp parse_datetime(nil), do: nil
 
   defp parse_datetime(str) when is_binary(str) do
