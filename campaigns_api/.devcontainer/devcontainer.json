@@ -8,7 +8,11 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "JakeBecker.elixir-ls"
+        "JakeBecker.elixir-ls",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode"
       ],
       "settings": {
         "editor.formatOnSave": true,
