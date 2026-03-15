@@ -24,7 +24,7 @@ defmodule CampaignsApiMessaging.ChallengePublisher do
   def publish_raw(raw_payload, opts \\ []) when is_binary(raw_payload) do
     with {:ok, connection} <- AMQP.Connection.open(config(:rabbitmq_url)),
          {:ok, channel} <- AMQP.Channel.open(connection),
-         :ok <- setup_topology(channel),
+         :ok <- ensure_exchange(channel),
          :ok <-
            AMQP.Basic.publish(
              channel,
@@ -44,19 +44,9 @@ defmodule CampaignsApiMessaging.ChallengePublisher do
     end
   end
 
-  @spec setup_topology(AMQP.Channel.t()) :: :ok | {:error, :blocked | :closing}
-  def setup_topology(channel) do
-    exchange = config(:exchange)
-    queue = config(:queue)
-    queue_dlq = config(:queue_dlq)
-    routing_key = config(:routing_key)
-    dlq_routing_key = config(:dlq_routing_key)
-
-    with :ok <- AMQP.Exchange.declare(channel, exchange, :direct, durable: true),
-         {:ok, _} <- AMQP.Queue.declare(channel, queue, durable: true),
-         {:ok, _} <- AMQP.Queue.declare(channel, queue_dlq, durable: true),
-         :ok <- AMQP.Queue.bind(channel, queue, exchange, routing_key: routing_key),
-         do: AMQP.Queue.bind(channel, queue_dlq, exchange, routing_key: dlq_routing_key)
+  @spec ensure_exchange(AMQP.Channel.t()) :: :ok | {:error, :blocked | :closing}
+  defp ensure_exchange(channel) do
+    AMQP.Exchange.declare(channel, config(:exchange), :direct, durable: true)
   end
 
   defp config(key), do: Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[key]

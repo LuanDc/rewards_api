@@ -8,18 +8,25 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
   alias Broadway.Message
   alias CampaignsApi.Challenges
   alias CampaignsApiMessaging.ChallengeMessage
-  alias CampaignsApiMessaging.ChallengePublisher
 
   def start_link(_opts) do
     broadway_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging.Broadway)
     messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)
+
+    queue_arguments = [
+      {"x-dead-letter-exchange", :longstr, messaging_config[:exchange]},
+      {"x-dead-letter-routing-key", :longstr, messaging_config[:dlq_routing_key]}
+    ]
 
     Broadway.start_link(__MODULE__,
       name: __MODULE__,
       producer: [
         module: {
           BroadwayRabbitMQ.Producer,
+          after_connect: fn channel -> declare_rabbitmq_topology(channel, messaging_config) end,
           queue: messaging_config[:queue],
+          declare: [durable: true, arguments: queue_arguments],
+          bindings: [{messaging_config[:exchange], [routing_key: messaging_config[:routing_key]]}],
           connection: messaging_config[:rabbitmq_url],
           qos: [prefetch_count: broadway_config[:prefetch_count]],
           metadata: [:headers],
@@ -73,63 +80,19 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
 
   @impl true
   def handle_failed(messages, _context) do
-    Enum.map(messages, &route_failed_message/1)
+    Enum.map(messages, &Message.configure_ack(&1, on_failure: :reject))
   end
 
-  defp route_failed_message(message) do
-    case classify_failure_action(message.status) do
-      :dlq ->
-        case publish_to_dlq(message) do
-          :ok -> Message.configure_ack(message, on_failure: :ack)
-          {:error, _reason} -> Message.configure_ack(message, on_failure: :reject_and_requeue)
-        end
-
-      :retry ->
-        case republish_with_retry(message) do
-          :ok -> Message.configure_ack(message, on_failure: :ack)
-          {:error, _reason} -> Message.configure_ack(message, on_failure: :reject_and_requeue)
-        end
+  defp declare_rabbitmq_topology(channel, messaging_config) do
+    with :ok <-
+           AMQP.Exchange.declare(channel, messaging_config[:exchange], :direct, durable: true),
+         {:ok, _} <- AMQP.Queue.declare(channel, messaging_config[:queue_dlq], durable: true),
+         :ok <-
+           AMQP.Queue.bind(channel, messaging_config[:queue_dlq], messaging_config[:exchange],
+             routing_key: messaging_config[:dlq_routing_key]
+           ) do
+      :ok
     end
-  end
-
-  defp classify_failure_action({:invalid_payload, _}), do: :dlq
-  defp classify_failure_action({:validation_error, _}), do: :dlq
-  defp classify_failure_action(_), do: :retry
-
-  defp republish_with_retry(message) do
-    current_retry_count = retry_count(message)
-    max_retries = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[:max_retries]
-
-    if current_retry_count < max_retries do
-      ChallengePublisher.publish_raw(raw_payload(message),
-        headers: [{"x-retry-count", :long, current_retry_count + 1}]
-      )
-    else
-      publish_to_dlq(message)
-    end
-  end
-
-  defp publish_to_dlq(message) do
-    messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)
-
-    ChallengePublisher.publish_raw(raw_payload(message),
-      routing_key: messaging_config[:dlq_routing_key],
-      headers: [{"x-retry-count", :long, retry_count(message)}]
-    )
-  end
-
-  defp raw_payload(%Message{metadata: metadata, data: data}) do
-    Map.get(metadata, :raw_payload, data)
-  end
-
-  defp retry_count(%Message{metadata: metadata}) do
-    metadata
-    |> Map.get(:headers, [])
-    |> Enum.find_value(0, fn
-      {"x-retry-count", _type, value} when is_integer(value) -> value
-      {<<"x-retry-count">>, _type, value} when is_integer(value) -> value
-      _ -> nil
-    end)
   end
 
   defp put_raw_payload(%Message{metadata: metadata} = message, payload) do
