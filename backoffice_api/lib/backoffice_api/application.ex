@@ -14,6 +14,7 @@ defmodule BackofficeApi.Application do
       {Phoenix.PubSub, name: BackofficeApi.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: BackofficeApi.Finch},
+      {Oban, Application.fetch_env!(:backoffice_api, Oban)},
       # Start a worker by calling: BackofficeApi.Worker.start_link(arg)
       # {BackofficeApi.Worker, arg},
       # Start to serve requests, typically the last entry

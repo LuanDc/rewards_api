@@ -31,6 +31,18 @@ config :backoffice_api, BackofficeApiWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :backoffice_api, BackofficeApi.Mailer, adapter: Swoosh.Adapters.Local
 
+config :backoffice_api, Oban,
+  repo: BackofficeApi.Repo,
+  queues: [challenge_events: 10],
+  plugins: [Oban.Plugins.Pruner]
+
+config :backoffice_api, BackofficeApiMessaging,
+  enabled: true,
+  rabbitmq_url: "amqp://guest:guest@rabbitmq:5672",
+  exchange: "campaigns_api.challenges",
+  routing_key: "challenge.upsert",
+  max_retries: 5
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",
