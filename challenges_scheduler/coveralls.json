@@ -1,0 +1,18 @@
+{
+  "skip_files": [
+    "lib/challenges_scheduler/application.ex",
+    "lib/challenges_scheduler.ex",
+    "lib/challenges_scheduler_web.ex",
+    "lib/challenges_scheduler/repo.ex",
+    "lib/challenges_scheduler/mailer.ex",
+    "lib/challenges_scheduler_web/endpoint.ex",
+    "lib/challenges_scheduler_web/gettext.ex",
+    "lib/challenges_scheduler_web/controllers/page_html.ex",
+    "lib/challenges_scheduler_web/components/layouts.ex",
+    "lib/challenges_scheduler_web/components/core_components.ex",
+    "lib/challenges_scheduler_web/components/layouts/",
+    "lib/challenges_scheduler_web/router.ex",
+    "lib/challenges_scheduler_web/telemetry.ex",
+    "test/support/"
+  ]
+}
