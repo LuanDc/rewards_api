@@ -3,7 +3,7 @@ import Config
 config :campaigns_api, CampaignsApi.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "postgres_db",
+  hostname: "localhost",
   database: "campaigns_api_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
@@ -33,7 +33,7 @@ config :campaigns_api, dev_routes: true
 
 config :campaigns_api, CampaignsApiMessaging,
   enabled: true,
-  rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@rabbitmq:5672"
+  rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@localhost:5672"
 
 config :logger, :console, format: "[$level] $message\n"
 
