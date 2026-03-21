@@ -21,7 +21,7 @@ defmodule CampaignsApi.Application do
 
   defp messaging_children do
     if Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[:enabled] do
-      [CampaignsApiMessaging.ChallengeConsumer]
+      []
     else
       []
     end

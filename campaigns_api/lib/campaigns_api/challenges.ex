@@ -11,8 +11,10 @@ defmodule CampaignsApi.Challenges do
   import Ecto.Query
   alias CampaignsApi.CampaignManagement.CampaignChallenge
   alias CampaignsApi.Challenges.Challenge
+  alias CampaignsApi.Outbox
   alias CampaignsApi.Pagination
   alias CampaignsApi.Repo
+  alias Ecto.Multi
 
   # Challenge Operations
 
@@ -77,9 +79,20 @@ defmodule CampaignsApi.Challenges do
   def create_challenge(attrs) do
     attrs = ensure_external_id(attrs)
 
-    %Challenge{}
-    |> Challenge.changeset(attrs)
-    |> Repo.insert()
+    Multi.new()
+    |> Multi.insert(:challenge, Challenge.changeset(%Challenge{}, attrs))
+    |> Outbox.enqueue_multi(:challenge_created,
+      aggregate_type: "challenge",
+      event_type: "challenge.created",
+      aggregate_id: fn %{challenge: challenge} -> challenge.id end,
+      payload: fn %{challenge: challenge} -> challenge_payload(challenge) end
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{challenge: challenge}} -> {:ok, challenge}
+      {:error, :challenge, changeset, _changes} -> {:error, changeset}
+      {:error, _step, reason, _changes} -> {:error, reason}
+    end
   end
 
   @doc """
@@ -100,9 +113,7 @@ defmodule CampaignsApi.Challenges do
             create_challenge(attrs)
 
           challenge ->
-            challenge
-            |> Challenge.changeset(attrs)
-            |> Repo.update()
+            update_challenge_record(challenge, attrs)
         end
     end
   end
@@ -132,9 +143,7 @@ defmodule CampaignsApi.Challenges do
         {:error, :not_found}
 
       challenge ->
-        challenge
-        |> Challenge.changeset(attrs)
-        |> Repo.update()
+        update_challenge_record(challenge, attrs)
     end
   end
 
@@ -167,7 +176,22 @@ defmodule CampaignsApi.Challenges do
         if has_campaign_associations?(challenge.id) do
           {:error, :has_associations}
         else
-          Repo.delete(challenge)
+          Multi.new()
+          |> Multi.delete(:challenge, challenge)
+          |> Outbox.enqueue_multi(:challenge_deleted,
+            aggregate_type: "challenge",
+            event_type: "challenge.deleted",
+            aggregate_id: fn %{challenge: deleted_challenge} -> deleted_challenge.id end,
+            payload: fn %{challenge: deleted_challenge} ->
+              challenge_payload(deleted_challenge)
+            end
+          )
+          |> Repo.transaction()
+          |> case do
+            {:ok, %{challenge: deleted_challenge}} -> {:ok, deleted_challenge}
+            {:error, :challenge, reason, _changes} -> {:error, reason}
+            {:error, _step, reason, _changes} -> {:error, reason}
+          end
         end
     end
   end
@@ -175,7 +199,7 @@ defmodule CampaignsApi.Challenges do
   # Private Helpers
 
   defp has_campaign_associations?(challenge_id) do
-    Repo.exists?(from cc in CampaignChallenge, where: cc.challenge_id == ^challenge_id)
+    Repo.exists?(from(cc in CampaignChallenge, where: cc.challenge_id == ^challenge_id))
   end
 
   defp get_challenge_by_external_id(external_id) do
@@ -203,5 +227,34 @@ defmodule CampaignsApi.Challenges do
 
   defp get_field(attrs, key) do
     Map.get(attrs, key) || Map.get(attrs, Atom.to_string(key))
+  end
+
+  defp update_challenge_record(challenge, attrs) do
+    Multi.new()
+    |> Multi.update(:challenge, Challenge.changeset(challenge, attrs))
+    |> Outbox.enqueue_multi(:challenge_updated,
+      aggregate_type: "challenge",
+      event_type: "challenge.updated",
+      aggregate_id: fn %{challenge: updated_challenge} -> updated_challenge.id end,
+      payload: fn %{challenge: updated_challenge} -> challenge_payload(updated_challenge) end
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{challenge: updated_challenge}} -> {:ok, updated_challenge}
+      {:error, :challenge, changeset, _changes} -> {:error, changeset}
+      {:error, _step, reason, _changes} -> {:error, reason}
+    end
+  end
+
+  defp challenge_payload(challenge) do
+    %{
+      id: challenge.id,
+      external_id: challenge.external_id,
+      name: challenge.name,
+      description: challenge.description,
+      metadata: challenge.metadata,
+      inserted_at: challenge.inserted_at,
+      updated_at: challenge.updated_at
+    }
   end
 end

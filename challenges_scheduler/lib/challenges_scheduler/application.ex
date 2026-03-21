@@ -7,23 +7,29 @@ defmodule ChallengesScheduler.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      ChallengesSchedulerWeb.Telemetry,
-      ChallengesScheduler.Repo,
-      {DNSCluster, query: Application.get_env(:challenges_scheduler, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: ChallengesScheduler.PubSub},
-      # Start the Finch HTTP client for sending emails
-      {Finch, name: ChallengesScheduler.Finch},
-      # Start a worker by calling: ChallengesScheduler.Worker.start_link(arg)
-      # {ChallengesScheduler.Worker, arg},
-      # Start to serve requests, typically the last entry
-      ChallengesSchedulerWeb.Endpoint
-    ]
+    children =
+      [
+        ChallengesSchedulerWeb.Telemetry,
+        ChallengesScheduler.Repo,
+        {DNSCluster,
+         query: Application.get_env(:challenges_scheduler, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: ChallengesScheduler.PubSub},
+        {Finch, name: ChallengesScheduler.Finch},
+        ChallengesSchedulerWeb.Endpoint
+      ] ++ messaging_children()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ChallengesScheduler.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  defp messaging_children do
+    if Application.fetch_env!(:challenges_scheduler, ChallengesSchedulerMessaging)[:enabled] do
+      [ChallengesSchedulerMessaging.CampaignProjectionConsumer]
+    else
+      []
+    end
   end
 
   # Tell Phoenix to update the endpoint configuration

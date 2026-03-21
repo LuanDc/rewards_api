@@ -21,6 +21,15 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
+  config :challenges_scheduler, ChallengesSchedulerMessaging,
+    enabled: System.get_env("MESSAGING_ENABLED", "true") == "true",
+    rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@localhost:5672",
+    exchange: System.get_env("RABBITMQ_EXCHANGE") || "campaigns_api.domain_events",
+    queue: System.get_env("RABBITMQ_QUEUE") || "challenges_scheduler.projections",
+    queue_dlq: System.get_env("RABBITMQ_QUEUE_DLQ") || "challenges_scheduler.projections.dlq",
+    dlq_routing_key:
+      System.get_env("RABBITMQ_DLQ_ROUTING_KEY") || "challenges_scheduler.projections.dlq"
+
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """

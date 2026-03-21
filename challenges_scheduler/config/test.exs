@@ -23,6 +23,10 @@ config :challenges_scheduler, ChallengesSchedulerWeb.Endpoint,
 # In test we don't send emails
 config :challenges_scheduler, ChallengesScheduler.Mailer, adapter: Swoosh.Adapters.Test
 
+config :challenges_scheduler, ChallengesSchedulerMessaging,
+  enabled: false,
+  rabbitmq_url: "amqp://guest:guest@localhost:5672"
+
 # Disable swoosh api client as it is only required for production adapters
 config :swoosh, :api_client, false
 

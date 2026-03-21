@@ -65,6 +65,10 @@ config :challenges_scheduler, ChallengesSchedulerWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :challenges_scheduler, dev_routes: true
 
+config :challenges_scheduler, ChallengesSchedulerMessaging,
+  enabled: true,
+  rabbitmq_url: System.get_env("RABBITMQ_URL") || "amqp://guest:guest@rabbitmq:5672"
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 

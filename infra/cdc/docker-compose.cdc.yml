@@ -1,0 +1,12 @@
+services:
+  debezium:
+    image: quay.io/debezium/server:2.7
+    container_name: debezium_server
+    depends_on:
+      - postgres_db
+      - rabbitmq
+    volumes:
+      - ./infra/cdc/debezium/conf:/debezium/conf
+      - ./infra/cdc/debezium/data:/debezium/data
+    networks:
+      - bsystem_network

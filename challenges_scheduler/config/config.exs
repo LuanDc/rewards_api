@@ -31,6 +31,33 @@ config :challenges_scheduler, ChallengesSchedulerWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :challenges_scheduler, ChallengesScheduler.Mailer, adapter: Swoosh.Adapters.Local
 
+config :challenges_scheduler, ChallengesSchedulerMessaging,
+  enabled: true,
+  rabbitmq_url: "amqp://guest:guest@rabbitmq:5672",
+  exchange: "campaigns_api.domain_events",
+  queue: "challenges_scheduler.projections",
+  queue_dlq: "challenges_scheduler.projections.dlq",
+  routing_keys: [
+    "campaign.created",
+    "campaign.updated",
+    "campaign.deleted",
+    "campaign_challenge.created",
+    "campaign_challenge.updated",
+    "campaign_challenge.deleted",
+    "challenge.created",
+    "challenge.updated",
+    "challenge.deleted"
+  ],
+  dlq_routing_key: "challenges_scheduler.projections.dlq"
+
+config :challenges_scheduler, ChallengesSchedulerMessaging.Broadway,
+  producers: 1,
+  processors: 4,
+  batchers: 2,
+  batch_size: 50,
+  batch_timeout_ms: 1000,
+  prefetch_count: 100
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",
