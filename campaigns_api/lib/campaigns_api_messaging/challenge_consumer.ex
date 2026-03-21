@@ -9,6 +9,8 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
   alias CampaignsApi.Challenges
   alias CampaignsApiMessaging.ChallengeMessage
 
+  require Logger
+
   def start_link(_opts) do
     broadway_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging.Broadway)
     messaging_config = Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)
@@ -58,6 +60,7 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
         |> Message.put_batcher(:challenges)
 
       {:error, reason} ->
+        Logger.warning("Failed to decode challenge message: #{inspect(reason)}")
         Message.failed(message, {:invalid_payload, reason})
     end
   end
@@ -70,9 +73,11 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
           message
 
         {:error, %Ecto.Changeset{} = changeset} ->
+          Logger.warning("Failed to upsert challenge: #{inspect(changeset)}")
           Message.failed(message, {:validation_error, changeset})
 
         {:error, reason} ->
+          Logger.warning("Failed to upsert challenge: #{inspect(reason)}")
           Message.failed(message, {:processing_error, reason})
       end
     end)
@@ -92,6 +97,10 @@ defmodule CampaignsApiMessaging.ChallengeConsumer do
              routing_key: messaging_config[:dlq_routing_key]
            ) do
       :ok
+    else
+      {:error, reason} ->
+        Logger.error("Failed to declare RabbitMQ topology: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 

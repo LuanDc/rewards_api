@@ -12,19 +12,12 @@ defmodule CampaignsApi.Application do
         {DNSCluster, query: Application.get_env(:campaigns_api, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: CampaignsApi.PubSub},
         {Finch, name: CampaignsApi.Finch},
-        CampaignsApiWeb.Endpoint
-      ] ++ messaging_children()
+        CampaignsApiWeb.Endpoint,
+        CampaignsApiMessaging.ChallengeConsumer
+      ]
 
     opts = [strategy: :one_for_one, name: CampaignsApi.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp messaging_children do
-    if Application.fetch_env!(:campaigns_api, CampaignsApiMessaging)[:enabled] do
-      []
-    else
-      []
-    end
   end
 
   @impl true
