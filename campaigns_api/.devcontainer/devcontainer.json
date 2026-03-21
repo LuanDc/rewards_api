@@ -1,7 +1,7 @@
 {
   "name": "Campaigns API",
   "dockerComposeFile": ["../../docker-compose.dev.yml"],
-  "service": "app",
+  "service": "campaigns_api",
   "workspaceFolder": "/workspace/campaigns_api",
   "forwardPorts": [4000],
   "postCreateCommand": "mix deps.get && mix ecto.setup && mix run priv/repo/seeds.exs",

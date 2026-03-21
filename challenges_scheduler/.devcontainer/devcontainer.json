@@ -1,7 +1,7 @@
 {
   "name": "Challenges Scheduler",
   "dockerComposeFile": ["../../docker-compose.dev.yml"],
-  "service": "app",
+  "service": "challenges_scheduler",
   "workspaceFolder": "/workspace/challenges_scheduler",
   "forwardPorts": [4000],
   "postCreateCommand": "mix deps.get && mix ecto.setup && mix run priv/repo/seeds.exs",

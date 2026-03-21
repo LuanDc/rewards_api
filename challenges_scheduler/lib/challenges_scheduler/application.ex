@@ -15,21 +15,14 @@ defmodule ChallengesScheduler.Application do
          query: Application.get_env(:challenges_scheduler, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: ChallengesScheduler.PubSub},
         {Finch, name: ChallengesScheduler.Finch},
-        ChallengesSchedulerWeb.Endpoint
-      ] ++ messaging_children()
+        ChallengesSchedulerWeb.Endpoint,
+        ChallengesSchedulerMessaging.CampaignProjectionConsumer
+      ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ChallengesScheduler.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp messaging_children do
-    if Application.fetch_env!(:challenges_scheduler, ChallengesSchedulerMessaging)[:enabled] do
-      [ChallengesSchedulerMessaging.CampaignProjectionConsumer]
-    else
-      []
-    end
   end
 
   # Tell Phoenix to update the endpoint configuration

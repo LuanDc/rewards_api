@@ -7,7 +7,7 @@ config :campaigns_api, CampaignsApi.Repo,
   database: "campaigns_api_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  pool_size: 5
 
 config :campaigns_api, CampaignsApiWeb.Endpoint,
   http: [ip: {0, 0, 0, 0}, port: 4000],
