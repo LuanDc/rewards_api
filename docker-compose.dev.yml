@@ -61,7 +61,7 @@ services:
       - rabbitmq
     volumes:
       - ./infra/cdc/debezium/conf:/debezium/conf
-      - ./infra/cdc/debezium/data:/debezium/data
+      - debezium_data:/debezium/data
     networks:
       - bsystem_network
 
@@ -72,6 +72,7 @@ volumes:
   deps-cache:
   pgdata:
   rabbitmq_data:
+  debezium_data:
 
 networks:
   bsystem_network:
